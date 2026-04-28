@@ -1,6 +1,7 @@
 import { auth } from '@/auth';
 import { redirect } from 'next/navigation';
 import { prisma } from '@/lib/prisma';
+import { serializeImoveis } from '@/lib/serialize';
 import ImoveisClient from './ImoveisClient';
 
 export default async function ImoveisPage() {
@@ -14,5 +15,5 @@ export default async function ImoveisPage() {
     orderBy: { createdAt: 'desc' },
   });
 
-  return <ImoveisClient imoveis={imoveis} />;
+  return <ImoveisClient imoveis={serializeImoveis(imoveis)} />;
 }

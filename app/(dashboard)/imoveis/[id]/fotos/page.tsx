@@ -24,10 +24,10 @@ export default function FotosPage({
   const [loading, setLoading] = useState(true);
   const [uploading, setUploading] = useState(false);
   const [dragOver, setDragOver] = useState(false);
-  const [reorderDragIdx, setReorderDragIdx] = useState<number | null>(null);
+  const [dragIdx, setDragIdx] = useState<number | null>(null);
   const inputRef = useRef<HTMLInputElement>(null);
 
-  // Carrega fotos atuais + dados do imóvel
+  // Carrega
   useEffect(() => {
     fetch(`/api/imoveis/${id}/fotos`)
       .then((r) => r.json())
@@ -88,8 +88,9 @@ export default function FotosPage({
   }
 
   async function setCapa(url: string) {
+    if (state.capaUrl === url) return;
     const prev = state;
-    setState((s) => ({ ...s, capaUrl: url })); // optimistic
+    setState((s) => ({ ...s, capaUrl: url }));
     try {
       const res = await fetch(`/api/imoveis/${id}/fotos`, {
         method: 'PATCH',
@@ -110,7 +111,7 @@ export default function FotosPage({
     setState((s) => ({
       imagens: s.imagens.filter((u) => u !== url),
       capaUrl: s.capaUrl === url ? null : s.capaUrl,
-    })); // optimistic
+    }));
     try {
       const res = await fetch(
         `/api/imoveis/${id}/fotos?url=${encodeURIComponent(url)}`,
@@ -125,23 +126,8 @@ export default function FotosPage({
     }
   }
 
-  function onReorderDragStart(idx: number) {
-    setReorderDragIdx(idx);
-  }
-  function onReorderDragOver(e: DragEvent) {
-    e.preventDefault();
-  }
-  async function onReorderDrop(targetIdx: number) {
-    if (reorderDragIdx === null || reorderDragIdx === targetIdx) {
-      setReorderDragIdx(null);
-      return;
-    }
-    const arr = [...state.imagens];
-    const [moved] = arr.splice(reorderDragIdx, 1);
-    arr.splice(targetIdx, 0, moved);
-    setReorderDragIdx(null);
-    setState((s) => ({ ...s, imagens: arr })); // optimistic
-
+  // Reorder via setas (mais simples que drag) e drag opcional
+  async function persistOrder(arr: string[]) {
     try {
       const res = await fetch(`/api/imoveis/${id}/fotos`, {
         method: 'PATCH',
@@ -154,6 +140,40 @@ export default function FotosPage({
     }
   }
 
+  function moveLeft(idx: number) {
+    if (idx === 0) return;
+    const arr = [...state.imagens];
+    [arr[idx - 1], arr[idx]] = [arr[idx], arr[idx - 1]];
+    setState((s) => ({ ...s, imagens: arr }));
+    persistOrder(arr);
+  }
+  function moveRight(idx: number) {
+    if (idx >= state.imagens.length - 1) return;
+    const arr = [...state.imagens];
+    [arr[idx + 1], arr[idx]] = [arr[idx], arr[idx + 1]];
+    setState((s) => ({ ...s, imagens: arr }));
+    persistOrder(arr);
+  }
+
+  function onDragStart(idx: number) {
+    setDragIdx(idx);
+  }
+  function onDragOverCard(e: DragEvent) {
+    e.preventDefault();
+  }
+  function onDropCard(targetIdx: number) {
+    if (dragIdx === null || dragIdx === targetIdx) {
+      setDragIdx(null);
+      return;
+    }
+    const arr = [...state.imagens];
+    const [moved] = arr.splice(dragIdx, 1);
+    arr.splice(targetIdx, 0, moved);
+    setDragIdx(null);
+    setState((s) => ({ ...s, imagens: arr }));
+    persistOrder(arr);
+  }
+
   return (
     <div className="fade-in">
       <div className="mb-6 flex items-center justify-between" style={{ flexWrap: 'wrap', gap: 12 }}>
@@ -161,7 +181,7 @@ export default function FotosPage({
           <Link href={`/imoveis/${id}`} className="text-muted hover:text-primary text-sm">
             ← Voltar pro imóvel
           </Link>
-          <h1 className="mt-1">Fotos do imóvel</h1>
+          <h1 className="mt-1">Galeria de fotos</h1>
           {imovel && (
             <p className="text-muted text-sm">
               {imovel.titulo} <span className="text-xs font-mono">· {imovel.codigo}</span>
@@ -169,8 +189,7 @@ export default function FotosPage({
           )}
         </div>
         <div className="text-xs text-muted">
-          {state.imagens.length} foto{state.imagens.length === 1 ? '' : 's'} ·
-          {state.capaUrl ? ' capa definida' : ' sem capa'}
+          {state.imagens.length} foto{state.imagens.length === 1 ? '' : 's'}
         </div>
       </div>
 
@@ -207,7 +226,7 @@ export default function FotosPage({
         </div>
       </div>
 
-      {/* GRID DE FOTOS */}
+      {/* GRID DE FOTOS — estilo Lano: posição + setas + botão capa visível */}
       {loading ? (
         <p className="text-muted mt-8 text-center">Carregando…</p>
       ) : state.imagens.length === 0 ? (
@@ -215,50 +234,84 @@ export default function FotosPage({
           <p className="text-muted">Nenhuma foto ainda. Sobe a primeira aí em cima — vira capa automaticamente.</p>
         </div>
       ) : (
-        <div className={styles.grid}>
-          {state.imagens.map((url, idx) => {
-            const isCapa = state.capaUrl === url;
-            return (
-              <div
-                key={url}
-                className={`${styles.fotoCard} ${isCapa ? styles.fotoCapa : ''}`}
-                draggable
-                onDragStart={() => onReorderDragStart(idx)}
-                onDragOver={onReorderDragOver}
-                onDrop={() => onReorderDrop(idx)}
-              >
-                {/* eslint-disable-next-line @next/next/no-img-element */}
-                <img src={url} alt={`Foto ${idx + 1}`} className={styles.fotoImg} loading="lazy" />
-                <div className={styles.fotoOverlay}>
-                  {isCapa ? (
-                    <span className={styles.fotoBadgeCapa}>★ Capa</span>
-                  ) : (
-                    <button
-                      className={styles.fotoBtnCapa}
-                      onClick={() => setCapa(url)}
-                      title="Definir como capa"
-                    >
-                      ☆ Capa
-                    </button>
-                  )}
-                  <button
-                    className={styles.fotoBtnRemove}
-                    onClick={() => removeFoto(url)}
-                    title="Remover"
-                  >
-                    ✕
-                  </button>
-                </div>
-                <span className={styles.fotoIdx}>{idx + 1}</span>
-              </div>
-            );
-          })}
-        </div>
-      )}
+        <>
+          <div className={styles.legendaInfo}>
+            ★ A foto marcada como <strong>CAPA</strong> é a que aparece no card do imóvel e nos posts.
+            Use as setas <strong>‹ ›</strong> pra reordenar.
+          </div>
 
-      <p className="text-xs text-muted mt-4 text-center">
-        Dica: arraste as fotos pra reordenar · clique no ☆ pra trocar a capa.
-      </p>
+          <div className={styles.grid}>
+            {state.imagens.map((url, idx) => {
+              const isCapa = state.capaUrl === url;
+              const total = state.imagens.length;
+              return (
+                <div
+                  key={url}
+                  className={`${styles.fotoCard} ${isCapa ? styles.fotoCapa : ''}`}
+                  draggable
+                  onDragStart={() => onDragStart(idx)}
+                  onDragOver={onDragOverCard}
+                  onDrop={() => onDropCard(idx)}
+                >
+                  <div className={styles.fotoImgWrapper}>
+                    {/* eslint-disable-next-line @next/next/no-img-element */}
+                    <img src={url} alt={`Foto ${idx + 1}`} className={styles.fotoImg} loading="lazy" />
+
+                    {isCapa && <span className={styles.fotoBadgeCapa}>★ CAPA</span>}
+                    <span className={styles.fotoIdx}>#{idx + 1}</span>
+
+                    <button
+                      className={styles.fotoBtnRemove}
+                      onClick={() => removeFoto(url)}
+                      title="Remover foto"
+                      type="button"
+                    >
+                      ✕
+                    </button>
+                  </div>
+
+                  <div className={styles.fotoActions}>
+                    {isCapa ? (
+                      <span className={styles.fotoCapaActive}>★ É a capa</span>
+                    ) : (
+                      <button
+                        className={styles.fotoBtnCapa}
+                        onClick={() => setCapa(url)}
+                        type="button"
+                      >
+                        ☆ Definir como capa
+                      </button>
+                    )}
+
+                    <div className={styles.fotoArrows}>
+                      <button
+                        type="button"
+                        className={styles.arrowBtn}
+                        onClick={() => moveLeft(idx)}
+                        disabled={idx === 0}
+                        title="Mover pra esquerda"
+                        aria-label="Mover pra esquerda"
+                      >
+                        ‹
+                      </button>
+                      <button
+                        type="button"
+                        className={styles.arrowBtn}
+                        onClick={() => moveRight(idx)}
+                        disabled={idx === total - 1}
+                        title="Mover pra direita"
+                        aria-label="Mover pra direita"
+                      >
+                        ›
+                      </button>
+                    </div>
+                  </div>
+                </div>
+              );
+            })}
+          </div>
+        </>
+      )}
     </div>
   );
 }

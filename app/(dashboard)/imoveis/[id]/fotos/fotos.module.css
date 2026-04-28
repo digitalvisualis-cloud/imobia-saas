@@ -7,7 +7,7 @@
   cursor: pointer;
   transition: all 0.18s ease;
   background: var(--bg-soft, hsl(0 0% 98%));
-  margin-bottom: 24px;
+  margin-bottom: 20px;
 }
 
 .dropzone:hover {
@@ -18,11 +18,11 @@
 .dragOver {
   border-color: var(--accent);
   background: var(--accent-soft, hsl(39 46% 95%));
-  transform: scale(1.01);
+  transform: scale(1.005);
 }
 
 .uploading {
-  opacity: 0.7;
+  opacity: 0.6;
   pointer-events: none;
 }
 
@@ -30,7 +30,7 @@
   display: flex;
   flex-direction: column;
   align-items: center;
-  gap: 8px;
+  gap: 6px;
 }
 
 .dropzoneTitle {
@@ -39,7 +39,18 @@
   color: var(--text-primary);
 }
 
-/* ─── Empty state ──────────────────────────────────────────── */
+/* ─── Legenda informativa ────────────────────────────────────── */
+.legendaInfo {
+  background: hsl(39 46% 96%);
+  border: 1px solid hsl(39 46% 80%);
+  color: hsl(39 46% 30%);
+  padding: 10px 14px;
+  border-radius: 8px;
+  font-size: 0.85rem;
+  margin-bottom: 16px;
+}
+
+/* ─── Empty state ────────────────────────────────────────────── */
 .emptyState {
   padding: 48px 16px;
   text-align: center;
@@ -48,26 +59,28 @@
   border: 1px solid var(--border);
 }
 
-/* ─── Grid de fotos ────────────────────────────────────────── */
+/* ─── Grid de fotos ──────────────────────────────────────────── */
 .grid {
   display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
-  gap: 12px;
+  grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+  gap: 14px;
 }
 
 .fotoCard {
-  position: relative;
-  aspect-ratio: 4 / 3;
-  border-radius: 10px;
-  overflow: hidden;
+  display: flex;
+  flex-direction: column;
   border: 2px solid transparent;
-  background: var(--bg-soft, hsl(0 0% 96%));
+  border-radius: 12px;
+  overflow: hidden;
+  background: var(--bg-card, white);
+  transition: border-color 0.18s ease, transform 0.12s ease, box-shadow 0.18s ease;
   cursor: grab;
-  transition: transform 0.12s ease, border-color 0.18s ease;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.04);
 }
 
 .fotoCard:hover {
   transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
 }
 
 .fotoCard:active {
@@ -75,8 +88,15 @@
 }
 
 .fotoCapa {
-  border-color: var(--accent, #c9a227);
-  box-shadow: 0 0 0 3px var(--accent-soft, rgba(201, 162, 39, 0.18));
+  border-color: hsl(142 70% 45%); /* verde estilo Lano */
+  box-shadow: 0 0 0 3px hsla(142 70% 45% / 0.15);
+}
+
+.fotoImgWrapper {
+  position: relative;
+  aspect-ratio: 4 / 3;
+  background: hsl(0 0% 96%);
+  overflow: hidden;
 }
 
 .fotoImg {
@@ -88,83 +108,124 @@
 
 .fotoIdx {
   position: absolute;
-  top: 6px;
-  left: 6px;
+  bottom: 8px;
+  left: 8px;
   background: rgba(0, 0, 0, 0.65);
   color: white;
   font-size: 0.7rem;
   font-weight: 700;
-  padding: 2px 8px;
+  padding: 3px 9px;
   border-radius: 999px;
   pointer-events: none;
-}
-
-.fotoOverlay {
-  position: absolute;
-  top: 0;
-  left: 0;
-  right: 0;
-  bottom: 0;
-  display: flex;
-  flex-direction: column;
-  justify-content: space-between;
-  padding: 8px;
-  opacity: 0;
-  background: linear-gradient(
-    to bottom,
-    rgba(0, 0, 0, 0) 0%,
-    rgba(0, 0, 0, 0.55) 100%
-  );
-  transition: opacity 0.18s ease;
-}
-
-.fotoCard:hover .fotoOverlay,
-.fotoCapa .fotoOverlay {
-  opacity: 1;
+  letter-spacing: 0.02em;
 }
 
 .fotoBadgeCapa {
-  align-self: flex-end;
-  background: var(--accent, #c9a227);
+  position: absolute;
+  top: 8px;
+  left: 8px;
+  background: hsl(142 70% 45%);
   color: white;
-  font-size: 0.7rem;
-  font-weight: 700;
+  font-size: 0.72rem;
+  font-weight: 800;
   padding: 4px 10px;
   border-radius: 999px;
+  letter-spacing: 0.06em;
   pointer-events: none;
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.18);
 }
 
-.fotoBtnCapa,
 .fotoBtnRemove {
-  align-self: flex-end;
+  position: absolute;
+  top: 6px;
+  right: 6px;
+  width: 28px;
+  height: 28px;
   border: none;
-  cursor: pointer;
-  font-weight: 600;
-  border-radius: 8px;
-  transition: all 0.12s ease;
-}
-
-.fotoBtnCapa {
-  background: rgba(255, 255, 255, 0.92);
-  color: var(--text-primary, #111);
-  font-size: 0.7rem;
-  padding: 4px 10px;
-}
-
-.fotoBtnCapa:hover {
-  background: var(--accent, #c9a227);
-  color: white;
-}
-
-.fotoBtnRemove {
-  background: rgba(220, 38, 38, 0.92);
+  border-radius: 50%;
+  background: rgba(0, 0, 0, 0.55);
   color: white;
   font-size: 0.85rem;
-  padding: 4px 8px;
-  align-self: flex-start;
-  margin-top: auto;
+  font-weight: 700;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: background 0.12s ease;
 }
 
 .fotoBtnRemove:hover {
-  background: rgb(185, 28, 28);
+  background: rgb(220, 38, 38);
+}
+
+/* ─── Botões de ação abaixo da foto ──────────────────────────── */
+.fotoActions {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  padding: 8px 10px;
+  background: white;
+}
+
+.fotoBtnCapa {
+  flex: 1;
+  border: 1px solid var(--border, hsl(0 0% 88%));
+  background: white;
+  color: var(--text-primary, #111);
+  font-size: 0.78rem;
+  font-weight: 600;
+  padding: 6px 10px;
+  border-radius: 8px;
+  cursor: pointer;
+  transition: all 0.12s ease;
+  white-space: nowrap;
+}
+
+.fotoBtnCapa:hover {
+  background: hsl(142 70% 45%);
+  border-color: hsl(142 70% 45%);
+  color: white;
+}
+
+.fotoCapaActive {
+  flex: 1;
+  font-size: 0.78rem;
+  font-weight: 700;
+  color: hsl(142 70% 35%);
+  text-align: center;
+  padding: 6px 10px;
+}
+
+.fotoArrows {
+  display: flex;
+  gap: 4px;
+}
+
+.arrowBtn {
+  width: 30px;
+  height: 30px;
+  border: 1px solid var(--border, hsl(0 0% 88%));
+  background: white;
+  border-radius: 8px;
+  font-size: 1.1rem;
+  font-weight: 700;
+  cursor: pointer;
+  color: var(--text-primary, #111);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.12s ease;
+  line-height: 1;
+}
+
+.arrowBtn:hover:not(:disabled) {
+  background: var(--accent, #c9a227);
+  border-color: var(--accent, #c9a227);
+  color: white;
+}
+
+.arrowBtn:disabled {
+  opacity: 0.35;
+  cursor: not-allowed;
 }

@@ -1,6 +1,7 @@
 import { notFound, redirect } from 'next/navigation';
 import { auth } from '@/auth';
 import { prisma } from '@/lib/prisma';
+import { serializeImovel } from '@/lib/serialize';
 import ImovelDetailsClient from './ImovelDetailsClient';
 
 export default async function ImovelDetailsPage({ params }: { params: Promise<{ id: string }> }) {
@@ -17,5 +18,5 @@ export default async function ImovelDetailsPage({ params }: { params: Promise<{ 
 
   if (!imovel || imovel.tenantId !== tenantId) notFound();
 
-  return <ImovelDetailsClient imovel={imovel} siteSlug={site?.slug} />;
+  return <ImovelDetailsClient imovel={serializeImovel(imovel)} siteSlug={site?.slug} />;
 }
