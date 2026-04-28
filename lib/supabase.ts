@@ -1,53 +1,42 @@
-import { createClient } from '@supabase/supabase-js';
+/**
+ * Clientes Supabase.
+ *
+ * Pra UPLOAD DE IMAGENS: NÃO use esse arquivo. Use a API server-side:
+ *   - POST   /api/imoveis/[id]/fotos    — upload de fotos do imóvel
+ *   - PATCH  /api/imoveis/[id]/fotos    — set-capa, reorder
+ *   - DELETE /api/imoveis/[id]/fotos    — remover foto
+ *
+ * Implementação real em `lib/storage.ts` (server-only, service_role).
+ */
 
-// Client-side (public)
+import { createClient } from "@supabase/supabase-js";
+
+/**
+ * Cliente Supabase pro browser (anon key).
+ * Hoje só usado pra realtime/auth fallback — uploads vão pelas APIs server-side.
+ *
+ * Se NEXT_PUBLIC_SUPABASE_ANON_KEY estiver vazio, esse client lança erro
+ * só quando alguém tentar usar — então tá ok deixar exportado.
+ */
 export const supabase = createClient(
   process.env.NEXT_PUBLIC_SUPABASE_URL!,
-  process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
+  process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY ?? "",
 );
 
-// Server-side (service role — só no servidor!)
+/**
+ * Cliente Supabase server-side com service_role.
+ * SÓ EM ROTAS API ou Server Actions — nunca no browser.
+ */
 export const supabaseAdmin = () =>
   createClient(
     process.env.NEXT_PUBLIC_SUPABASE_URL!,
     process.env.SUPABASE_SERVICE_ROLE_KEY!,
-    { auth: { autoRefreshToken: false, persistSession: false } }
+    { auth: { autoRefreshToken: false, persistSession: false } },
   );
 
-// Upload de imagem para o bucket 'imoveis'
-export async function uploadImagem(
-  file: File,
-  tenantId: string,
-  path?: string
-): Promise<string> {
-  const ext = file.name.split('.').pop();
-  const filePath = path ?? `${tenantId}/${Date.now()}.${ext}`;
-
-  const { error } = await supabase.storage
-    .from('imoveis')
-    .upload(filePath, file, { upsert: true });
-
-  if (error) throw error;
-
-  const { data } = supabase.storage.from('imoveis').getPublicUrl(filePath);
-  return data.publicUrl;
-}
-
-// Upload de asset de marca (logo, favicon)
-export async function uploadMarca(
-  file: File,
-  tenantId: string,
-  tipo: 'logo' | 'favicon' | 'manual'
-): Promise<string> {
-  const ext = file.name.split('.').pop();
-  const filePath = `${tenantId}/${tipo}.${ext}`;
-
-  const { error } = await supabase.storage
-    .from('site-assets')
-    .upload(filePath, file, { upsert: true });
-
-  if (error) throw error;
-
-  const { data } = supabase.storage.from('site-assets').getPublicUrl(filePath);
-  return data.publicUrl;
-}
+// Re-exports das funções server-side (compat com imports antigos).
+export {
+  uploadFotoImovel,
+  removeFotoImovel,
+  uploadAssetMarca,
+} from "./storage";

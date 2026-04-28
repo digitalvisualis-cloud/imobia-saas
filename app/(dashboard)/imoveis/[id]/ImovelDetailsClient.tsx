@@ -21,6 +21,9 @@ export default function ImovelDetailsClient({ imovel, siteSlug }: { imovel: any;
           <h1 style={{ fontSize: '2rem' }}>{imovel.titulo}</h1>
         </div>
         <div className="flex gap-2">
+          <Link href={`/imoveis/${imovel.id}/fotos`} className="btn btn-secondary">
+            📸 Fotos {imovel.imagens?.length ? `(${imovel.imagens.length})` : ''}
+          </Link>
           {siteSlug && (
             <Link href={`/s/${siteSlug}/imovel/${imovel.codigo}`} target="_blank" className="btn btn-secondary">
               👁️ Ver no Site
