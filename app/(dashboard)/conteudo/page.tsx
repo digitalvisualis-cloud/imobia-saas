@@ -1,22 +1,52 @@
-'use client';
-import Link from 'next/link';
+import { auth } from '@/auth';
+import { redirect } from 'next/navigation';
+import { prisma } from '@/lib/prisma';
+import ConteudoClient from './ConteudoClient';
 
-export default function ConteudoPage() {
+export const dynamic = 'force-dynamic';
+
+export default async function ConteudoPage() {
+  const session = await auth();
+  if (!session?.user) redirect('/login');
+  const tenantId = (session.user as any).tenantId as string;
+
+  // Cards = imóveis do tenant. Cada card abre o Media Kit do imóvel.
+  // Lá dentro o cliente gera os posts visualmente (3 templates).
+  const imoveis = await prisma.imovel.findMany({
+    where: { tenantId },
+    orderBy: [{ destaque: 'desc' }, { createdAt: 'desc' }],
+    select: {
+      id: true,
+      codigo: true,
+      titulo: true,
+      capaUrl: true,
+      cidade: true,
+      bairro: true,
+      tipo: true,
+      operacao: true,
+      preco: true,
+      publicado: true,
+      _count: {
+        select: { posts: true },
+      },
+    },
+  });
+
   return (
-    <div className="fade-in">
-      <div className="mb-6">
-        <h1>✍️ Gerar Posts com IA</h1>
-        <p className="text-muted">Crie legendas e posts prontos para Instagram e WhatsApp</p>
-      </div>
-
-      <div className="card" style={{ maxWidth: 560 }}>
-        <div style={{ fontSize: '3rem', marginBottom: 16 }}>🤖</div>
-        <h3 className="mb-2">Gere posts a partir dos seus imóveis</h3>
-        <p className="text-sm text-muted mb-4">
-          Acesse qualquer imóvel cadastrado, vá na aba <strong>IA & Conteúdo</strong> e gere posts personalizados em segundos.
-        </p>
-        <Link href="/imoveis" className="btn btn-primary">Ver meus imóveis →</Link>
-      </div>
-    </div>
+    <ConteudoClient
+      imoveis={imoveis.map((i) => ({
+        id: i.id,
+        codigo: i.codigo,
+        titulo: i.titulo,
+        capaUrl: i.capaUrl,
+        cidade: i.cidade,
+        bairro: i.bairro,
+        tipo: i.tipo as unknown as string,
+        operacao: i.operacao as unknown as string,
+        preco: Number(i.preco),
+        publicado: i.publicado,
+        postsCount: i._count.posts,
+      }))}
+    />
   );
 }

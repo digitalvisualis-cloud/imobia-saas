@@ -1,114 +1,125 @@
 import { NextResponse } from 'next/server';
 import { auth } from '@/auth';
 import { prisma } from '@/lib/prisma';
-import { createClient } from '@supabase/supabase-js';
 
-const supabase = createClient(
-  process.env.NEXT_PUBLIC_SUPABASE_URL!,
-  process.env.SUPABASE_SERVICE_ROLE_KEY!
-);
+const MAP_TIPO: Record<string, string> = {
+  'Casa': 'CASA',
+  'Apartamento': 'APARTAMENTO',
+  'Cobertura': 'COBERTURA',
+  'Studio': 'STUDIO',
+  'Terreno': 'TERRENO',
+  'Sala Comercial': 'SALA_COMERCIAL',
+  'Loja': 'LOJA',
+  'Galpão': 'GALPAO',
+  'Chácara': 'CHACARA',
+  'Sítio': 'SITIO',
+  // legacy
+  'Comercial': 'SALA_COMERCIAL',
+};
+
+const MAP_OPERACAO: Record<string, string> = {
+  'Venda': 'VENDA',
+  'Aluguel': 'ALUGUEL',
+  'Temporada': 'TEMPORADA',
+};
 
 export async function POST(req: Request) {
   try {
     const session = await auth();
-    if (!session?.user) return NextResponse.json({ error: 'Não autorizado.' }, { status: 401 });
+    if (!session?.user) {
+      return NextResponse.json({ error: 'Não autorizado.' }, { status: 401 });
+    }
     const tenantId = (session.user as any).tenantId as string;
-    if (!tenantId) return NextResponse.json({ error: 'Tenant não encontrado.' }, { status: 400 });
+    if (!tenantId) {
+      return NextResponse.json({ error: 'Tenant não encontrado.' }, { status: 400 });
+    }
 
     const formData = await req.formData();
 
     const codigo = 'IMV-' + Math.floor(1000 + Math.random() * 9000);
-    
-    // Dados do imóvel
-    const tipo = formData.get('tipo') as string;
-    const operacao = formData.get('operacao') as string;
-    const cidadeBairro = formData.get('cidadeBairro') as string;
-    const endereco = formData.get('endereco') as string;
+
+    const tipoStr = (formData.get('tipo') as string) || '';
+    const operacaoStr = (formData.get('operacao') as string) || '';
+    if (!tipoStr || !operacaoStr) {
+      return NextResponse.json(
+        { error: 'Tipo e operação são obrigatórios.' },
+        { status: 400 },
+      );
+    }
+    const tipo = MAP_TIPO[tipoStr] ?? tipoStr.toUpperCase().replace(/[^A-Z]/g, '_');
+    const operacao = MAP_OPERACAO[operacaoStr] ?? operacaoStr.toUpperCase();
+
+    // Localização
+    const cep = (formData.get('cep') as string) || '';
+    const endereco = (formData.get('endereco') as string) || '';
+    const bairro = (formData.get('bairro') as string) || null;
+    const cidade =
+      (formData.get('cidade') as string) ||
+      // fallback: split do cidadeBairro legacy "Bairro, Cidade"
+      (formData.get('cidadeBairro') as string)?.split(',').map((s) => s.trim()).pop() ||
+      '';
+    const estado = (formData.get('estado') as string) || 'SP';
+
+    if (!cidade) {
+      return NextResponse.json({ error: 'Cidade é obrigatória.' }, { status: 400 });
+    }
+
+    // Preço & specs
     const preco = Number(formData.get('preco'));
-    const quartos = Number(formData.get('quartos'));
-    const banheiros = Number(formData.get('banheiros'));
-    const vagas = Number(formData.get('vagas'));
-    const area = Number(formData.get('area'));
-    const areaTotal = Number(formData.get('areaTotal')) || area; // Fallback para area util se vazio
-    const amenidades = JSON.parse(formData.get('amenidades') as string || '[]');
-    const descricao = formData.get('descricao') as string;
-    const videoUrl = formData.get('videoUrl') as string;
+    const quartos = Number(formData.get('quartos') ?? 0);
+    const suites = Number(formData.get('suites') ?? 0);
+    const banheiros = Number(formData.get('banheiros') ?? 0);
+    const vagas = Number(formData.get('vagas') ?? 0);
+    const area = Number(formData.get('area') ?? 0);
+    const areaTotal = Number(formData.get('areaTotal')) || area;
 
-    // ListaPro
-    const videoTipo = formData.get('videoTipo') as string;
-    const voiceoverVoz = formData.get('voiceoverVoz') as string;
-    const voiceoverTom = formData.get('voiceoverTom') as string;
-    const voiceoverContexto = formData.get('voiceoverContexto') as string;
-
-    if (!tipo || !operacao) {
-      return NextResponse.json({ error: 'Tipo e Operação são obrigatórios.' }, { status: 400 });
+    if (!preco || isNaN(preco)) {
+      return NextResponse.json({ error: 'Preço é obrigatório.' }, { status: 400 });
     }
 
-    // Split cidadeBairro simples: "Bairro, Cidade"
-    const partes = cidadeBairro.split(',').map(s => s.trim());
-    const cidade = partes.length > 1 ? partes[1] : partes[0];
-    const bairro = partes.length > 1 ? partes[0] : null;
+    // Características
+    const caracteristicasRaw = formData.get('amenidades') as string;
+    const amenidades = caracteristicasRaw ? JSON.parse(caracteristicasRaw) : [];
 
-    // Upload das fotos
-    const fotos: string[] = [];
-    let capaUrl = null;
-    
-    // Percorre todos os arquivos enviados
-    const files = formData.getAll('fotos') as File[];
-    
-    for (const file of files) {
-      if (file.size === 0) continue;
-      
-      const fileExt = file.name.split('.').pop();
-      const fileName = `${tenantId}/${codigo}-${Math.random().toString(36).substring(2)}.${fileExt}`;
-      
-      const { data } = await supabase.storage
-        .from('imoveis')
-        .upload(fileName, file, { upsert: true });
-        
-      if (data) {
-        const url = `${process.env.NEXT_PUBLIC_SUPABASE_URL}/storage/v1/object/public/imoveis/${fileName}`;
-        fotos.push(url);
-        if (!capaUrl) capaUrl = url;
-      }
-    }
+    const descricao = (formData.get('descricao') as string) || '';
+    const videoUrl = (formData.get('videoUrl') as string) || null;
 
-    // Salva no Prisma
+    // Cria imóvel
     const imovel = await prisma.imovel.create({
       data: {
         tenantId,
         codigo,
-        titulo: `${tipo} em ${cidadeBairro}`,
-        tipo: tipo.toUpperCase().replace(' ', '_') as any, // "Casa" -> "CASA"
-        operacao: operacao.toUpperCase() as any, // "Venda" -> "VENDA"
+        titulo: `${tipoStr}${bairro ? ` em ${bairro}` : cidade ? ` em ${cidade}` : ''}`,
+        tipo: tipo as any,
+        operacao: operacao as any,
+        cep: cep || null,
+        endereco: endereco || null,
         cidade,
         bairro,
-        endereco,
+        estado,
         preco,
         quartos,
+        suites,
         banheiros,
         vagas,
         areaM2: area,
-        areaTotal: areaTotal,
+        areaTotal,
         descricao,
         amenidades,
-        imagens: fotos,
-        capaUrl,
-        videoUrl: videoUrl || null,
+        imagens: [],
+        capaUrl: null,
+        videoUrl,
         publicado: true,
-        // ListaPro
-        videoTipo,
-        voiceoverVoz,
-        voiceoverTom,
-        voiceoverContexto,
-        statusGeracao: 'RASCUNHO' // Inicializa como rascunho
-      }
+        statusGeracao: 'RASCUNHO',
+      },
     });
 
     return NextResponse.json({ success: true, imovel });
-
   } catch (error: any) {
     console.error('Erro ao salvar imóvel:', error);
-    return NextResponse.json({ error: 'Erro interno ao salvar imóvel' }, { status: 500 });
+    return NextResponse.json(
+      { error: error.message ?? 'Erro interno ao salvar imóvel' },
+      { status: 500 },
+    );
   }
 }

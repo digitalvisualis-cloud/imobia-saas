@@ -1,149 +1,349 @@
 'use client';
-import { useState } from 'react';
+
+import { useState, useTransition } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
-import styles from './imoveis.module.css';
+import {
+  Plus,
+  Search,
+  Copy,
+  Pencil,
+  Trash2,
+  Check,
+  Loader2,
+  ImageOff,
+} from 'lucide-react';
+import { Button } from '@/components/ui/button';
+import { Badge } from '@/components/ui/badge';
+import { Input } from '@/components/ui/input';
+import { NativeSelect } from '@/components/ui/select';
+import { Switch } from '@/components/ui/switch';
+import {
+  TIPO_LABELS,
+  FINALIDADE_LABELS,
+  formatBRL,
+} from '@/app/_templates/types';
 
-export default function ImoveisClient({ imoveis }: { imoveis: any[] }) {
+type Imovel = {
+  id: string;
+  codigo: string;
+  titulo: string;
+  tipo: string;
+  operacao: string;
+  preco: number;
+  bairro: string | null;
+  cidade: string;
+  estado: string;
+  capaUrl: string | null;
+  imagens: string[];
+  publicado: boolean;
+  destaque: boolean;
+  status: string;
+  statusGeracao: string | null;
+};
+
+export default function ImoveisClient({ imoveis }: { imoveis: Imovel[] }) {
   const router = useRouter();
-  const [view, setView] = useState<'grid'|'table'>('grid');
-  const [filter, setFilter] = useState('');
-  const [tipo, setTipo] = useState('');
+  const [search, setSearch] = useState('');
+  const [filterTipo, setFilterTipo] = useState('');
+  const [filterFinalidade, setFilterFinalidade] = useState('');
+  const [copiedId, setCopiedId] = useState<string | null>(null);
+  const [confirmDeleteId, setConfirmDeleteId] = useState<string | null>(null);
+  const [pendingId, setPendingId] = useState<string | null>(null);
+  const [, startTransition] = useTransition();
 
-  const filtered = imoveis.filter(i => {
-    const searchString = `${i.titulo} ${i.endereco} ${i.cidade} ${i.codigo}`.toLowerCase();
-    const matchSearch = searchString.includes(filter.toLowerCase());
-    const matchTipo = !tipo || i.tipo.toLowerCase() === tipo.toLowerCase();
-    return matchSearch && matchTipo;
+  const filtered = imoveis.filter((im) => {
+    const q = search.trim().toLowerCase();
+    if (q) {
+      const hay = `${im.titulo} ${im.bairro ?? ''} ${im.cidade} ${im.codigo}`
+        .toLowerCase();
+      if (!hay.includes(q)) return false;
+    }
+    if (filterTipo && im.tipo !== filterTipo) return false;
+    if (filterFinalidade && im.operacao !== filterFinalidade) return false;
+    return true;
   });
 
-  const statusColor: Record<string,string> = {
-    'DISPONIVEL': 'badge-green',
-    'RESERVADO': 'badge-yellow',
-    'VENDIDO': 'badge-gray',
-    'ALUGADO': 'badge-blue',
-    'INATIVO': 'badge-red',
-  };
+  async function copyCode(code: string, id: string) {
+    try {
+      await navigator.clipboard.writeText(code);
+    } catch {}
+    setCopiedId(id);
+    setTimeout(() => setCopiedId((cur) => (cur === id ? null : cur)), 1500);
+  }
 
-  const iaStatusLabel: Record<string, { label: string; color: string }> = {
-    'GERANDO': { label: '⏳ Gerando IA...', color: 'badge-yellow' },
-    'PRONTO': { label: '✨ IA Pronto', color: 'badge-green' },
-    'ERRO': { label: '❌ Erro IA', color: 'badge-red' },
-  };
+  async function patchImovel(id: string, body: Record<string, unknown>) {
+    setPendingId(id);
+    try {
+      const r = await fetch(`/api/imoveis/${id}`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(body),
+      });
+      if (!r.ok) throw new Error('PATCH failed');
+      startTransition(() => router.refresh());
+    } catch (e) {
+      console.error(e);
+      alert('Erro ao atualizar imóvel');
+    } finally {
+      setPendingId(null);
+    }
+  }
+
+  async function handleDelete(id: string) {
+    setPendingId(id);
+    try {
+      const r = await fetch(`/api/imoveis/${id}`, { method: 'DELETE' });
+      if (!r.ok) throw new Error('DELETE failed');
+      setConfirmDeleteId(null);
+      startTransition(() => router.refresh());
+    } catch (e) {
+      console.error(e);
+      alert('Erro ao excluir imóvel');
+    } finally {
+      setPendingId(null);
+    }
+  }
+
+  const imovelEmConfirma = imoveis.find((i) => i.id === confirmDeleteId);
 
   return (
-    <div className="fade-in">
-      <div className="flex items-center justify-between mb-6" style={{ flexWrap:'wrap', gap:12 }}>
-        <div>
-          <h1>Imóveis</h1>
-          <p className="text-muted">Gerencie seu portfólio completo</p>
-        </div>
-        <Link href="/imoveis/novo" className="btn btn-primary">+ Cadastrar Imóvel</Link>
+    <div className="space-y-6 fade-in">
+      {/* Header */}
+      <div className="flex items-center justify-between">
+        <h1 className="font-display text-3xl font-bold text-foreground">
+          Imóveis
+        </h1>
+        <Button asChild>
+          <Link href="/imoveis/novo">
+            <Plus className="h-4 w-4 mr-2" /> Adicionar imóvel
+          </Link>
+        </Button>
       </div>
 
-      {/* FILTERS */}
-      <div className="flex gap-2 mb-6" style={{ flexWrap:'wrap' }}>
-        <input className="input" style={{ width:260 }} placeholder="🔍 Buscar imóvel ou endereço..." value={filter} onChange={e=>setFilter(e.target.value)} />
-        <select className="input" style={{ width:160 }} value={tipo} onChange={e=>setTipo(e.target.value)}>
+      {/* Filters */}
+      <div className="flex flex-col md:flex-row gap-3">
+        <div className="relative flex-1">
+          <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+          <Input
+            placeholder="Buscar por título, bairro, cidade ou código..."
+            value={search}
+            onChange={(e) => setSearch(e.target.value)}
+            className="pl-10"
+          />
+        </div>
+        <NativeSelect
+          value={filterTipo}
+          onChange={(e) => setFilterTipo(e.target.value)}
+          className="md:w-[170px]"
+        >
           <option value="">Todos os tipos</option>
-          <option value="apartamento">Apartamento</option>
-          <option value="casa">Casa</option>
-          <option value="cobertura">Cobertura</option>
-          <option value="studio">Studio</option>
-          <option value="terreno">Terreno</option>
-          <option value="comercial">Comercial</option>
-        </select>
-        <div className="flex gap-1 ml-auto">
-          <button className={`btn btn-sm ${view==='grid'?'btn-primary':'btn-secondary'}`} onClick={()=>setView('grid')}>⊞ Grid</button>
-          <button className={`btn btn-sm ${view==='table'?'btn-primary':'btn-secondary'}`} onClick={()=>setView('table')}>≡ Tabela</button>
-        </div>
+          {Object.entries(TIPO_LABELS).map(([k, v]) => (
+            <option key={k} value={k}>
+              {v}
+            </option>
+          ))}
+        </NativeSelect>
+        <NativeSelect
+          value={filterFinalidade}
+          onChange={(e) => setFilterFinalidade(e.target.value)}
+          className="md:w-[170px]"
+        >
+          <option value="">Todas finalidades</option>
+          {Object.entries(FINALIDADE_LABELS).map(([k, v]) => (
+            <option key={k} value={k}>
+              {v}
+            </option>
+          ))}
+        </NativeSelect>
       </div>
 
-      {filtered.length === 0 && (
-        <div className="card text-center p-6">
-          <p className="text-muted">Nenhum imóvel encontrado.</p>
+      {/* List */}
+      {filtered.length === 0 ? (
+        <div className="text-center py-16 bg-card border border-border rounded-lg">
+          <p className="text-muted-foreground mb-4">
+            {imoveis.length === 0
+              ? 'Você ainda não tem imóveis cadastrados.'
+              : 'Nenhum imóvel encontrado para esse filtro.'}
+          </p>
+          {imoveis.length === 0 && (
+            <Button asChild>
+              <Link href="/imoveis/novo">
+                <Plus className="h-4 w-4 mr-2" /> Cadastrar primeiro imóvel
+              </Link>
+            </Button>
+          )}
         </div>
-      )}
-
-      {/* GRID VIEW */}
-      {view === 'grid' && (
-        <div className={styles.grid}>
-          {filtered.map(im => (
-            <div key={im.id} className={styles.imovelCard} onClick={() => router.push(`/imoveis/${im.id}`)} style={{cursor:'pointer'}}>
-              <div className={styles.imovelPhoto}>
-                {im.capaUrl ? (
-                  <img src={im.capaUrl} alt={im.titulo} style={{width:'100%', height:'100%', objectFit:'cover'}} />
-                ) : (
-                  <span className={styles.imovelPhotoIcon}>🏠</span>
-                )}
-                <span className={`badge ${statusColor[im.status]} ${styles.statusBadge}`}>{im.status}</span>
-                {im.imagens?.length > 0 && <span className={styles.fotoCount}>📷 {im.imagens.length}</span>}
-              </div>
-              <div className={styles.imovelInfo}>
-                <div className="flex items-center gap-2 mb-1 flex-wrap">
-                  <span className="badge badge-purple">{im.tipo}</span>
-                  <span className="badge badge-gray">{im.operacao}</span>
-                  {im.statusGeracao && iaStatusLabel[im.statusGeracao] && (
-                    <span className={`badge ${iaStatusLabel[im.statusGeracao].color}`}>
-                      {iaStatusLabel[im.statusGeracao].label}
-                    </span>
+      ) : (
+        <div className="space-y-3">
+          {filtered.map((im) => {
+            const isLoading = pendingId === im.id;
+            return (
+              <div
+                key={im.id}
+                className="flex items-center gap-4 p-4 rounded-lg border border-border bg-card hover:shadow-sm transition-shadow"
+              >
+                {/* Thumb */}
+                <div className="shrink-0 w-16 h-12 rounded-md overflow-hidden bg-muted flex items-center justify-center">
+                  {im.capaUrl ? (
+                    /* eslint-disable-next-line @next/next/no-img-element */
+                    <img
+                      src={im.capaUrl}
+                      alt=""
+                      className="w-full h-full object-cover"
+                    />
+                  ) : (
+                    <ImageOff className="h-5 w-5 text-muted-foreground/60" />
                   )}
                 </div>
-                <h4 className={styles.imovelTitle}>{im.titulo}</h4>
-                <p className="text-xs text-muted mt-1">📍 {im.bairro ? `${im.bairro}, ` : ''}{im.cidade}</p>
-                <p className={styles.imovelValor}>
-                  R$ {Number(im.preco).toLocaleString('pt-BR')}
-                </p>
-                <div className={styles.imovelSpecs}>
-                  {im.quartos > 0 && <span>🛏 {im.quartos}q</span>}
-                  {im.banheiros > 0 && <span>🚿 {im.banheiros}b</span>}
-                  {im.vagas > 0 && <span>🚗 {im.vagas}v</span>}
-                  {im.areaM2 > 0 && <span>📐 {Number(im.areaM2)}m²</span>}
+
+                {/* Info */}
+                <div className="flex-1 min-w-0">
+                  <div className="flex items-center gap-2 mb-1 flex-wrap">
+                    <h3 className="font-semibold text-sm truncate text-foreground">
+                      {im.titulo}
+                    </h3>
+                    <Badge
+                      variant="outline"
+                      className="text-xs shrink-0 font-normal"
+                    >
+                      {TIPO_LABELS[im.tipo] ?? im.tipo}
+                    </Badge>
+                    <Badge
+                      variant="outline"
+                      className="text-xs shrink-0 font-normal"
+                    >
+                      {FINALIDADE_LABELS[im.operacao] ?? im.operacao}
+                    </Badge>
+                  </div>
+                  <div className="flex items-center gap-3 text-xs text-muted-foreground">
+                    <span className="truncate">
+                      {[im.bairro, im.cidade].filter(Boolean).join(', ')}
+                    </span>
+                    <span className="font-semibold text-primary whitespace-nowrap">
+                      {formatBRL(im.preco)}
+                    </span>
+                  </div>
                 </div>
-                <div className={styles.imovelActions} style={{ marginTop: 'auto', paddingTop: 12 }}>
-                  <Link href={`/imoveis/${im.id}?tab=ia`} className="btn btn-secondary btn-sm" style={{flex: 1}} onClick={e=>e.stopPropagation()}>✨ Gerar Conteúdo</Link>
+
+                {/* Código + copy */}
+                <button
+                  onClick={() => copyCode(im.codigo, im.id)}
+                  className="hidden md:flex items-center gap-1.5 px-2.5 py-1 rounded text-xs bg-muted hover:bg-muted/80 font-mono shrink-0"
+                  type="button"
+                  title="Copiar código"
+                >
+                  {im.codigo}
+                  {copiedId === im.id ? (
+                    <Check className="h-3 w-3 text-green-600" />
+                  ) : (
+                    <Copy className="h-3 w-3" />
+                  )}
+                </button>
+
+                {/* Toggles Pub/Dest */}
+                <div className="flex items-center gap-4 shrink-0">
+                  <div className="flex items-center gap-1.5">
+                    <span className="text-xs text-muted-foreground">Pub.</span>
+                    <Switch
+                      checked={im.publicado}
+                      disabled={isLoading}
+                      onCheckedChange={() =>
+                        patchImovel(im.id, { publicado: !im.publicado })
+                      }
+                      aria-label="Publicado"
+                    />
+                  </div>
+                  <div className="flex items-center gap-1.5">
+                    <span className="text-xs text-muted-foreground">Dest.</span>
+                    <Switch
+                      checked={im.destaque}
+                      disabled={isLoading}
+                      onCheckedChange={() =>
+                        patchImovel(im.id, { destaque: !im.destaque })
+                      }
+                      aria-label="Destaque"
+                    />
+                  </div>
+                </div>
+
+                {/* Ações inline */}
+                <div className="flex items-center gap-1 shrink-0">
+                  {isLoading && (
+                    <Loader2 className="h-4 w-4 animate-spin text-muted-foreground" />
+                  )}
+                  <Button
+                    asChild
+                    variant="ghost"
+                    size="icon"
+                    className="h-8 w-8"
+                    title="Editar"
+                  >
+                    <Link href={`/imoveis/${im.id}/editar`}>
+                      <Pencil className="h-4 w-4" />
+                    </Link>
+                  </Button>
+                  <Button
+                    variant="ghost"
+                    size="icon"
+                    className="h-8 w-8 text-destructive hover:text-destructive hover:bg-destructive/10"
+                    title="Excluir"
+                    onClick={() => setConfirmDeleteId(im.id)}
+                    disabled={isLoading}
+                  >
+                    <Trash2 className="h-4 w-4" />
+                  </Button>
                 </div>
               </div>
-            </div>
-          ))}
+            );
+          })}
         </div>
       )}
 
-      {/* TABLE VIEW */}
-      {view === 'table' && (
-        <div className="table-wrapper">
-          <table>
-            <thead>
-              <tr>
-                <th>Imóvel</th><th>Tipo</th><th>Valor</th><th>Área</th><th>Quartos</th><th>Status</th><th>Conteúdo IA</th><th>Ações</th>
-              </tr>
-            </thead>
-            <tbody>
-              {filtered.map(im => (
-                <tr key={im.id}>
-                  <td>
-                    <p className="font-medium">{im.titulo}</p>
-                    <p className="text-xs text-muted">{im.codigo} • {im.cidade}</p>
-                  </td>
-                  <td><span className="badge badge-purple">{im.tipo}</span></td>
-                  <td className="font-semibold text-green">R$ {Number(im.preco).toLocaleString('pt-BR')}</td>
-                  <td>{im.areaM2 ? `${Number(im.areaM2)}m²` : '-'}</td>
-                  <td>{im.quartos || '-'}</td>
-                  <td><span className={`badge ${statusColor[im.status]}`}>{im.status}</span></td>
-                  <td>
-                    {im.statusGeracao && iaStatusLabel[im.statusGeracao]
-                      ? <span className={`badge ${iaStatusLabel[im.statusGeracao].color}`}>{iaStatusLabel[im.statusGeracao].label}</span>
-                      : <span className="text-muted text-xs">—</span>}
-                  </td>
-                  <td>
-                    <div className="flex gap-1">
-                      <Link href={`/imoveis/${im.id}`} className="btn btn-secondary btn-sm">Abrir</Link>
-                    </div>
-                  </td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
+      {/* Modal de confirmação de delete */}
+      {imovelEmConfirma && (
+        <div
+          className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 px-4"
+          onClick={() => setConfirmDeleteId(null)}
+        >
+          <div
+            className="bg-card border rounded-lg shadow-xl max-w-md w-full p-6"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <h3 className="font-display text-xl font-semibold mb-2 text-foreground">
+              Excluir imóvel
+            </h3>
+            <p className="text-sm text-muted-foreground mb-6">
+              Tem certeza que deseja excluir{' '}
+              <span className="font-semibold text-foreground">
+                {imovelEmConfirma.titulo}
+              </span>
+              ? Essa ação não pode ser desfeita.
+            </p>
+            <div className="flex justify-end gap-2">
+              <Button
+                variant="outline"
+                onClick={() => setConfirmDeleteId(null)}
+                disabled={pendingId === imovelEmConfirma.id}
+              >
+                Cancelar
+              </Button>
+              <Button
+                variant="destructive"
+                onClick={() => handleDelete(imovelEmConfirma.id)}
+                disabled={pendingId === imovelEmConfirma.id}
+              >
+                {pendingId === imovelEmConfirma.id ? (
+                  <>
+                    <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                    Excluindo...
+                  </>
+                ) : (
+                  'Excluir'
+                )}
+              </Button>
+            </div>
+          </div>
         </div>
       )}
     </div>

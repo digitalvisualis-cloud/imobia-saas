@@ -188,8 +188,16 @@ export default function FotosPage({
             </p>
           )}
         </div>
-        <div className="text-xs text-muted">
-          {state.imagens.length} foto{state.imagens.length === 1 ? '' : 's'}
+        <div className="flex gap-2 items-center" style={{ flexWrap: 'wrap' }}>
+          <span className="text-xs text-muted">
+            {state.imagens.length} foto{state.imagens.length === 1 ? '' : 's'}
+          </span>
+          <Link href={`/imoveis/${id}/editar`} className="btn btn-secondary btn-sm">
+            ✏️ Editar dados
+          </Link>
+          <Link href={`/imoveis/${id}`} className="btn btn-primary btn-sm">
+            ✓ Concluir
+          </Link>
         </div>
       </div>
 

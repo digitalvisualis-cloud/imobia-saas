@@ -2,6 +2,7 @@ import NextAuth from 'next-auth';
 import Credentials from 'next-auth/providers/credentials';
 import Google from 'next-auth/providers/google';
 import bcrypt from 'bcryptjs';
+import { isSuperAdminEmail } from '@/lib/super-admin';
 
 // Config base — Edge compatible (JWT only, no PrismaAdapter)
 export const { handlers, auth, signIn, signOut } = NextAuth({
@@ -58,6 +59,8 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
         token.role = (user as any).role;
         token.id = user.id;
       }
+      // isSuperAdmin é derivado do email — recalcula a cada refresh do JWT
+      token.isSuperAdmin = isSuperAdminEmail(token.email as string | undefined);
       return token;
     },
     async session({ session, token }) {
@@ -65,6 +68,7 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
         (session.user as any).id = token.id as string;
         (session.user as any).tenantId = token.tenantId as string;
         (session.user as any).role = token.role as string;
+        (session.user as any).isSuperAdmin = Boolean(token.isSuperAdmin);
       }
       return session;
     },

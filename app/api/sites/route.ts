@@ -15,6 +15,21 @@ export async function GET() {
   }
 }
 
+export async function DELETE() {
+  try {
+    const session = await auth();
+    if (!session?.user) return NextResponse.json({ error: 'Não autorizado.' }, { status: 401 });
+    const tenantId = (session.user as any).tenantId as string;
+
+    // Apaga o site do tenant (se existir). Idempotente: não falha se não tiver.
+    await prisma.site.deleteMany({ where: { tenantId } });
+
+    return NextResponse.json({ success: true, deleted: true });
+  } catch (error: any) {
+    return NextResponse.json({ error: error.message }, { status: 500 });
+  }
+}
+
 export async function POST(req: Request) {
   try {
     const session = await auth();

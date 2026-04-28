@@ -328,6 +328,8 @@ model Site {
   dominio     String?  @unique // domínio customizado
   titulo      String?
   publicado   Boolean  @default(false)
+  templateId  String?  @default("elegance") // qual template visual está ativo
+  config      Json?    // páginas e seções habilitadas (formato em lib/site-config.ts)
   createdAt   DateTime @default(now())
   updatedAt   DateTime @updatedAt
 

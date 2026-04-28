@@ -23,6 +23,9 @@ export default function ImovelDetailsClient({
           <h1 style={{ fontSize: '2rem' }}>{imovel.titulo}</h1>
         </div>
         <div className="flex gap-2">
+          <Link href={`/imoveis/${imovel.id}/editar`} className="btn btn-primary">
+            ✏️ Editar
+          </Link>
           <Link href={`/imoveis/${imovel.id}/fotos`} className="btn btn-secondary">
             📸 Fotos {fotosCount > 0 ? `(${fotosCount})` : ''}
           </Link>
