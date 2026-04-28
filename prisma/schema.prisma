@@ -1,0 +1,363 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+// ─── TENANTS (imobiliárias/corretores) ─────────────────────────────────────
+
+model Tenant {
+  id        String   @id @default(cuid())
+  slug      String   @unique // URL do site: imobia.io/slug
+  plano     Plano    @default(FREE)
+  stripeCustomerId  String?
+  stripeSubId       String?
+  planExpiresAt     DateTime?
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  users     User[]
+  imoveis   Imovel[]
+  leads     Lead[]
+  marca     ConfigMarca?
+  agente    AgenteIA?
+  site      Site?
+  posts     PostGerado[]
+
+  @@map("tenants")
+}
+
+enum Plano {
+  FREE
+  STARTER
+  PRO
+  ENTERPRISE
+}
+
+// ─── USERS ─────────────────────────────────────────────────────────────────
+
+model User {
+  id           String   @id @default(cuid())
+  tenantId     String
+  email        String   @unique
+  passwordHash String?
+  nome         String
+  whatsapp     String?
+  creci        String?
+  role         Role     @default(CORRETOR)
+  avatarUrl    String?
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+
+  tenant       Tenant   @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  accounts     Account[]
+  sessions     Session[]
+
+  @@map("users")
+}
+
+enum Role {
+  ADMIN
+  CORRETOR
+  VIEWER
+}
+
+// NextAuth adapters
+model Account {
+  id                String  @id @default(cuid())
+  userId            String
+  type              String
+  provider          String
+  providerAccountId String
+  refresh_token     String?
+  access_token      String?
+  expires_at        Int?
+  token_type        String?
+  scope             String?
+  id_token          String?
+  session_state     String?
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([provider, providerAccountId])
+  @@map("accounts")
+}
+
+model Session {
+  id           String   @id @default(cuid())
+  sessionToken String   @unique
+  userId       String
+  expires      DateTime
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@map("sessions")
+}
+
+model VerificationToken {
+  identifier String
+  token      String   @unique
+  expires    DateTime
+
+  @@unique([identifier, token])
+  @@map("verification_tokens")
+}
+
+// ─── IMÓVEIS ───────────────────────────────────────────────────────────────
+
+model Imovel {
+  id           String          @id @default(cuid())
+  tenantId     String
+  codigo       String          // IMV-XXXXXX
+  titulo       String
+  descricao    String?
+  tipo         TipoImovel
+  operacao     Operacao
+  status       StatusImovel    @default(DISPONIVEL)
+  preco        Decimal         @db.Decimal(15, 2)
+  quartos      Int             @default(0)
+  banheiros    Int             @default(0)
+  suites       Int             @default(0)
+  vagas        Int             @default(0)
+  areaM2       Decimal?        @db.Decimal(10, 2)
+  areaTotal    Decimal?        @db.Decimal(10, 2)
+  areaTerrenoM2 Decimal?       @db.Decimal(10, 2)
+  pisos        Int?
+  estado       String          @default("SP")
+  cidade       String
+  bairro       String?
+  endereco     String?
+  cep          String?
+  imagens      String[]
+  capaUrl      String?
+  videoUrl     String?
+  amenidades   String[]
+  amenidadesOutras String?
+  notas        String?
+  destaque     Boolean         @default(false)
+  publicado    Boolean         @default(true)
+  visualizacoes Int            @default(0)
+  
+  // ListaPro Fields
+  videoTipo         String?
+  voiceoverVoz      String?
+  voiceoverTom      String?
+  voiceoverContexto String?
+  guionEscenas      Json?
+  formatosGerados   Json?
+  statusGeracao     ListaProStatus?
+  statusGeracaoErro String?
+  geradoAt          DateTime?
+  
+  // Contato Específico
+  agenteNome        String?
+  agenteTelefone    String?
+  agenteEmail       String?
+  agenciaNome       String?
+
+  createdAt    DateTime        @default(now())
+  updatedAt    DateTime        @updatedAt
+
+  tenant       Tenant          @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  leads        Lead[]
+  posts        PostGerado[]
+
+  @@unique([tenantId, codigo])
+  @@index([tenantId, status])
+  @@index([tenantId, publicado])
+  @@index([tenantId, tipo])
+  @@index([tenantId, operacao])
+  @@index([tenantId, cidade])
+  @@map("imoveis")
+}
+
+enum TipoImovel {
+  APARTAMENTO
+  CASA
+  CHACARA
+  SITIO
+  TERRENO
+  COMERCIAL
+  STUDIO
+  COBERTURA
+  SALA_COMERCIAL
+  LOJA
+  GALPAO
+}
+
+enum Operacao {
+  VENDA
+  ALUGUEL
+  TEMPORADA
+}
+
+enum StatusImovel {
+  DISPONIVEL
+  RESERVADO
+  VENDIDO
+  ALUGADO
+  INATIVO
+}
+
+enum ListaProStatus {
+  RASCUNHO
+  GERANDO
+  PRONTO
+  ERRO
+}
+
+// ─── LEADS / KANBAN ────────────────────────────────────────────────────────
+
+model Lead {
+  id              String      @id @default(cuid())
+  tenantId        String
+  imovelId        String?
+  nome            String
+  whatsapp        String?
+  email           String?
+  etapa           EtapaLead   @default(NOVO)
+  temperatura     Temperatura @default(MORNO)
+  interesse       String?     // tipo de imóvel que busca
+  bairroDesejado  String?
+  orcamento       Decimal?    @db.Decimal(15, 2)
+  resumoConversa  String?
+  dataVisita      DateTime?
+  followUp1       DateTime?
+  followUp2       DateTime?
+  followUp3       DateTime?
+  // ChatWoot
+  chatwootContactId   String?
+  chatwootConversaId  String?
+  chatwootInboxId     String?
+  // n8n
+  n8nLeadId       String?
+  origem          String?     // site, whatsapp, instagram, etc.
+  notas           String?
+  createdAt       DateTime    @default(now())
+  updatedAt       DateTime    @updatedAt
+
+  tenant          Tenant      @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  imovel          Imovel?     @relation(fields: [imovelId], references: [id])
+
+  @@index([tenantId, etapa])
+  @@index([tenantId, createdAt])
+  @@map("leads")
+}
+
+enum EtapaLead {
+  NOVO
+  CONTATO
+  VISITA_AGENDADA
+  PROPOSTA
+  FECHADO
+  PERDIDO
+}
+
+enum Temperatura {
+  FRIO
+  MORNO
+  QUENTE
+}
+
+// ─── MARCA / WHITE LABEL ───────────────────────────────────────────────────
+
+model ConfigMarca {
+  id              String   @id @default(cuid())
+  tenantId        String   @unique
+  nomeEmpresa     String?
+  slogan          String?
+  descricao       String?
+  logoUrl         String?
+  faviconUrl      String?
+  corPrimaria     String   @default("#7c3aed")
+  corSecundaria   String   @default("#06b6d4")
+  email           String?
+  whatsapp        String?
+  telefone        String?
+  endereco        String?
+  instagram       String?
+  facebook        String?
+  youtube         String?
+  linkedin        String?
+  tiktok          String?
+  manualMarcaUrl  String?
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+
+  tenant          Tenant   @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+
+  @@map("config_marca")
+}
+
+// ─── AGENTE IA ─────────────────────────────────────────────────────────────
+
+model AgenteIA {
+  id              String   @id @default(cuid())
+  tenantId        String   @unique
+  nome            String   @default("Sofia")
+  personalidade   String   @default("Consultivo e empático")
+  apresentacao    String?
+  ativo           Boolean  @default(false)
+  // n8n
+  usarN8n         Boolean  @default(true)
+  webhookUrl      String?
+  webhookSecret   String?
+  // ChatWoot
+  usarChatwoot    Boolean  @default(false)
+  chatwootUrl     String?
+  chatwootToken   String?
+  chatwootInboxId String?
+  // Fluxo
+  etapas          Json     @default("[]") // array de etapas configuradas
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+
+  tenant          Tenant   @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+
+  @@map("agente_ia")
+}
+
+// ─── SITE WHITE-LABEL ──────────────────────────────────────────────────────
+
+model Site {
+  id          String   @id @default(cuid())
+  tenantId    String   @unique
+  slug        String   @unique
+  dominio     String?  @unique // domínio customizado
+  titulo      String?
+  publicado   Boolean  @default(false)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  tenant      Tenant   @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+
+  @@map("sites")
+}
+
+// ─── POSTS / ARTES GERADAS ─────────────────────────────────────────────────
+
+model PostGerado {
+  id         String     @id @default(cuid())
+  tenantId   String
+  imovelId   String?
+  tipo       TipoPost
+  conteudo   String
+  imageUrl   String?
+  createdAt  DateTime   @default(now())
+
+  tenant     Tenant     @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  imovel     Imovel?    @relation(fields: [imovelId], references: [id])
+
+  @@index([tenantId])
+  @@map("posts_gerados")
+}
+
+enum TipoPost {
+  INSTAGRAM_FEED
+  INSTAGRAM_STORIES
+  WHATSAPP
+  FICHA_PDF
+  DESCRICAO_SITE
+}
