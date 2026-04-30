@@ -1,20 +1,26 @@
 import type { TenantContext } from './PublicLayout';
+import { buildWhatsappLink } from '@/lib/whatsapp-link';
 import styles from './whatsapp-button.module.css';
 
-function buildLink(num: string, msg = 'Olá! Vim pelo site e gostaria de mais informações.') {
-  const cleaned = num.replace(/\D/g, '');
-  // Adiciona 55 (Brasil) se for número com DDD sem código de país
-  const withCountry = cleaned.length === 11 || cleaned.length === 10 ? `55${cleaned}` : cleaned;
-  return `https://wa.me/${withCountry}?text=${encodeURIComponent(msg)}`;
-}
-
+/**
+ * Botão flutuante geral do site público.
+ * Mensagem genérica — agente IA cumprimenta e qualifica.
+ *
+ * Pra botão ESPECÍFICO de imóvel (com código), usa <ImovelWhatsAppLink/> ou
+ * monta direto com `buildWhatsappLink({ imovel: { codigo, titulo } })`.
+ */
 export function WhatsAppButton({ tenant }: { tenant: TenantContext }) {
   const wa = tenant.marca?.whatsapp;
   if (!wa) return null;
 
+  const href = buildWhatsappLink({
+    whatsapp: wa,
+    nomeEmpresa: tenant.marca?.nomeEmpresa ?? undefined,
+  });
+
   return (
     <a
-      href={buildLink(wa)}
+      href={href}
       target="_blank"
       rel="noopener noreferrer"
       className={styles.btn}

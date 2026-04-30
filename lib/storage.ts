@@ -102,6 +102,36 @@ export async function removeFotoImovel(publicUrl: string): Promise<void> {
 }
 
 /**
+ * Upload de imagem de post gerado pela IA (OpenAI Image).
+ * Bucket "imoveis" é reusado — path separa por /posts.
+ * Retorna URL pública.
+ */
+export async function uploadPostGerado(opts: {
+  buffer: Buffer | ArrayBuffer | Uint8Array;
+  contentType: string;
+  tenantId: string;
+  imovelId?: string;
+}): Promise<{ url: string; path: string }> {
+  const ext = opts.contentType === 'image/png' ? 'png' : 'jpg';
+  const filename = `${randomUUID()}.${ext}`;
+  const path = opts.imovelId
+    ? `${opts.tenantId}/posts/${opts.imovelId}/${filename}`
+    : `${opts.tenantId}/posts/_geral/${filename}`;
+
+  const sb = admin();
+  const { error } = await sb.storage
+    .from('imoveis')
+    .upload(path, opts.buffer as ArrayBuffer, {
+      contentType: opts.contentType,
+      upsert: false,
+    });
+  if (error) throw new Error(`Storage upload failed: ${error.message}`);
+
+  const { data } = sb.storage.from('imoveis').getPublicUrl(path);
+  return { url: data.publicUrl, path };
+}
+
+/**
  * Upload de asset de marca (logo, favicon, banner).
  * tipo determina o filename — sobrescreve a versão anterior automaticamente.
  */

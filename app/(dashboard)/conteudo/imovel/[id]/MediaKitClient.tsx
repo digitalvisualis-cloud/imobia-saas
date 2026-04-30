@@ -20,6 +20,9 @@ import {
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
+import { EmptyState } from '@/components/ui/empty-state';
+import { PageHeader } from '@/components/ui/page-header';
+import { toast } from '@/lib/toast';
 import { cn } from '@/lib/utils';
 import {
   type ImovelParaPost,
@@ -41,6 +44,8 @@ type PostExistente = {
 
 type Step = 'lista' | 'formato' | 'template' | 'export';
 
+const AI_TEMPLATE_ID = '__ia__';
+
 export default function MediaKitClient({
   imovel,
   marca,
@@ -60,6 +65,9 @@ export default function MediaKitClient({
   const [legendaCustom, setLegendaCustom] = useState<string | null>(null); // se IA gerou
   const [gerandoIA, setGerandoIA] = useState(false);
   const [flashMsg, setFlashMsg] = useState<string | null>(null);
+  // F4.3c — imagem gerada pela OpenAI (alternativa aos templates HTML)
+  const [imagemIaUrl, setImagemIaUrl] = useState<string | null>(null);
+  const [gerandoImagemIa, setGerandoImagemIa] = useState(false);
 
   // Ref do template em tamanho REAL (off-screen) — esse é o que o html2canvas captura
   const offscreenRef = useRef<HTMLDivElement>(null);
@@ -68,6 +76,7 @@ export default function MediaKitClient({
 
   function abrirGerador() {
     setLegendaCustom(null); // reset legenda IA ao começar de novo
+    setImagemIaUrl(null); // reset imagem IA também
     setStep('formato');
   }
 
@@ -76,9 +85,38 @@ export default function MediaKitClient({
     setStep('template');
   }
 
-  function escolherTemplate(templateId: string) {
+  async function escolherTemplate(templateId: string) {
     setTemplateEscolhido(templateId);
+    if (templateId === AI_TEMPLATE_ID) {
+      // Dispara geração antes de mostrar o export
+      await gerarImagemIA();
+    }
     setStep('export');
+  }
+
+  async function gerarImagemIA() {
+    setGerandoImagemIa(true);
+    setImagemIaUrl(null);
+    try {
+      const r = await fetch('/api/posts/imagem', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          imovelId: imovel.id,
+          formato: formatoEscolhido,
+          estilo: 'fotografico',
+        }),
+      });
+      const data = await r.json();
+      if (!r.ok) throw new Error(data.error || 'Erro');
+      setImagemIaUrl(data.imageUrl);
+    } catch (e) {
+      toast.error('Não consegui gerar a imagem com IA', {
+        description: (e as Error).message,
+      });
+    } finally {
+      setGerandoImagemIa(false);
+    }
   }
 
   async function gerarLegendaIA() {
@@ -93,7 +131,9 @@ export default function MediaKitClient({
       if (!r.ok) throw new Error(data.error || 'Erro ao gerar');
       setLegendaCustom(data.legenda);
     } catch (e) {
-      alert(`Erro ao gerar legenda com IA: ${(e as Error).message}`);
+      toast.error('Erro ao gerar legenda com IA', {
+        description: (e as Error).message,
+      });
     } finally {
       setGerandoIA(false);
     }
@@ -104,8 +144,31 @@ export default function MediaKitClient({
    * scale=2 = ~2160×2160 (alta resolução pra Instagram).
    */
   async function baixarPNG() {
+    // Se for imagem IA, baixa direto da URL — não usa html2canvas
+    if (templateEscolhido === AI_TEMPLATE_ID && imagemIaUrl) {
+      setDownloading(true);
+      try {
+        const r = await fetch(imagemIaUrl);
+        const blob = await r.blob();
+        const url = URL.createObjectURL(blob);
+        const link = document.createElement('a');
+        link.download = `${imovel.codigo}_ia_${formatoEscolhido.toLowerCase()}.png`;
+        link.href = url;
+        link.click();
+        URL.revokeObjectURL(url);
+      } catch (e) {
+        toast.error('Erro ao baixar imagem IA', {
+          description: (e as Error).message,
+        });
+      } finally {
+        setDownloading(false);
+      }
+      return;
+    }
     if (!offscreenRef.current) {
-      alert('Template não está pronto. Tenta novamente.');
+      toast.error('Template não está pronto', {
+        description: 'Aguarde um instante e tente novamente.',
+      });
       return;
     }
     setDownloading(true);
@@ -127,7 +190,9 @@ export default function MediaKitClient({
       link.href = canvas.toDataURL('image/png');
       link.click();
     } catch (e) {
-      alert(`Erro ao baixar: ${(e as Error).message}`);
+      toast.error('Erro ao baixar PNG', {
+        description: (e as Error).message,
+      });
     } finally {
       setDownloading(false);
     }
@@ -145,6 +210,9 @@ export default function MediaKitClient({
           conteudo: legenda,
           templateId: templateEscolhido,
           formato: formatoEscolhido,
+          // Se gerou pela IA, persiste imageUrl pra a biblioteca exibir direto
+          imageUrl:
+            templateEscolhido === AI_TEMPLATE_ID ? imagemIaUrl : undefined,
         }),
       });
       if (!r.ok) throw new Error('Erro ao salvar');
@@ -154,7 +222,7 @@ export default function MediaKitClient({
       setTimeout(() => setFlashMsg(null), 4000);
       router.refresh();
     } catch (e) {
-      alert(`Erro: ${(e as Error).message}`);
+      toast.error('Erro ao salvar', { description: (e as Error).message });
     } finally {
       setSavingPost(false);
     }
@@ -217,6 +285,8 @@ export default function MediaKitClient({
           savingPost={savingPost}
           copiedTexto={copiedTexto}
           gerandoIA={gerandoIA}
+          imagemIaUrl={imagemIaUrl}
+          gerandoImagemIa={gerandoImagemIa}
           onBack={() => setStep('template')}
           onClose={() => setStep('lista')}
           onDownload={baixarPNG}
@@ -224,6 +294,7 @@ export default function MediaKitClient({
           onCopy={copyTexto}
           onGerarIA={gerarLegendaIA}
           onResetLegenda={() => setLegendaCustom(null)}
+          onRegenerarImagemIa={gerarImagemIA}
         />
       )}
     </>
@@ -253,63 +324,33 @@ function ListaView({
           <span>{flashMsg}</span>
         </div>
       )}
-      <div>
-        <Link
-          href="/conteudo"
-          className="inline-flex items-center gap-2 text-sm text-muted-foreground hover:text-foreground mb-3"
-        >
-          <ArrowLeft className="h-4 w-4" />
-          Voltar pra Conteúdo
-        </Link>
-        <div className="flex items-center justify-between flex-wrap gap-3">
-          <div className="flex items-center gap-3 min-w-0">
-            <div className="h-12 w-16 rounded-md bg-muted overflow-hidden shrink-0">
-              {imovel.capaUrl ? (
-                /* eslint-disable-next-line @next/next/no-img-element */
-                <img
-                  src={imovel.capaUrl}
-                  alt=""
-                  className="w-full h-full object-cover"
-                />
-              ) : (
-                <div className="w-full h-full grid place-items-center">
-                  <ImageOff className="h-4 w-4 text-muted-foreground/60" />
-                </div>
-              )}
-            </div>
-            <div className="min-w-0">
-              <p className="text-[11px] uppercase font-semibold tracking-wider text-muted-foreground">
-                Media Kit · {imovel.codigo}
-              </p>
-              <h1 className="font-display text-2xl md:text-3xl font-bold text-foreground truncate">
-                {imovel.titulo}
-              </h1>
-            </div>
-          </div>
+      <PageHeader
+        kicker={`Media Kit · ${imovel.codigo}`}
+        back={{ href: '/conteudo', label: 'Voltar pra Conteúdo' }}
+        title={imovel.titulo}
+        description={[imovel.bairro, imovel.cidade].filter(Boolean).join(', ')}
+        compact
+        actions={
           <Button onClick={onGerar}>
             <Plus className="h-4 w-4 mr-2" />
             Gerar novo post
           </Button>
-        </div>
-      </div>
+        }
+      />
 
       <BrandKitInfoCard marca={marca} />
 
       {postsExistentes.length === 0 ? (
-        <div className="text-center py-16 bg-card border border-border rounded-lg">
-          <Sparkles className="h-10 w-10 text-muted-foreground/40 mx-auto mb-3" />
-          <p className="text-muted-foreground mb-1">
-            Nenhum post salvo ainda pra esse imóvel.
-          </p>
-          <p className="text-xs text-muted-foreground/70 mb-4">
-            Você pode baixar posts sem salvar — só salve se quiser ter
-            histórico aqui na biblioteca.
-          </p>
-          <Button onClick={onGerar}>
-            <Plus className="h-4 w-4 mr-2" />
-            Gerar primeiro post
-          </Button>
-        </div>
+        <EmptyState
+          icon={Sparkles}
+          title="Nenhum post salvo ainda pra esse imóvel"
+          description="Você pode baixar posts sem salvar — só salve se quiser ter histórico aqui na biblioteca."
+          action={{
+            label: 'Gerar primeiro post',
+            icon: Plus,
+            onClick: onGerar,
+          }}
+        />
       ) : (
         <div>
           <p className="text-sm text-muted-foreground mb-3">
@@ -375,8 +416,9 @@ function BibliotecaCard({
   const [downloading, setDownloading] = useState(false);
   const offscreenRef = useRef<HTMLDivElement>(null);
   const { templateId, formato, texto } = parsePostMetadata(post.conteudo);
-  const template = getTemplate(templateId) ?? POST_TEMPLATES[0];
-  const TemplateComp = template.Component;
+  const isAI = templateId === AI_TEMPLATE_ID || !!post.imageUrl;
+  const template = isAI ? null : getTemplate(templateId) ?? POST_TEMPLATES[0];
+  const TemplateComp = template?.Component;
   const dim = FORMATO_DIMENSOES[formato];
 
   // Preview cabe em ~340px de largura, mantendo proporção
@@ -391,9 +433,21 @@ function BibliotecaCard({
   }
 
   async function baixar() {
-    if (!offscreenRef.current) return;
     setDownloading(true);
     try {
+      // Se for post IA, baixa direto a imagem do Storage
+      if (isAI && post.imageUrl) {
+        const r = await fetch(post.imageUrl);
+        const blob = await r.blob();
+        const url = URL.createObjectURL(blob);
+        const link = document.createElement('a');
+        link.download = `${imovel.codigo}_ia_${formato.toLowerCase()}.png`;
+        link.href = url;
+        link.click();
+        URL.revokeObjectURL(url);
+        return;
+      }
+      if (!offscreenRef.current) return;
       const html2canvas = (await import('html2canvas')).default;
       const canvas = await html2canvas(offscreenRef.current, {
         useCORS: true,
@@ -410,7 +464,9 @@ function BibliotecaCard({
       link.href = canvas.toDataURL('image/png');
       link.click();
     } catch (e) {
-      alert(`Erro ao baixar: ${(e as Error).message}`);
+      toast.error('Erro ao baixar PNG', {
+        description: (e as Error).message,
+      });
     } finally {
       setDownloading(false);
     }
@@ -418,23 +474,25 @@ function BibliotecaCard({
 
   return (
     <>
-      {/* Off-screen — tamanho real pra captura em alta resolução */}
-      <div
-        style={{
-          position: 'fixed',
-          top: 0,
-          left: -99999,
-          width: dim.w,
-          height: dim.h,
-          pointerEvents: 'none',
-          zIndex: -1,
-        }}
-        aria-hidden
-      >
-        <div ref={offscreenRef} style={{ width: dim.w, height: dim.h }}>
-          <TemplateComp imovel={imovel} marca={marca} formato={formato} />
+      {/* Off-screen — só pros templates HTML */}
+      {!isAI && TemplateComp && (
+        <div
+          style={{
+            position: 'fixed',
+            top: 0,
+            left: -99999,
+            width: dim.w,
+            height: dim.h,
+            pointerEvents: 'none',
+            zIndex: -1,
+          }}
+          aria-hidden
+        >
+          <div ref={offscreenRef} style={{ width: dim.w, height: dim.h }}>
+            <TemplateComp imovel={imovel} marca={marca} formato={formato} />
+          </div>
         </div>
-      </div>
+      )}
 
       <div className="rounded-lg border border-border bg-card overflow-hidden">
         {/* Mini preview do criativo */}
@@ -442,16 +500,25 @@ function BibliotecaCard({
           className="relative bg-muted overflow-hidden mx-auto"
           style={{ width: previewW, height: previewH }}
         >
-          <div
-            style={{
-              transform: `scale(${scale})`,
-              transformOrigin: 'top left',
-              width: dim.w,
-              height: dim.h,
-            }}
-          >
-            <TemplateComp imovel={imovel} marca={marca} formato={formato} />
-          </div>
+          {isAI && post.imageUrl ? (
+            // eslint-disable-next-line @next/next/no-img-element
+            <img
+              src={post.imageUrl}
+              alt="Imagem por IA"
+              className="h-full w-full object-cover"
+            />
+          ) : TemplateComp ? (
+            <div
+              style={{
+                transform: `scale(${scale})`,
+                transformOrigin: 'top left',
+                width: dim.w,
+                height: dim.h,
+              }}
+            >
+              <TemplateComp imovel={imovel} marca={marca} formato={formato} />
+            </div>
+          ) : null}
           {/* Botão download flutuante */}
           <button
             onClick={baixar}
@@ -471,9 +538,16 @@ function BibliotecaCard({
         {/* Texto + ações */}
         <div className="p-3 border-t border-border space-y-2">
           <div className="flex items-center gap-2 flex-wrap">
-            <Badge variant="outline" className="text-[10px] uppercase font-normal">
-              {template.nome}
-            </Badge>
+            {isAI ? (
+              <Badge className="bg-violet-500/15 text-violet-700 dark:text-violet-400 border-violet-500/30 text-[10px] uppercase font-normal">
+                <Sparkles className="h-2.5 w-2.5 mr-1" />
+                Por IA
+              </Badge>
+            ) : (
+              <Badge variant="outline" className="text-[10px] uppercase font-normal">
+                {template?.nome}
+              </Badge>
+            )}
             <span className="text-[10px] text-muted-foreground">
               {dim.aspect}
             </span>
@@ -704,6 +778,39 @@ function TemplateModal({
         </div>
 
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+          {/* Card "Imagem por IA" — opção #1, com badge de novidade */}
+          <button
+            onClick={() => onChoose(AI_TEMPLATE_ID)}
+            className="text-left rounded-md border-2 border-violet-500/40 hover:border-violet-500 hover:shadow-md transition-all overflow-hidden bg-gradient-to-br from-violet-500/5 to-fuchsia-500/5 group relative"
+          >
+            <span className="absolute top-2 right-2 z-10 text-[9px] uppercase tracking-wider px-2 py-0.5 rounded bg-violet-600 text-white font-bold">
+              ✨ Novo
+            </span>
+            <div
+              className="relative bg-gradient-to-br from-violet-500/10 via-fuchsia-500/10 to-pink-500/10 overflow-hidden mx-auto flex items-center justify-center"
+              style={{ width: previewW, height: dim.h * scale }}
+            >
+              <div className="text-center px-4">
+                <Sparkles className="h-12 w-12 text-violet-500 mx-auto mb-3 group-hover:scale-110 transition-transform" />
+                <p className="text-sm font-semibold text-foreground">
+                  Imagem gerada por IA
+                </p>
+                <p className="text-[11px] text-muted-foreground mt-1">
+                  OpenAI cria uma arte realista baseada nos dados do imóvel
+                </p>
+              </div>
+            </div>
+            <div className="p-3 border-t border-violet-500/30">
+              <p className="font-semibold text-sm">Imagem IA</p>
+              <p className="text-xs text-muted-foreground">
+                Cores da marca aplicadas. Demora ~30s.
+              </p>
+              <p className="text-[10px] text-violet-600 mt-1 uppercase tracking-wider font-semibold">
+                gpt-image-1
+              </p>
+            </div>
+          </button>
+
           {POST_TEMPLATES.map((t) => {
             const Component = t.Component;
             return (
@@ -758,6 +865,8 @@ function ExportView({
   savingPost,
   copiedTexto,
   gerandoIA,
+  imagemIaUrl,
+  gerandoImagemIa,
   onBack,
   onClose,
   onDownload,
@@ -765,6 +874,7 @@ function ExportView({
   onCopy,
   onGerarIA,
   onResetLegenda,
+  onRegenerarImagemIa,
 }: {
   imovel: ImovelParaPost;
   marca: MarcaParaPost;
@@ -776,6 +886,8 @@ function ExportView({
   savingPost: boolean;
   copiedTexto: boolean;
   gerandoIA: boolean;
+  imagemIaUrl: string | null;
+  gerandoImagemIa: boolean;
   onBack: () => void;
   onClose: () => void;
   onDownload: () => void;
@@ -783,9 +895,13 @@ function ExportView({
   onCopy: () => void;
   onGerarIA: () => void;
   onResetLegenda: () => void;
+  onRegenerarImagemIa: () => void;
 }) {
-  const template = getTemplate(templateId) ?? POST_TEMPLATES[0];
-  const Component = template.Component;
+  const isAI = templateId === AI_TEMPLATE_ID;
+  const template = isAI
+    ? null
+    : getTemplate(templateId) ?? POST_TEMPLATES[0];
+  const Component = template?.Component;
   const dim = FORMATO_DIMENSOES[formato];
   // preview grande (até 480px de largura ou altura, mantendo aspect)
   const maxW = 480;
@@ -812,7 +928,7 @@ function ExportView({
             {imovel.titulo}
           </h1>
           <p className="text-xs text-muted-foreground">
-            {template.nome} · {FORMATO_LABELS[formato]} · {dim.w}×{dim.h}
+            {isAI ? 'Imagem por IA' : template?.nome} · {FORMATO_LABELS[formato]} · {dim.w}×{dim.h}
           </p>
         </div>
         <Button variant="outline" onClick={onClose}>
@@ -824,19 +940,57 @@ function ExportView({
         {/* Preview grande do post */}
         <div className="flex justify-center">
           <div
-            className="rounded-lg overflow-hidden shadow-xl bg-muted"
+            className="rounded-lg overflow-hidden shadow-xl bg-muted relative"
             style={{ width: previewW, height: previewH }}
           >
-            <div
-              style={{
-                transform: `scale(${scale})`,
-                transformOrigin: 'top left',
-                width: dim.w,
-                height: dim.h,
-              }}
-            >
-              <Component imovel={imovel} marca={marca} formato={formato} />
-            </div>
+            {isAI ? (
+              <>
+                {gerandoImagemIa ? (
+                  <div className="h-full w-full flex flex-col items-center justify-center text-center px-6 bg-gradient-to-br from-violet-500/10 to-fuchsia-500/10">
+                    <Loader2 className="h-10 w-10 text-violet-600 animate-spin mb-3" />
+                    <p className="text-sm font-semibold text-foreground">
+                      Gerando arte com IA...
+                    </p>
+                    <p className="text-xs text-muted-foreground mt-1">
+                      Pode levar até 30 segundos. A OpenAI tá pintando.
+                    </p>
+                  </div>
+                ) : imagemIaUrl ? (
+                  // eslint-disable-next-line @next/next/no-img-element
+                  <img
+                    src={imagemIaUrl}
+                    alt="Imagem gerada por IA"
+                    className="h-full w-full object-cover"
+                  />
+                ) : (
+                  <div className="h-full w-full flex flex-col items-center justify-center text-center px-6 bg-muted">
+                    <ImageOff className="h-10 w-10 text-muted-foreground mb-3" />
+                    <p className="text-sm font-semibold">
+                      Nenhuma imagem gerada
+                    </p>
+                    <Button
+                      onClick={onRegenerarImagemIa}
+                      size="sm"
+                      className="mt-3"
+                    >
+                      <Sparkles className="h-3 w-3 mr-1" />
+                      Gerar agora
+                    </Button>
+                  </div>
+                )}
+              </>
+            ) : Component ? (
+              <div
+                style={{
+                  transform: `scale(${scale})`,
+                  transformOrigin: 'top left',
+                  width: dim.w,
+                  height: dim.h,
+                }}
+              >
+                <Component imovel={imovel} marca={marca} formato={formato} />
+              </div>
+            ) : null}
           </div>
         </div>
 

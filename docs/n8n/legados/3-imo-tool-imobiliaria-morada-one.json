@@ -1,0 +1,618 @@
+{
+  "updatedAt": "2026-04-07T00:58:06.266Z",
+  "createdAt": "2026-03-27T17:22:50.117Z",
+  "id": "CpW6RpXnIZ98mqJU",
+  "name": "3- imo_tool | Imobiliaria Morada One",
+  "description": null,
+  "active": true,
+  "isArchived": false,
+  "nodes": [
+    {
+      "parameters": {
+        "jsCode": "const days = ['domingo', 'segunda', 'terça', 'quarta', 'quinta', 'sexta', 'sábado'];\nconst now = new Date();\nconst pad = (n) => String(n).padStart(2, '0');\n\nlet result = `Hoje é ${days[now.getDay()]} ${pad(now.getDate())}/${pad(now.getMonth()+1)}/${String(now.getFullYear()).slice(2)} às ${pad(now.getHours())}:${pad(now.getMinutes())}\\n`;\n\nfor (let i = 1; i <= 6; i++) {\n  const future = new Date(now);\n  future.setDate(now.getDate() + i);\n\n  let label = '';\n\n  if (i === 1) {\n    label = `Amanhã é ${days[future.getDay()]} ${pad(future.getDate())}/${pad(future.getMonth()+1)}/${String(future.getFullYear()).slice(2)}`;\n  } else if (i === 2) {\n    label = `Depois de amanhã é ${days[future.getDay()]} ${pad(future.getDate())}/${pad(future.getMonth()+1)}/${String(future.getFullYear()).slice(2)}`;\n  } else {\n    label = `A próxima ${days[future.getDay()]} será dia ${pad(future.getDate())}/${pad(future.getMonth()+1)}/${String(future.getFullYear()).slice(2)}`;\n  }\n\n  result += `${label}\\n`;\n}\n\nreturn [\n  {\n    json: {\n      resultado: result.trim()\n    }\n  }\n];\n"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        896,
+        -144
+      ],
+      "id": "f0d4876a-8e93-4266-a5ef-09ca107dd13e",
+      "name": "proximos_dias"
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "3dad3bda-9329-49d4-abcb-0b88c40f04ce",
+              "name": "proximos_dias",
+              "value": "={{ $json.resultado }}",
+              "type": "string"
+            },
+            {
+              "id": "183c1e3d-df72-4dc6-a263-4593a53fa0dd",
+              "name": "MsgLead",
+              "value": "={{ $('imo_tool').item.json.MsgLead }}",
+              "type": "string"
+            },
+            {
+              "id": "9e40b773-14f2-442c-a343-52e822279ee0",
+              "name": "whatsapp_lead",
+              "value": "={{ $('imo_tool').item.json.whatsapp_lead }}",
+              "type": "string"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        1120,
+        -144
+      ],
+      "id": "f2007b0b-9efd-4fd6-8f82-fbaca1faeb73",
+      "name": "setarInfo"
+    },
+    {
+      "id": "1208cf1d-c22e-4226-adfc-a3f8e6e4d185",
+      "name": "buscar_imoveis",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        1344,
+        -144
+      ],
+      "parameters": {
+        "url": "https://mlyeqkkcqfsivqhuoedm.supabase.co/rest/v1/imoveis",
+        "sendQuery": true,
+        "queryParameters": {
+          "parameters": [
+            {
+              "name": "publicado",
+              "value": "eq.true"
+            },
+            {
+              "name": "select",
+              "value": "codigo_imovel,titulo,tipo,finalidade,preco,quartos,banheiros,area_m2,bairro,cidade,estado,imagens,descricao"
+            },
+            {
+              "name": "order",
+              "value": "preco.asc"
+            }
+          ]
+        },
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "apikey",
+              "value": "{{SUPABASE_ANON_KEY}}"
+            },
+            {
+              "name": "Authorization",
+              "value": "Bearer {{SUPABASE_ANON_KEY}}"
+            }
+          ]
+        },
+        "options": {}
+      }
+    },
+    {
+      "id": "97943c11-81de-4429-b619-0d622842bfae",
+      "name": "formatar_imoveis",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        1568,
+        -144
+      ],
+      "parameters": {
+        "jsCode": "const imoveis = $input.all().map(item => item.json);\n\nconst formatted = imoveis.map(i => {\n  const link = `https://star-estate-hub.lovable.app/imovel/${i.codigo_imovel}`;\n  const preco = Number(i.preco).toLocaleString('pt-BR', {style:'currency', currency:'BRL'});\n  return `[${i.codigo_imovel}] ${i.titulo} | ${i.tipo} | ${i.finalidade} | ${i.bairro}, ${i.cidade} | ${preco} | ${i.quartos} quartos | ${i.banheiros} banheiros | ${i.area_m2}m² | Link: ${link} | ${i.descricao || ''}`;\n}).join('\\n');\n\nconst MsgLead = $('setarInfo').first().json.MsgLead;\nconst proximos_dias = $('setarInfo').first().json.proximos_dias;\n\nreturn [{ json: { imoveis_lista: formatted, MsgLead, proximos_dias } }];"
+      }
+    },
+    {
+      "parameters": {
+        "promptType": "define",
+        "text": "={{ $json.MsgLead }}",
+        "options": {
+          "systemMessage": "=# IDENTIDADE\n\nVocê é um agente interno de suporte ao corretor da imobiliária **Morada One**.\nSua função é filtrar e apresentar imóveis da lista abaixo de acordo com o que o cliente pediu.\n\n# REGRAS\n\n- Use SOMENTE os imóveis da lista abaixo. Jamais invente imóveis.\n- Filtre por: tipo, finalidade (compra/aluguel), cidade, bairro, quartos, preço — conforme o pedido.\n- Se não houver imóvel compatível, diga que não há opções disponíveis no momento.\n- Cada resposta deve ter no máximo 80 palavras.\n- Inclua o link do imóvel e as fotos quando disponíveis.\n- Nunca pergunte \"quer saber mais?\" ou faça convites — responda apenas o que foi pedido.\n- Tom persuasivo mas direto.\n\n# IMÓVEIS DISPONÍVEIS\n\n{{ $json.imoveis_lista }}\n\n# DATA E HORA\n\n{{ $json.proximos_dias }}"
+        }
+      },
+      "type": "@n8n/n8n-nodes-langchain.agent",
+      "typeVersion": 2.2,
+      "position": [
+        1792,
+        -144
+      ],
+      "id": "4fd020da-e754-4a82-9c3e-40870a6b6669",
+      "name": "AI Agent"
+    },
+    {
+      "parameters": {
+        "model": {
+          "__rl": true,
+          "mode": "list",
+          "value": "gpt-4.1-mini"
+        },
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.lmChatOpenAi",
+      "typeVersion": 1.2,
+      "position": [
+        1536,
+        80
+      ],
+      "id": "f95849eb-0672-4a21-a5e4-9781cd3a109d",
+      "name": "4.1",
+      "credentials": {
+        "openAiApi": {
+          "id": "o2dGjNekswTmljmN",
+          "name": "OpenAi andre"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "8d7cbbec-49f9-480a-b9dd-055752d40908",
+              "name": "response",
+              "value": "={{ $json.output }}",
+              "type": "string"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        2016,
+        -144
+      ],
+      "id": "a5be96ab-34ca-400d-9a15-05f7dda6adce",
+      "name": "response"
+    },
+    {
+      "parameters": {
+        "workflowInputs": {
+          "values": [
+            {
+              "name": "MsgLead"
+            },
+            {
+              "name": "whatsapp_lead"
+            }
+          ]
+        }
+      },
+      "type": "n8n-nodes-base.executeWorkflowTrigger",
+      "typeVersion": 1.1,
+      "position": [
+        688,
+        -144
+      ],
+      "id": "ffa10ad3-ac60-4054-bb36-5ebd0525c7c8",
+      "name": "imo_tool"
+    }
+  ],
+  "connections": {
+    "imo_tool": {
+      "main": [
+        [
+          {
+            "node": "proximos_dias",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "proximos_dias": {
+      "main": [
+        [
+          {
+            "node": "setarInfo",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "setarInfo": {
+      "main": [
+        [
+          {
+            "node": "buscar_imoveis",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "buscar_imoveis": {
+      "main": [
+        [
+          {
+            "node": "formatar_imoveis",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "formatar_imoveis": {
+      "main": [
+        [
+          {
+            "node": "AI Agent",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "AI Agent": {
+      "main": [
+        [
+          {
+            "node": "response",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "4.1": {
+      "ai_languageModel": [
+        [
+          {
+            "node": "AI Agent",
+            "type": "ai_languageModel",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "settings": {
+    "executionOrder": "v1",
+    "binaryMode": "separate",
+    "timeSavedMode": "fixed",
+    "timezone": "America/Sao_Paulo",
+    "callerPolicy": "workflowsFromSameOwner",
+    "availableInMCP": false
+  },
+  "staticData": null,
+  "meta": {
+    "templateCredsSetupCompleted": true
+  },
+  "pinData": {},
+  "versionId": "b12bf9ed-053c-46da-aa22-d25f3241607a",
+  "activeVersionId": "b12bf9ed-053c-46da-aa22-d25f3241607a",
+  "versionCounter": 17,
+  "triggerCount": 0,
+  "shared": [
+    {
+      "updatedAt": "2026-03-27T17:22:50.122Z",
+      "createdAt": "2026-03-27T17:22:50.122Z",
+      "role": "workflow:owner",
+      "workflowId": "CpW6RpXnIZ98mqJU",
+      "projectId": "AKiCCH0oxaoQhr2Z",
+      "project": {
+        "updatedAt": "2026-03-27T14:30:55.615Z",
+        "createdAt": "2026-03-27T14:27:20.854Z",
+        "id": "AKiCCH0oxaoQhr2Z",
+        "name": "PABLO MEDINA <digitalvisualis@gmail.com>",
+        "type": "personal",
+        "icon": null,
+        "description": null,
+        "creatorId": "595fd4e5-a243-4d30-88ac-7327a99f627e"
+      }
+    }
+  ],
+  "tags": [],
+  "activeVersion": {
+    "updatedAt": "2026-04-07T00:58:06.268Z",
+    "createdAt": "2026-04-07T00:58:06.268Z",
+    "versionId": "b12bf9ed-053c-46da-aa22-d25f3241607a",
+    "workflowId": "CpW6RpXnIZ98mqJU",
+    "nodes": [
+      {
+        "parameters": {
+          "jsCode": "const days = ['domingo', 'segunda', 'terça', 'quarta', 'quinta', 'sexta', 'sábado'];\nconst now = new Date();\nconst pad = (n) => String(n).padStart(2, '0');\n\nlet result = `Hoje é ${days[now.getDay()]} ${pad(now.getDate())}/${pad(now.getMonth()+1)}/${String(now.getFullYear()).slice(2)} às ${pad(now.getHours())}:${pad(now.getMinutes())}\\n`;\n\nfor (let i = 1; i <= 6; i++) {\n  const future = new Date(now);\n  future.setDate(now.getDate() + i);\n\n  let label = '';\n\n  if (i === 1) {\n    label = `Amanhã é ${days[future.getDay()]} ${pad(future.getDate())}/${pad(future.getMonth()+1)}/${String(future.getFullYear()).slice(2)}`;\n  } else if (i === 2) {\n    label = `Depois de amanhã é ${days[future.getDay()]} ${pad(future.getDate())}/${pad(future.getMonth()+1)}/${String(future.getFullYear()).slice(2)}`;\n  } else {\n    label = `A próxima ${days[future.getDay()]} será dia ${pad(future.getDate())}/${pad(future.getMonth()+1)}/${String(future.getFullYear()).slice(2)}`;\n  }\n\n  result += `${label}\\n`;\n}\n\nreturn [\n  {\n    json: {\n      resultado: result.trim()\n    }\n  }\n];\n"
+        },
+        "type": "n8n-nodes-base.code",
+        "typeVersion": 2,
+        "position": [
+          896,
+          -144
+        ],
+        "id": "f0d4876a-8e93-4266-a5ef-09ca107dd13e",
+        "name": "proximos_dias"
+      },
+      {
+        "parameters": {
+          "assignments": {
+            "assignments": [
+              {
+                "id": "3dad3bda-9329-49d4-abcb-0b88c40f04ce",
+                "name": "proximos_dias",
+                "value": "={{ $json.resultado }}",
+                "type": "string"
+              },
+              {
+                "id": "183c1e3d-df72-4dc6-a263-4593a53fa0dd",
+                "name": "MsgLead",
+                "value": "={{ $('imo_tool').item.json.MsgLead }}",
+                "type": "string"
+              },
+              {
+                "id": "9e40b773-14f2-442c-a343-52e822279ee0",
+                "name": "whatsapp_lead",
+                "value": "={{ $('imo_tool').item.json.whatsapp_lead }}",
+                "type": "string"
+              }
+            ]
+          },
+          "options": {}
+        },
+        "type": "n8n-nodes-base.set",
+        "typeVersion": 3.4,
+        "position": [
+          1120,
+          -144
+        ],
+        "id": "f2007b0b-9efd-4fd6-8f82-fbaca1faeb73",
+        "name": "setarInfo"
+      },
+      {
+        "id": "1208cf1d-c22e-4226-adfc-a3f8e6e4d185",
+        "name": "buscar_imoveis",
+        "type": "n8n-nodes-base.httpRequest",
+        "typeVersion": 4.2,
+        "position": [
+          1344,
+          -144
+        ],
+        "parameters": {
+          "url": "https://mlyeqkkcqfsivqhuoedm.supabase.co/rest/v1/imoveis",
+          "sendQuery": true,
+          "queryParameters": {
+            "parameters": [
+              {
+                "name": "publicado",
+                "value": "eq.true"
+              },
+              {
+                "name": "select",
+                "value": "codigo_imovel,titulo,tipo,finalidade,preco,quartos,banheiros,area_m2,bairro,cidade,estado,imagens,descricao"
+              },
+              {
+                "name": "order",
+                "value": "preco.asc"
+              }
+            ]
+          },
+          "sendHeaders": true,
+          "headerParameters": {
+            "parameters": [
+              {
+                "name": "apikey",
+                "value": "{{SUPABASE_ANON_KEY}}"
+              },
+              {
+                "name": "Authorization",
+                "value": "Bearer {{SUPABASE_ANON_KEY}}"
+              }
+            ]
+          },
+          "options": {}
+        }
+      },
+      {
+        "id": "97943c11-81de-4429-b619-0d622842bfae",
+        "name": "formatar_imoveis",
+        "type": "n8n-nodes-base.code",
+        "typeVersion": 2,
+        "position": [
+          1568,
+          -144
+        ],
+        "parameters": {
+          "jsCode": "const imoveis = $input.all().map(item => item.json);\n\nconst formatted = imoveis.map(i => {\n  const link = `https://star-estate-hub.lovable.app/imovel/${i.codigo_imovel}`;\n  const preco = Number(i.preco).toLocaleString('pt-BR', {style:'currency', currency:'BRL'});\n  return `[${i.codigo_imovel}] ${i.titulo} | ${i.tipo} | ${i.finalidade} | ${i.bairro}, ${i.cidade} | ${preco} | ${i.quartos} quartos | ${i.banheiros} banheiros | ${i.area_m2}m² | Link: ${link} | ${i.descricao || ''}`;\n}).join('\\n');\n\nconst MsgLead = $('setarInfo').first().json.MsgLead;\nconst proximos_dias = $('setarInfo').first().json.proximos_dias;\n\nreturn [{ json: { imoveis_lista: formatted, MsgLead, proximos_dias } }];"
+        }
+      },
+      {
+        "parameters": {
+          "promptType": "define",
+          "text": "={{ $json.MsgLead }}",
+          "options": {
+            "systemMessage": "=# IDENTIDADE\n\nVocê é um agente interno de suporte ao corretor da imobiliária **Morada One**.\nSua função é filtrar e apresentar imóveis da lista abaixo de acordo com o que o cliente pediu.\n\n# REGRAS\n\n- Use SOMENTE os imóveis da lista abaixo. Jamais invente imóveis.\n- Filtre por: tipo, finalidade (compra/aluguel), cidade, bairro, quartos, preço — conforme o pedido.\n- Se não houver imóvel compatível, diga que não há opções disponíveis no momento.\n- Cada resposta deve ter no máximo 80 palavras.\n- Inclua o link do imóvel e as fotos quando disponíveis.\n- Nunca pergunte \"quer saber mais?\" ou faça convites — responda apenas o que foi pedido.\n- Tom persuasivo mas direto.\n\n# IMÓVEIS DISPONÍVEIS\n\n{{ $json.imoveis_lista }}\n\n# DATA E HORA\n\n{{ $json.proximos_dias }}"
+          }
+        },
+        "type": "@n8n/n8n-nodes-langchain.agent",
+        "typeVersion": 2.2,
+        "position": [
+          1792,
+          -144
+        ],
+        "id": "4fd020da-e754-4a82-9c3e-40870a6b6669",
+        "name": "AI Agent"
+      },
+      {
+        "parameters": {
+          "model": {
+            "__rl": true,
+            "mode": "list",
+            "value": "gpt-4.1-mini"
+          },
+          "options": {}
+        },
+        "type": "@n8n/n8n-nodes-langchain.lmChatOpenAi",
+        "typeVersion": 1.2,
+        "position": [
+          1536,
+          80
+        ],
+        "id": "f95849eb-0672-4a21-a5e4-9781cd3a109d",
+        "name": "4.1",
+        "credentials": {
+          "openAiApi": {
+            "id": "o2dGjNekswTmljmN",
+            "name": "OpenAi andre"
+          }
+        }
+      },
+      {
+        "parameters": {
+          "assignments": {
+            "assignments": [
+              {
+                "id": "8d7cbbec-49f9-480a-b9dd-055752d40908",
+                "name": "response",
+                "value": "={{ $json.output }}",
+                "type": "string"
+              }
+            ]
+          },
+          "options": {}
+        },
+        "type": "n8n-nodes-base.set",
+        "typeVersion": 3.4,
+        "position": [
+          2016,
+          -144
+        ],
+        "id": "a5be96ab-34ca-400d-9a15-05f7dda6adce",
+        "name": "response"
+      },
+      {
+        "parameters": {
+          "workflowInputs": {
+            "values": [
+              {
+                "name": "MsgLead"
+              },
+              {
+                "name": "whatsapp_lead"
+              }
+            ]
+          }
+        },
+        "type": "n8n-nodes-base.executeWorkflowTrigger",
+        "typeVersion": 1.1,
+        "position": [
+          688,
+          -144
+        ],
+        "id": "ffa10ad3-ac60-4054-bb36-5ebd0525c7c8",
+        "name": "imo_tool"
+      }
+    ],
+    "connections": {
+      "imo_tool": {
+        "main": [
+          [
+            {
+              "node": "proximos_dias",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "proximos_dias": {
+        "main": [
+          [
+            {
+              "node": "setarInfo",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "setarInfo": {
+        "main": [
+          [
+            {
+              "node": "buscar_imoveis",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "buscar_imoveis": {
+        "main": [
+          [
+            {
+              "node": "formatar_imoveis",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "formatar_imoveis": {
+        "main": [
+          [
+            {
+              "node": "AI Agent",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "AI Agent": {
+        "main": [
+          [
+            {
+              "node": "response",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "4.1": {
+        "ai_languageModel": [
+          [
+            {
+              "node": "AI Agent",
+              "type": "ai_languageModel",
+              "index": 0
+            }
+          ]
+        ]
+      }
+    },
+    "authors": "PABLO MEDINA",
+    "name": null,
+    "description": null,
+    "autosaved": false,
+    "workflowPublishHistory": [
+      {
+        "createdAt": "2026-04-07T00:58:06.331Z",
+        "id": 41,
+        "workflowId": "CpW6RpXnIZ98mqJU",
+        "versionId": "b12bf9ed-053c-46da-aa22-d25f3241607a",
+        "event": "activated",
+        "userId": "595fd4e5-a243-4d30-88ac-7327a99f627e"
+      },
+      {
+        "createdAt": "2026-04-07T00:58:06.303Z",
+        "id": 40,
+        "workflowId": "CpW6RpXnIZ98mqJU",
+        "versionId": "b12bf9ed-053c-46da-aa22-d25f3241607a",
+        "event": "deactivated",
+        "userId": "595fd4e5-a243-4d30-88ac-7327a99f627e"
+      }
+    ]
+  }
+}

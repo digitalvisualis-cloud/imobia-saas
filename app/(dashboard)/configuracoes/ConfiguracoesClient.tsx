@@ -15,6 +15,7 @@ import {
   UsersRound,
   CreditCard,
   Save,
+  Settings,
   Check,
   ExternalLink,
   Plus,
@@ -25,7 +26,10 @@ import {
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
+import { PageHeader } from '@/components/ui/page-header';
+import { toast } from '@/lib/toast';
 import { cn } from '@/lib/utils';
+import { FONTES_TITULO, FONTES_CORPO } from '@/lib/fonts';
 
 type Perfil = {
   id: string;
@@ -42,6 +46,8 @@ type Marca = {
   faviconUrl: string;
   corPrimaria: string;
   corSecundaria: string;
+  fonteTitulo: string;
+  fonteCorpo: string;
   email: string;
   whatsapp: string;
   telefone: string;
@@ -145,7 +151,7 @@ export default function ConfiguracoesClient(props: {
       flashSaved();
       startTransition(() => router.refresh());
     } catch {
-      alert('Erro ao salvar perfil');
+      toast.error('Erro ao salvar perfil', { description: 'Tente novamente.' });
     } finally {
       setSaving(false);
     }
@@ -163,7 +169,7 @@ export default function ConfiguracoesClient(props: {
       flashSaved();
       startTransition(() => router.refresh());
     } catch {
-      alert('Erro ao salvar configurações');
+      toast.error('Erro ao salvar configurações');
     } finally {
       setSaving(false);
     }
@@ -175,21 +181,19 @@ export default function ConfiguracoesClient(props: {
 
   return (
     <div className="space-y-6">
-      <div className="flex items-center justify-between flex-wrap gap-3">
-        <div>
-          <h1 className="font-display text-3xl font-bold text-foreground">
-            Configurações
-          </h1>
-          <p className="text-sm text-muted-foreground">
-            Identidade, marca, site e equipe da sua imobiliária
-          </p>
-        </div>
-        {savedFlash && (
-          <Badge className="bg-green-500/15 text-green-700 dark:text-green-400 border-green-500/30 hover:bg-green-500/20">
-            <Check className="h-3 w-3 mr-1" /> Salvo
-          </Badge>
-        )}
-      </div>
+      <PageHeader
+        kicker="Plataforma"
+        icon={Settings}
+        title="Configurações"
+        description="Identidade, marca, site e equipe da sua imobiliária"
+        actions={
+          savedFlash ? (
+            <Badge className="bg-green-500/15 text-green-700 dark:text-green-400 border-green-500/30 hover:bg-green-500/20">
+              <Check className="h-3 w-3 mr-1" /> Salvo
+            </Badge>
+          ) : null
+        }
+      />
 
       <div className="grid grid-cols-1 md:grid-cols-[220px_1fr] gap-6">
         {/* Tabs verticais */}
@@ -438,6 +442,30 @@ export default function ConfiguracoesClient(props: {
                     );
                   })}
                 </div>
+              </div>
+
+              {/* Fontes (tipografia) */}
+              <div className="mt-6 grid grid-cols-1 md:grid-cols-2 gap-4">
+                <Field
+                  label="Fonte dos títulos"
+                  hint="Aplica nas chamadas e títulos do site"
+                >
+                  <FonteSelect
+                    value={(marca as any).fonteTitulo ?? 'cormorant'}
+                    onChange={(v) => setM('fonteTitulo' as any, v)}
+                    opcoes={FONTES_TITULO}
+                  />
+                </Field>
+                <Field
+                  label="Fonte do corpo"
+                  hint="Aplica nos textos longos (descrições, parágrafos)"
+                >
+                  <FonteSelect
+                    value={(marca as any).fonteCorpo ?? 'inter'}
+                    onChange={(v) => setM('fonteCorpo' as any, v)}
+                    opcoes={FONTES_CORPO}
+                  />
+                </Field>
               </div>
 
               <SaveButton onClick={saveMarca} saving={saving} />
@@ -896,6 +924,47 @@ function KpiCardLite({
       >
         {value}
       </p>
+    </div>
+  );
+}
+
+/* ---------- Dropdown de fonte com preview ---------- */
+
+function FonteSelect({
+  value,
+  onChange,
+  opcoes,
+}: {
+  value: string;
+  onChange: (v: string) => void;
+  opcoes: Array<{ key: string; nome: string; familyCss: string; vibe?: string }>;
+}) {
+  return (
+    <div className="space-y-2">
+      <select
+        value={value}
+        onChange={(e) => onChange(e.target.value)}
+        className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-ring"
+      >
+        {opcoes.map((o) => (
+          <option key={o.key} value={o.key}>
+            {o.nome}
+            {o.vibe ? ` — ${o.vibe}` : ''}
+          </option>
+        ))}
+      </select>
+      {/* Preview da fonte selecionada */}
+      <div
+        className="rounded-md border border-border bg-card px-3 py-2.5"
+        style={{ fontFamily: opcoes.find((o) => o.key === value)?.familyCss }}
+      >
+        <p className="text-lg leading-tight">
+          Encontre o imóvel ideal
+        </p>
+        <p className="text-xs text-muted-foreground">
+          Pré-visualização — abc 123 ABC çãÁéí
+        </p>
+      </div>
     </div>
   );
 }

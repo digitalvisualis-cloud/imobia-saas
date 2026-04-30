@@ -175,10 +175,12 @@ export function TemplateImovel({
               className="w-full bg-green-500 hover:bg-green-600 text-white"
             >
               <a
-                href={buildWhatsAppLink(
-                  wa,
-                  `Olá! Tenho interesse no imóvel ${imovel.codigo} (${imovel.titulo}).`,
-                )}
+                href={buildWhatsAppLink(wa, '', {
+                  codigo: imovel.codigo,
+                  titulo: imovel.titulo,
+                  bairro: imovel.bairro,
+                  cidade: imovel.cidade,
+                })}
                 target="_blank"
                 rel="noopener noreferrer"
               >

@@ -29,7 +29,7 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: 'Body inválido.' }, { status: 400 });
     }
 
-    const { imovelId, tipo, conteudo, templateId, formato } = body;
+    const { imovelId, tipo, conteudo, templateId, formato, imageUrl } = body;
 
     if (!tipo || !conteudo) {
       return NextResponse.json(
@@ -63,6 +63,8 @@ export async function POST(req: NextRequest) {
           templateId || formato
             ? `[template:${templateId ?? 'clean'}|formato:${formato ?? 'POST_QUADRADO'}]\n${conteudo}`
             : conteudo,
+        // Se a IA gerou a arte, salva URL pública do Storage
+        imageUrl: typeof imageUrl === 'string' && imageUrl.startsWith('http') ? imageUrl : null,
       },
     });
 

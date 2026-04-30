@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useTransition } from 'react';
+import { useState, useTransition, useEffect, useRef } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import {
@@ -18,7 +18,8 @@ import {
   AlertCircle,
   Plus,
   Settings,
-  Save,
+  Maximize2,
+  Minimize2,
   Monitor,
   Smartphone,
   type LucideIcon,
@@ -27,6 +28,9 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
 import { Switch } from '@/components/ui/switch';
+import { KpiCard } from '@/components/ui/kpi-card';
+import { PageHeader } from '@/components/ui/page-header';
+import { toast } from '@/lib/toast';
 import { cn } from '@/lib/utils';
 import {
   type SiteConfig,
@@ -68,7 +72,8 @@ const TEMPLATES: Template[] = [
   {
     id: 'elegance',
     nome: 'Elegance',
-    descricao: 'Tema gold + forest com tipografia serif. Sofisticado.',
+    descricao:
+      'Tipografia serif sofisticada. Aplica suas cores automaticamente.',
     preview: 'linear-gradient(135deg, #c5a64f 0%, #1a2e1a 100%)',
     vibe: 'Alto padrão · Boutique',
     ativo: true,
@@ -76,18 +81,20 @@ const TEMPLATES: Template[] = [
   {
     id: 'cosmic',
     nome: 'Cosmic',
-    descricao: 'Tema dark moderno com gradientes vibrantes.',
+    descricao:
+      'Dark mode moderno com gradientes vibrantes e animações suaves.',
     preview: 'linear-gradient(135deg, #7c3aed 0%, #06b6d4 100%)',
-    vibe: 'Lançamentos · Tech',
+    vibe: 'Lançamentos · Imóveis tech',
     ativo: false,
     premium: true,
   },
   {
     id: 'boutique',
     nome: 'Boutique',
-    descricao: 'Tema clean rose + cream com tipografia delicada.',
+    descricao:
+      'Clean cream + tipografia delicada. Visual editorial sofisticado.',
     preview: 'linear-gradient(135deg, #f97316 0%, #fef3c7 100%)',
-    vibe: 'Residencial · Família',
+    vibe: 'Residencial · Famílias',
     ativo: false,
     premium: true,
   },
@@ -124,13 +131,61 @@ function Editor({
   const [viewport, setViewport] = useState<'desktop' | 'mobile'>('desktop');
   const [saving, setSaving] = useState(false);
   const [savedFlash, setSavedFlash] = useState(false);
-  const [dirty, setDirty] = useState(false);
   const [publicado, setPublicado] = useState(site.publicado);
   const [copied, setCopied] = useState(false);
+  const [iframeKey, setIframeKey] = useState(0); // força reload do iframe
+  const [previewFullscreen, setPreviewFullscreen] = useState(false); // esconde sidebar de seções
+  const [templateAtivo, setTemplateAtivo] = useState(site.templateId);
+  const [trocandoTemplate, setTrocandoTemplate] = useState(false);
+
+  // Refs pra autosave com debounce
+  const debounceTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const configRef = useRef(config);
+  configRef.current = config;
+  const initialMount = useRef(true);
 
   const origin =
     typeof window !== 'undefined' ? window.location.origin : 'https://imobia.io';
   const url = `${origin}/s/${site.slug}`;
+  // adiciona timestamp pra forçar reload do iframe sem cache
+  const iframeUrl = `${url}?t=${iframeKey}`;
+
+  // Autosave: sempre que `config` muda (toggle de página/seção),
+  // espera 500ms e dispara save → reload iframe
+  useEffect(() => {
+    // Pula a primeira render (mount inicial)
+    if (initialMount.current) {
+      initialMount.current = false;
+      return;
+    }
+    if (debounceTimer.current) clearTimeout(debounceTimer.current);
+    debounceTimer.current = setTimeout(async () => {
+      setSaving(true);
+      try {
+        const r = await fetch('/api/sites/config', {
+          method: 'PUT',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            config: configRef.current,
+            templateId: site.templateId,
+          }),
+        });
+        if (!r.ok) throw new Error('Erro ao salvar');
+        setSavedFlash(true);
+        setTimeout(() => setSavedFlash(false), 1500);
+        // Aguarda 200ms pro DB persistir e força reload do iframe
+        setTimeout(() => setIframeKey(Date.now()), 200);
+      } catch (e) {
+        console.error(e);
+      } finally {
+        setSaving(false);
+      }
+    }, 500);
+    return () => {
+      if (debounceTimer.current) clearTimeout(debounceTimer.current);
+    };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [config]);
 
   function togglePagina(id: PageId) {
     setConfig((prev) => ({
@@ -139,7 +194,6 @@ function Editor({
         p.id === id ? { ...p, enabled: !p.enabled } : p,
       ),
     }));
-    setDirty(true);
   }
 
   function toggleSection(pageId: PageId, secId: SectionId) {
@@ -156,27 +210,6 @@ function Editor({
             },
       ),
     }));
-    setDirty(true);
-  }
-
-  async function salvar() {
-    setSaving(true);
-    try {
-      const r = await fetch('/api/sites/config', {
-        method: 'PUT',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ config, templateId: site.templateId }),
-      });
-      if (!r.ok) throw new Error('Erro ao salvar');
-      setSavedFlash(true);
-      setDirty(false);
-      setTimeout(() => setSavedFlash(false), 2200);
-      startTransition(() => router.refresh());
-    } catch (e) {
-      alert(`Erro: ${(e as Error).message}`);
-    } finally {
-      setSaving(false);
-    }
   }
 
   async function togglePublicado() {
@@ -191,7 +224,7 @@ function Editor({
       startTransition(() => router.refresh());
     } catch {
       setPublicado(!novo);
-      alert('Erro ao alterar status');
+      toast.error('Erro ao alterar status do site');
     }
   }
 
@@ -199,6 +232,36 @@ function Editor({
     navigator.clipboard.writeText(url);
     setCopied(true);
     setTimeout(() => setCopied(false), 1500);
+  }
+
+  async function selecionarTemplate(templateId: string) {
+    if (templateId === templateAtivo) return;
+    const template = TEMPLATES.find((t) => t.id === templateId);
+    if (template?.premium) {
+      const proceed = window.confirm(
+        `${template.nome} ainda está em construção visual.\n\nVocê pode selecionar agora pra reservar — ele será aplicado quando ficar pronto. Por enquanto seu site continua usando o Elegance.\n\nContinuar?`,
+      );
+      if (!proceed) return;
+    }
+    setTrocandoTemplate(true);
+    try {
+      const r = await fetch('/api/sites/config', {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ config, templateId }),
+      });
+      if (!r.ok) throw new Error('Erro ao trocar template');
+      setTemplateAtivo(templateId);
+      setSavedFlash(true);
+      setTimeout(() => setSavedFlash(false), 1500);
+      setTimeout(() => setIframeKey(Date.now()), 200);
+    } catch (e) {
+      toast.error('Erro ao trocar template', {
+        description: (e as Error).message,
+      });
+    } finally {
+      setTrocandoTemplate(false);
+    }
   }
 
   const paginaAtual = config.pages.find((p) => p.id === pageActive);
@@ -211,48 +274,47 @@ function Editor({
 
   return (
     <div className="space-y-4">
-      {/* Header de gestão (não é parte do editor — fica no topo da rota /sites) */}
-      <div className="flex flex-wrap items-center justify-between gap-3">
-        <div>
-          <h1 className="font-display text-2xl md:text-3xl font-bold text-foreground">
-            Meu Site
-          </h1>
-          <p className="text-sm text-muted-foreground">
-            Personalize páginas e seções. Mudanças entram no ar quando você clica
-            em <span className="font-semibold">Salvar</span>.
-          </p>
-        </div>
-        <div className="flex items-center gap-2">
+      <PageHeader
+        kicker="Marketing"
+        icon={Globe}
+        title="Meu Site"
+        description="Personalize páginas e seções. As mudanças aplicam automaticamente."
+        actions={
           <Button asChild variant="outline" size="sm">
             <Link href={url} target="_blank">
               <ExternalLink className="h-4 w-4 mr-2" />
               Abrir site
             </Link>
           </Button>
-        </div>
-      </div>
+        }
+        compact
+      />
 
       {/* KPIs simples */}
       <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
         <KpiCard
+          compact
           label="Status"
           value={publicado ? 'No ar' : 'Fora do ar'}
           icon={publicado ? Eye : EyeOff}
           accent={publicado ? 'green' : 'amber'}
         />
         <KpiCard
+          compact
           label="Imóveis publicados"
           value={String(totalImoveis)}
           icon={ImageIcon}
           accent="primary"
         />
         <KpiCard
+          compact
           label="Template ativo"
           value="Elegance"
           icon={Palette}
           accent="violet"
         />
         <KpiCard
+          compact
           label="URL"
           value={`/s/${site.slug}`}
           icon={Globe}
@@ -330,171 +392,175 @@ function Editor({
               />
             </div>
 
-            {/* Salvar */}
-            <Button
-              onClick={salvar}
-              disabled={saving || !dirty}
-              size="sm"
-              className="min-w-[100px]"
-            >
+            {/* Indicador de autosave */}
+            <div className="flex items-center gap-1.5 text-xs text-muted-foreground min-w-[80px]">
               {saving ? (
                 <>
-                  <Loader2 className="h-4 w-4 mr-2 animate-spin" />
-                  Salvando
+                  <Loader2 className="h-3.5 w-3.5 animate-spin" />
+                  <span>Salvando</span>
                 </>
               ) : savedFlash ? (
                 <>
-                  <Check className="h-4 w-4 mr-2" />
-                  Salvo
+                  <Check className="h-3.5 w-3.5 text-green-600" />
+                  <span className="text-green-700 dark:text-green-400">
+                    Salvo
+                  </span>
                 </>
               ) : (
                 <>
-                  <Save className="h-4 w-4 mr-2" />
-                  Salvar
+                  <Check className="h-3.5 w-3.5 text-muted-foreground/40" />
+                  <span>Sincronizado</span>
                 </>
               )}
-            </Button>
+            </div>
           </div>
         </div>
 
-        {/* 3 colunas */}
-        <div className="grid grid-cols-1 lg:grid-cols-[200px_280px_1fr] min-h-[700px]">
-          {/* Coluna 1 — Páginas */}
-          <div className="border-b lg:border-b-0 lg:border-r border-border">
-            <div className="px-4 py-3 border-b border-border">
-              <p className="text-[10px] font-semibold uppercase tracking-wider text-muted-foreground">
-                Páginas
-              </p>
-            </div>
-            <div className="p-2 space-y-0.5">
-              {config.pages.map((p) => {
-                const meta = PAGE_CATALOG.find((x) => x.id === p.id);
-                if (!meta) return null;
-                const active = pageActive === p.id;
-                return (
-                  <button
-                    key={p.id}
-                    onClick={() => setPageActive(p.id)}
-                    className={cn(
-                      'w-full flex items-center gap-2 px-2.5 py-2 rounded-md text-sm transition-colors text-left',
-                      active
-                        ? 'bg-primary/15 text-primary font-medium'
-                        : 'text-foreground/80 hover:bg-muted',
-                    )}
-                  >
-                    <span className="text-base">{meta.icon}</span>
-                    <span className="flex-1 truncate text-xs">
-                      {meta.label}
-                    </span>
-                    {!p.enabled && (
-                      <EyeOff className="h-3 w-3 text-muted-foreground/60" />
-                    )}
-                  </button>
-                );
-              })}
-            </div>
-            <div className="px-2 pb-3 pt-2 border-t border-border mt-2">
-              <p className="text-[10px] text-muted-foreground/70 px-2 mb-2">
-                Adicionar página customizada chega na próxima entrega.
-              </p>
-            </div>
+        {/* Tabs de páginas (horizontal, em vez de sidebar) */}
+        <div className="border-b border-border bg-card overflow-x-auto">
+          <div className="flex items-center gap-0.5 px-2 py-1.5 min-w-max">
+            {config.pages.map((p) => {
+              const meta = PAGE_CATALOG.find((x) => x.id === p.id);
+              if (!meta) return null;
+              const active = pageActive === p.id;
+              return (
+                <button
+                  key={p.id}
+                  onClick={() => setPageActive(p.id)}
+                  className={cn(
+                    'flex items-center gap-1.5 px-3 h-8 rounded-md text-xs font-medium transition-colors whitespace-nowrap',
+                    active
+                      ? 'bg-primary/15 text-primary'
+                      : 'text-muted-foreground hover:bg-muted hover:text-foreground',
+                    !p.enabled && 'opacity-50',
+                  )}
+                  title={meta.description}
+                >
+                  <span className="text-sm">{meta.icon}</span>
+                  <span>{meta.label}</span>
+                  {!p.enabled && <EyeOff className="h-3 w-3" />}
+                </button>
+              );
+            })}
           </div>
+        </div>
 
-          {/* Coluna 2 — Seções da página atual */}
-          <div className="border-b lg:border-b-0 lg:border-r border-border bg-muted/20">
-            <div className="px-4 py-3 border-b border-border">
-              <p className="text-[10px] font-semibold uppercase tracking-wider text-muted-foreground">
-                {paginaAtual
-                  ? PAGE_CATALOG.find((p) => p.id === paginaAtual.id)?.label
-                  : 'Seções'}
-              </p>
-              <p className="text-[10px] text-muted-foreground/70 mt-0.5">
-                Liga e desliga as seções da página
-              </p>
-            </div>
-
-            {paginaAtual && (
-              <>
-                {/* Toggle da página inteira */}
-                <div className="px-3 py-2.5 border-b border-border bg-card flex items-center justify-between">
-                  <div>
-                    <p className="text-xs font-semibold">Página ativa</p>
-                    <p className="text-[10px] text-muted-foreground">
-                      {paginaAtual.enabled
-                        ? 'Visível no menu'
-                        : 'Escondida do menu'}
-                    </p>
+        {/* Layout: sidebar fina (Seções) + Preview ocupando o resto */}
+        <div
+          className={cn(
+            'grid min-h-[700px]',
+            previewFullscreen
+              ? 'grid-cols-1'
+              : 'grid-cols-1 lg:grid-cols-[280px_1fr]',
+          )}
+        >
+          {/* Coluna Seções (esconde quando fullscreen) */}
+          {!previewFullscreen && (
+            <div className="border-b lg:border-b-0 lg:border-r border-border bg-muted/20 flex flex-col">
+              {paginaAtual && (
+                <>
+                  {/* Toggle da página inteira */}
+                  <div className="px-3 py-2.5 border-b border-border bg-card flex items-center justify-between sticky top-0 z-10">
+                    <div className="min-w-0">
+                      <p className="text-xs font-semibold truncate">
+                        {PAGE_CATALOG.find((p) => p.id === paginaAtual.id)?.label}
+                      </p>
+                      <p className="text-[10px] text-muted-foreground">
+                        {paginaAtual.enabled
+                          ? 'Visível no menu'
+                          : 'Escondida'}
+                      </p>
+                    </div>
+                    <Switch
+                      checked={paginaAtual.enabled}
+                      disabled={
+                        PAGE_CATALOG.find((p) => p.id === paginaAtual.id)?.fixed
+                      }
+                      onCheckedChange={() => togglePagina(paginaAtual.id)}
+                      aria-label="Ativar página"
+                    />
                   </div>
-                  <Switch
-                    checked={paginaAtual.enabled}
-                    disabled={
-                      PAGE_CATALOG.find((p) => p.id === paginaAtual.id)?.fixed
-                    }
-                    onCheckedChange={() => togglePagina(paginaAtual.id)}
-                    aria-label="Ativar página"
-                  />
-                </div>
 
-                <div className="p-2 space-y-1">
-                  {paginaAtual.sections.map((sec) => {
-                    const meta = SECTION_CATALOG[sec.id];
-                    if (!meta) return null;
-                    return (
-                      <div
-                        key={sec.id}
-                        className={cn(
-                          'flex items-start gap-2 p-2.5 rounded-md border transition-colors',
-                          sec.enabled
-                            ? 'border-border bg-card'
-                            : 'border-dashed border-border/60 bg-muted/30',
-                        )}
-                      >
-                        <div className="flex-1 min-w-0">
-                          <p
-                            className={cn(
-                              'text-xs font-semibold truncate',
-                              sec.enabled
-                                ? 'text-foreground'
-                                : 'text-muted-foreground',
-                            )}
-                          >
-                            {meta.label}
-                          </p>
-                          <p className="text-[10px] text-muted-foreground line-clamp-2 leading-snug mt-0.5">
-                            {meta.description}
-                          </p>
+                  <div className="p-2 space-y-1 overflow-y-auto flex-1">
+                    {paginaAtual.sections.map((sec) => {
+                      const meta = SECTION_CATALOG[sec.id];
+                      if (!meta) return null;
+                      return (
+                        <div
+                          key={sec.id}
+                          className={cn(
+                            'flex items-start gap-2 p-2.5 rounded-md border transition-colors',
+                            sec.enabled
+                              ? 'border-border bg-card'
+                              : 'border-dashed border-border/60 bg-muted/30',
+                          )}
+                        >
+                          <div className="flex-1 min-w-0">
+                            <p
+                              className={cn(
+                                'text-xs font-semibold truncate',
+                                sec.enabled
+                                  ? 'text-foreground'
+                                  : 'text-muted-foreground',
+                              )}
+                            >
+                              {meta.label}
+                            </p>
+                            <p className="text-[10px] text-muted-foreground line-clamp-2 leading-snug mt-0.5">
+                              {meta.description}
+                            </p>
+                          </div>
+                          <Switch
+                            checked={sec.enabled}
+                            onCheckedChange={() =>
+                              toggleSection(paginaAtual.id, sec.id)
+                            }
+                            aria-label={`Ativar ${meta.label}`}
+                            disabled={!paginaAtual.enabled}
+                          />
                         </div>
-                        <Switch
-                          checked={sec.enabled}
-                          onCheckedChange={() =>
-                            toggleSection(paginaAtual.id, sec.id)
-                          }
-                          aria-label={`Ativar ${meta.label}`}
-                          disabled={!paginaAtual.enabled}
-                        />
-                      </div>
-                    );
-                  })}
-                </div>
+                      );
+                    })}
+                  </div>
 
-                <div className="px-3 pb-3 pt-1 text-[10px] text-muted-foreground/70">
-                  Adicionar / reordenar seções chega na próxima entrega.
-                </div>
-              </>
-            )}
-          </div>
-
-          {/* Coluna 3 — Preview */}
-          <div className="bg-muted/40 p-4 flex flex-col items-center justify-start overflow-auto">
-            <div className="text-[10px] uppercase tracking-wider text-muted-foreground mb-2">
-              Preview ao vivo · {viewport === 'mobile' ? 'mobile' : 'desktop'}
+                  <div className="px-3 py-2 text-[10px] text-muted-foreground/70 border-t border-border">
+                    Reordenar e adicionar seções chega em breve.
+                  </div>
+                </>
+              )}
             </div>
+          )}
+
+          {/* Preview — agora MAIOR */}
+          <div className="bg-muted/40 p-3 lg:p-5 flex flex-col items-center justify-start overflow-auto relative">
+            {/* Botão Tela cheia (canto sup direito do preview) */}
+            <button
+              onClick={() => setPreviewFullscreen((v) => !v)}
+              className="absolute top-3 right-3 z-10 h-8 px-2.5 rounded-md bg-card border border-border hover:bg-muted text-xs flex items-center gap-1.5 shadow-sm"
+              title={
+                previewFullscreen
+                  ? 'Mostrar painel de seções'
+                  : 'Tela cheia (esconder seções)'
+              }
+            >
+              {previewFullscreen ? (
+                <>
+                  <Minimize2 className="h-3.5 w-3.5" />
+                  <span className="hidden sm:inline">Sair tela cheia</span>
+                </>
+              ) : (
+                <>
+                  <Maximize2 className="h-3.5 w-3.5" />
+                  <span className="hidden sm:inline">Tela cheia</span>
+                </>
+              )}
+            </button>
+
             <div
-              className="rounded-md overflow-hidden shadow-md border border-border bg-white"
+              className="rounded-md overflow-hidden shadow-md border border-border bg-white w-full"
               style={{
-                width: previewSize.w,
-                maxWidth: '100%',
-                height: previewSize.h,
+                maxWidth: viewport === 'mobile' ? 380 : '100%',
+                height: 760,
               }}
             >
               <div className="flex items-center gap-2 px-3 py-1.5 border-b border-border bg-muted/40">
@@ -508,15 +574,15 @@ function Editor({
                 </span>
               </div>
               <iframe
-                src={url}
+                key={iframeKey}
+                src={iframeUrl}
                 title="Preview"
                 className="w-full bg-white"
                 style={{ height: 'calc(100% - 32px)', border: 0 }}
               />
             </div>
-            <p className="text-[11px] text-muted-foreground/70 mt-3 text-center max-w-md">
-              ⓘ As mudanças nas seções aplicam no site público depois que você
-              clicar em <span className="font-semibold">Salvar</span>.
+            <p className="text-[11px] text-muted-foreground/70 mt-3 text-center">
+              ⓘ Toggles atualizam o preview em ~1 segundo.
             </p>
           </div>
         </div>
@@ -580,19 +646,30 @@ function Editor({
 
         {/* Templates */}
         <div className="rounded-lg border border-border bg-card p-5">
-          <div className="flex items-center gap-2 mb-3">
+          <div className="flex items-center gap-2 mb-1">
             <Palette className="h-4 w-4 text-muted-foreground" />
             <h3 className="font-display text-base font-semibold">
               Template visual
             </h3>
           </div>
-          <p className="text-xs text-muted-foreground mb-3">
-            Estilo visual do site. Conteúdo e configurações são preservados ao
-            trocar.
+          <p className="text-xs text-muted-foreground mb-4">
+            Suas cores e logo são aplicadas automaticamente em qualquer
+            template. Click pra selecionar.
           </p>
-          <div className="space-y-2">
+          {trocandoTemplate && (
+            <p className="text-xs text-primary mb-3 flex items-center gap-1.5">
+              <Loader2 className="h-3 w-3 animate-spin" />
+              Trocando template...
+            </p>
+          )}
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
             {TEMPLATES.map((t) => (
-              <TemplateCard key={t.id} template={t} />
+              <TemplateCard
+                key={t.id}
+                template={t}
+                selecionado={templateAtivo === t.id}
+                onSelect={() => selecionarTemplate(t.id)}
+              />
             ))}
           </div>
         </div>
@@ -705,47 +782,226 @@ function CriarSiteWizard() {
 
 /* ---------- Helpers ---------- */
 
-function TemplateCard({ template }: { template: Template }) {
+function TemplateCard({
+  template,
+  onSelect,
+  selecionado,
+}: {
+  template: Template;
+  onSelect: () => void;
+  selecionado: boolean;
+}) {
+  const mock = TEMPLATE_MOCKS[template.id] ?? TEMPLATE_MOCKS.elegance;
   return (
-    <div
+    <button
+      type="button"
+      onClick={onSelect}
       className={cn(
-        'rounded-md border p-3 flex items-center gap-3 transition-colors',
-        template.ativo
-          ? 'border-primary bg-primary/5'
-          : 'border-border opacity-75',
+        'group relative w-full text-left rounded-xl border-2 overflow-hidden transition-all',
+        selecionado
+          ? 'border-primary shadow-lg ring-2 ring-primary/20'
+          : 'border-border hover:border-primary/50 hover:shadow-md',
       )}
     >
+      {/* Mockup visual do template — mais rico */}
       <div
-        className="h-10 w-14 shrink-0 rounded-md"
-        style={{ background: template.preview }}
-      />
-      <div className="flex-1 min-w-0">
-        <div className="flex items-center gap-2">
-          <p className="font-semibold text-sm">{template.nome}</p>
-          {template.ativo && (
-            <Badge className="bg-primary text-primary-foreground text-[9px] uppercase tracking-wider">
-              Ativo
-            </Badge>
+        className="relative aspect-[5/3] overflow-hidden"
+        style={{ background: mock.bg, color: mock.fg }}
+      >
+        {/* Header */}
+        <div
+          className="absolute top-0 left-0 right-0 px-3 py-2 flex items-center justify-between text-[8px] font-semibold border-b"
+          style={{ borderColor: `${mock.fg}1f` }}
+        >
+          <div className="flex items-center gap-1.5">
+            <span
+              className="h-3 w-3 rounded-full grid place-items-center text-[6px] font-bold"
+              style={{ background: mock.accent, color: mock.accentFg }}
+            >
+              ★
+            </span>
+            <span style={{ fontFamily: mock.fontDisplay }}>
+              {mock.logoText}
+            </span>
+          </div>
+          <span className="opacity-50 text-[7px]">
+            Início · Imóveis · Sobre
+          </span>
+        </div>
+
+        {/* Hero — 60% da altura */}
+        <div className="absolute top-[14%] left-0 right-0 bottom-[40%] flex flex-col items-center justify-center px-3">
+          <p
+            className="text-center leading-[1.05]"
+            style={{
+              fontFamily: mock.fontDisplay,
+              fontSize: 16,
+              fontWeight: 300,
+              maxWidth: '95%',
+            }}
+          >
+            {mock.slogan.split(' ').slice(0, -1).join(' ')}{' '}
+            <span style={{ color: mock.accent, fontStyle: 'italic' }}>
+              {mock.slogan.split(' ').slice(-1)}
+            </span>
+          </p>
+        </div>
+
+        {/* Card de busca encavalado */}
+        <div
+          className="absolute left-[10%] right-[10%] bottom-[18%] rounded px-2 py-1.5 flex flex-col gap-1"
+          style={{
+            background: mock.cardBg,
+            color: mock.cardFg,
+            boxShadow: '0 4px 12px rgba(0,0,0,0.18)',
+          }}
+        >
+          <span
+            className="text-[6px] font-semibold opacity-70"
+            style={{ fontFamily: mock.fontDisplay }}
+          >
+            Buscar imóveis
+          </span>
+          <div className="flex gap-1">
+            <span
+              className="flex-1 px-1 py-0.5 rounded text-[6px]"
+              style={{ background: mock.muted }}
+            >
+              Tipo
+            </span>
+            <span
+              className="flex-1 px-1 py-0.5 rounded text-[6px]"
+              style={{ background: mock.muted }}
+            >
+              Bairro
+            </span>
+            <span
+              className="px-1.5 py-0.5 rounded text-[6px] font-bold"
+              style={{ background: mock.accent, color: mock.accentFg }}
+            >
+              ⌕
+            </span>
+          </div>
+        </div>
+
+        {/* Mini-cards de imóveis embaixo */}
+        <div className="absolute left-3 right-3 bottom-2 flex gap-1">
+          {[0, 1, 2].map((i) => (
+            <div
+              key={i}
+              className="flex-1 h-4 rounded"
+              style={{
+                background: `${mock.fg}14`,
+                border: `1px solid ${mock.fg}22`,
+              }}
+            />
+          ))}
+        </div>
+
+        {/* Badge canto sup direito */}
+        <div className="absolute top-2 right-2 flex gap-1">
+          {selecionado && (
+            <span className="text-[9px] uppercase tracking-wider font-bold px-2 py-1 rounded-md bg-primary text-primary-foreground inline-flex items-center gap-1 shadow">
+              <Check className="h-2.5 w-2.5" />
+              Selecionado
+            </span>
           )}
-          {template.premium && !template.ativo && (
-            <Badge variant="outline" className="text-[9px] uppercase tracking-wider">
-              <Crown className="h-2.5 w-2.5 mr-1 text-amber-500" />
+          {template.premium && !selecionado && (
+            <span className="text-[9px] uppercase tracking-wider font-bold px-2 py-1 rounded-md bg-amber-500 text-amber-950 inline-flex items-center gap-1 shadow">
+              <Crown className="h-2.5 w-2.5" />
               Pro
-            </Badge>
+            </span>
           )}
         </div>
-        <p className="text-[11px] text-muted-foreground truncate">
+
+        {/* Overlay no hover */}
+        <div
+          className={cn(
+            'absolute inset-0 grid place-items-center transition-opacity',
+            selecionado
+              ? 'opacity-0'
+              : 'opacity-0 group-hover:opacity-100 bg-black/30',
+          )}
+        >
+          <span className="text-white text-xs font-semibold uppercase tracking-wider px-3 py-1.5 rounded bg-black/70 inline-flex items-center gap-1.5">
+            <Check className="h-3 w-3" />
+            Selecionar
+          </span>
+        </div>
+      </div>
+
+      {/* Info embaixo */}
+      <div className="p-3.5 bg-card">
+        <div className="flex items-start justify-between gap-2 mb-1">
+          <p className="font-display text-base font-semibold">{template.nome}</p>
+          {template.premium && (
+            <Crown className="h-3.5 w-3.5 text-amber-500 shrink-0" />
+          )}
+        </div>
+        <p className="text-[11px] text-muted-foreground leading-snug mb-2">
+          {template.descricao}
+        </p>
+        <p className="text-[10px] text-primary uppercase tracking-wider font-semibold">
           {template.vibe}
         </p>
       </div>
-      {template.ativo ? (
-        <Check className="h-4 w-4 text-primary shrink-0" />
-      ) : (
-        <span className="text-[10px] text-muted-foreground">Em breve</span>
-      )}
-    </div>
+    </button>
   );
 }
+
+/* Mockups visuais dos templates pra preview */
+const TEMPLATE_MOCKS: Record<
+  string,
+  {
+    bg: string;
+    fg: string;
+    cardBg: string;
+    cardFg: string;
+    muted: string;
+    accent: string;
+    accentFg: string;
+    fontDisplay: string;
+    logoText: string;
+    slogan: string;
+  }
+> = {
+  elegance: {
+    bg: '#1a2e1a',
+    fg: '#faf8f3',
+    cardBg: '#faf8f3',
+    cardFg: '#1a2e1a',
+    muted: '#e5e1d4',
+    accent: '#c5a64f',
+    accentFg: '#fff',
+    fontDisplay: '"Cormorant Garamond", serif',
+    logoText: 'IMOBILIÁRIA',
+    slogan: 'Encontre o imóvel ideal',
+  },
+  cosmic: {
+    bg: 'linear-gradient(135deg, #0f0a1f 0%, #1e0a3c 100%)',
+    fg: '#e9e3ff',
+    cardBg: 'rgba(255,255,255,0.08)',
+    cardFg: '#e9e3ff',
+    muted: 'rgba(255,255,255,0.12)',
+    accent: '#a78bfa',
+    accentFg: '#0f0a1f',
+    fontDisplay: '"Inter", sans-serif',
+    logoText: 'COSMIC',
+    slogan: 'Imóveis do futuro, hoje',
+  },
+  boutique: {
+    bg: '#fff8f0',
+    fg: '#3a2a1f',
+    cardBg: '#fff',
+    cardFg: '#3a2a1f',
+    muted: '#f4e8d8',
+    accent: '#c97362',
+    accentFg: '#fff',
+    fontDisplay: '"Playfair Display", serif',
+    logoText: 'Boutique',
+    slogan: 'Lares com personalidade',
+  },
+};
 
 function ColorChip({ color, label }: { color: string; label: string }) {
   return (
@@ -761,50 +1017,4 @@ function ColorChip({ color, label }: { color: string; label: string }) {
   );
 }
 
-function KpiCard({
-  label,
-  value,
-  icon: Icon,
-  accent,
-  mono,
-}: {
-  label: string;
-  value: string;
-  icon: LucideIcon;
-  accent: 'primary' | 'green' | 'amber' | 'violet' | 'blue';
-  mono?: boolean;
-}) {
-  const colors = {
-    primary: 'bg-primary/10 text-primary',
-    green: 'bg-green-500/10 text-green-600 dark:text-green-400',
-    amber: 'bg-amber-500/10 text-amber-600 dark:text-amber-400',
-    violet: 'bg-violet-500/10 text-violet-600 dark:text-violet-400',
-    blue: 'bg-blue-500/10 text-blue-600 dark:text-blue-400',
-  };
-  return (
-    <div className="rounded-lg border border-border bg-card p-3">
-      <div className="flex items-center justify-between">
-        <p className="text-[10px] uppercase tracking-wider text-muted-foreground">
-          {label}
-        </p>
-        <div
-          className={cn(
-            'h-6 w-6 rounded-md grid place-items-center',
-            colors[accent],
-          )}
-        >
-          <Icon className="h-3 w-3" />
-        </div>
-      </div>
-      <p
-        className={cn(
-          'mt-1.5 font-semibold text-base text-foreground truncate',
-          mono && 'font-mono text-sm',
-        )}
-        title={value}
-      >
-        {value}
-      </p>
-    </div>
-  );
-}
+// KpiCard agora vem de @/components/ui/kpi-card

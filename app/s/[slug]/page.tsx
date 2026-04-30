@@ -2,8 +2,11 @@ import { notFound } from 'next/navigation';
 import { prisma } from '@/lib/prisma';
 import { TemplateHome } from '@/app/_templates/elegance/TemplateHome';
 import type { TenantPublic, ImovelPublic } from '@/app/_templates/types';
+import { mergeSiteConfig } from '@/lib/site-config';
 
 export const dynamic = 'force-dynamic';
+// Iframe do editor faz cache-bust com ?t=... e revalida — força re-render
+export const revalidate = 0;
 
 function titleCase(slug: string) {
   return slug
@@ -20,7 +23,7 @@ export default async function SiteHome({
   const { slug } = await params;
   const tenant = await prisma.tenant.findUnique({
     where: { slug },
-    include: { marca: true },
+    include: { marca: true, site: true },
   });
 
   if (!tenant) notFound();
@@ -30,6 +33,14 @@ export default async function SiteHome({
     orderBy: [{ destaque: 'desc' }, { createdAt: 'desc' }],
     take: 30,
   });
+
+  // Lê config do site (páginas e seções habilitadas)
+  // Se nunca foi salvo, usa default
+  const siteConfig = mergeSiteConfig((tenant.site as any)?.config);
+  const inicio = siteConfig.pages.find((p) => p.id === 'inicio');
+  const enabledSections = inicio
+    ? inicio.sections.filter((s) => s.enabled).map((s) => s.id as any)
+    : undefined;
 
   const tenantCtx: TenantPublic = {
     slug: tenant.slug,
@@ -82,5 +93,11 @@ export default async function SiteHome({
     destaque: i.destaque,
   }));
 
-  return <TemplateHome tenant={tenantCtx} imoveis={imoveisData} />;
+  return (
+    <TemplateHome
+      tenant={tenantCtx}
+      imoveis={imoveisData}
+      enabledSections={enabledSections}
+    />
+  );
 }

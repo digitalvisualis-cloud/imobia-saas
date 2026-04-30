@@ -29,6 +29,7 @@ import {
   type LucideIcon,
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
+import { Toaster } from '@/components/ui/toaster';
 
 type NavItem = {
   name: string;
@@ -88,7 +89,7 @@ export default function DashboardLayout({
       items: [
         { name: 'Negócios', href: '/leads', icon: TrendingUp },
         { name: 'Contatos', href: '/contatos', icon: Users },
-        { name: 'Leads (chatbot)', href: '/leads-inbox', icon: MessageSquare, soon: true },
+        { name: 'Leads (chatbot)', href: '/leads-inbox', icon: MessageSquare },
         { name: 'Agenda', href: '/agenda', icon: Calendar },
       ],
     },
@@ -107,6 +108,11 @@ export default function DashboardLayout({
           : [{ name: 'Configurar Site', href: '/sites', icon: Globe }]),
         { name: 'Conteúdo IA', href: '/conteudo', icon: Sparkles },
         {
+          name: 'Anunciar em portais',
+          href: '/configuracoes/portais',
+          icon: Globe,
+        },
+        {
           name: 'Agendar Posts',
           href: '/conteudo/agenda',
           icon: Send,
@@ -117,7 +123,7 @@ export default function DashboardLayout({
     {
       label: 'Atendimento IA',
       items: [
-        { name: 'Assistente Virtual', href: '/atendimento', icon: Bot },
+        { name: 'Agente IA', href: '/configuracoes/agente-ia', icon: Bot },
       ],
     },
     {
@@ -299,6 +305,7 @@ export default function DashboardLayout({
         </header>
 
         <main className="flex-1 p-4 md:p-8 overflow-y-auto">{children}</main>
+        <Toaster />
       </div>
     </div>
   );

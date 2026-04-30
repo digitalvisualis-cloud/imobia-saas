@@ -4,6 +4,8 @@ import { Header } from '@/app/_templates/elegance/Header';
 import { Footer } from '@/app/_templates/elegance/Footer';
 import { WhatsAppButton } from '@/app/_templates/elegance/WhatsAppButton';
 import type { TenantPublic } from '@/app/_templates/types';
+import { hexToHsl, pickForeground } from '@/lib/colors';
+import { getFamilyTitulo, getFamilyCorpo } from '@/lib/fonts';
 
 export async function generateMetadata({
   params,
@@ -78,18 +80,37 @@ export default async function SiteLayout({
       : null,
   };
 
-  // O tema do Lovable (gold + forest) fica fixo. Se o tenant tiver
-  // corPrimaria definida, ela disponível em --brand-primary pra futuro
-  // (não sobrescreve o ouro do template — preserva a estética).
+  // Aplica as cores do brand kit do cliente como CSS vars do Tailwind.
+  // Sobrescreve --primary, --secondary e variações foreground com as cores
+  // que o cliente cadastrou em /configuracoes (ConfigMarca).
+  // Fallback: usa o tema padrão do template (gold + forest) se não cadastrou.
   const themeStyle: React.CSSProperties = {};
-  if (tenantCtx.marca?.corPrimaria) {
+  const primariaHsl = hexToHsl(tenantCtx.marca?.corPrimaria);
+  const secundariaHsl = hexToHsl(tenantCtx.marca?.corSecundaria);
+
+  if (primariaHsl) {
+    (themeStyle as Record<string, string>)['--primary'] = primariaHsl;
+    (themeStyle as Record<string, string>)['--primary-foreground'] =
+      pickForeground(tenantCtx.marca?.corPrimaria);
+    (themeStyle as Record<string, string>)['--ring'] = primariaHsl;
     (themeStyle as Record<string, string>)['--brand-primary'] =
-      tenantCtx.marca.corPrimaria;
+      tenantCtx.marca!.corPrimaria!;
   }
-  if (tenantCtx.marca?.corSecundaria) {
+  if (secundariaHsl) {
+    (themeStyle as Record<string, string>)['--secondary'] = secundariaHsl;
+    (themeStyle as Record<string, string>)['--secondary-foreground'] =
+      pickForeground(tenantCtx.marca?.corSecundaria);
     (themeStyle as Record<string, string>)['--brand-secondary'] =
-      tenantCtx.marca.corSecundaria;
+      tenantCtx.marca!.corSecundaria!;
   }
+
+  // Aplicar fontes que o cliente escolheu em /configuracoes
+  const fonteTituloKey = (tenant.marca as any)?.fonteTitulo as string | null;
+  const fonteCorpoKey = (tenant.marca as any)?.fonteCorpo as string | null;
+  (themeStyle as Record<string, string>)['--font-display'] =
+    getFamilyTitulo(fonteTituloKey);
+  (themeStyle as Record<string, string>)['--font-body'] =
+    getFamilyCorpo(fonteCorpoKey);
 
   return (
     <div className="min-h-screen flex flex-col bg-background" style={themeStyle}>

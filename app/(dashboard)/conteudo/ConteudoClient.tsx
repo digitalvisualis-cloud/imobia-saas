@@ -13,6 +13,9 @@ import {
 import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
+import { KpiCard } from '@/components/ui/kpi-card';
+import { EmptyState } from '@/components/ui/empty-state';
+import { PageHeader } from '@/components/ui/page-header';
 
 type ImovelLite = {
   id: string;
@@ -74,24 +77,20 @@ export default function ConteudoClient({ imoveis }: { imoveis: ImovelLite[] }) {
 
   return (
     <div className="space-y-6">
-      {/* Header */}
-      <div className="flex flex-wrap items-center justify-between gap-3">
-        <div>
-          <h1 className="font-display text-3xl font-bold text-foreground">
-            Conteúdo
-          </h1>
-          <p className="text-sm text-muted-foreground">
-            Gere posts visuais a partir dos seus imóveis. Cores e logo da sua
-            marca aplicados automaticamente.
-          </p>
-        </div>
-        <Button asChild variant="outline">
-          <Link href="/imoveis/novo">
-            <Plus className="h-4 w-4 mr-2" />
-            Cadastrar imóvel
-          </Link>
-        </Button>
-      </div>
+      <PageHeader
+        kicker="Marketing"
+        icon={Sparkles}
+        title="Conteúdo"
+        description="Gere posts visuais a partir dos seus imóveis. Cores e logo da sua marca aplicados automaticamente."
+        actions={
+          <Button asChild variant="outline">
+            <Link href="/imoveis/novo">
+              <Plus className="h-4 w-4 mr-2" />
+              Cadastrar imóvel
+            </Link>
+          </Button>
+        }
+      />
 
       {/* KPIs simples */}
       <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
@@ -136,22 +135,23 @@ export default function ConteudoClient({ imoveis }: { imoveis: ImovelLite[] }) {
 
       {/* Grid de imóveis */}
       {filtered.length === 0 ? (
-        <div className="text-center py-16 bg-card border border-border rounded-lg">
-          <ImageIcon className="h-10 w-10 text-muted-foreground/40 mx-auto mb-3" />
-          <p className="text-muted-foreground mb-1">
-            {imoveis.length === 0
-              ? 'Você ainda não tem imóveis cadastrados.'
-              : 'Nenhum imóvel encontrado pra esse filtro.'}
-          </p>
-          {imoveis.length === 0 && (
-            <Button asChild className="mt-4">
-              <Link href="/imoveis/novo">
-                <Plus className="h-4 w-4 mr-2" />
-                Cadastrar primeiro imóvel
-              </Link>
-            </Button>
-          )}
-        </div>
+        <EmptyState
+          icon={ImageIcon}
+          title={
+            imoveis.length === 0
+              ? 'Você ainda não tem imóveis cadastrados'
+              : 'Nenhum imóvel encontrado pra esse filtro'
+          }
+          action={
+            imoveis.length === 0
+              ? {
+                  label: 'Cadastrar primeiro imóvel',
+                  href: '/imoveis/novo',
+                  icon: Plus,
+                }
+              : undefined
+          }
+        />
       ) : (
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5">
           {filtered.map((i) => (
@@ -220,15 +220,4 @@ function ImovelCard({ imovel }: { imovel: ImovelLite }) {
   );
 }
 
-function KpiCard({ label, value }: { label: string; value: string }) {
-  return (
-    <div className="rounded-lg border border-border bg-card p-4">
-      <p className="text-[10px] uppercase tracking-wider text-muted-foreground">
-        {label}
-      </p>
-      <p className="mt-1 font-display text-2xl font-semibold text-foreground">
-        {value}
-      </p>
-    </div>
-  );
-}
+// KpiCard agora vem de @/components/ui/kpi-card

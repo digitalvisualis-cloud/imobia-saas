@@ -81,9 +81,25 @@ export function formatBRL(v: number) {
   });
 }
 
-export function buildWhatsAppLink(num: string, msg = 'Olá! Vim pelo site e gostaria de mais informações.') {
+/**
+ * @deprecated Usar `buildWhatsappLink` de `@/lib/whatsapp-link`. Mantido pra
+ * compatibilidade com templates legados.
+ */
+export function buildWhatsAppLink(
+  num: string,
+  msg = 'Olá! Vim pelo site e gostaria de mais informações.',
+  imovel?: { codigo: string; titulo: string; bairro?: string | null; cidade?: string | null },
+) {
   const cleaned = num.replace(/\D/g, '');
   const withCountry =
     cleaned.length === 11 || cleaned.length === 10 ? `55${cleaned}` : cleaned;
-  return `https://wa.me/${withCountry}?text=${encodeURIComponent(msg)}`;
+
+  // Se imóvel veio, prioriza mensagem com [CÓDIGO] pro agente IA reconhecer
+  let text = msg;
+  if (imovel) {
+    const local = [imovel.bairro, imovel.cidade].filter(Boolean).join(', ');
+    text = `Olá! Tenho interesse no imóvel [${imovel.codigo}] - ${imovel.titulo}${local ? ` (${local})` : ''}. Pode me passar mais informações?`;
+  }
+
+  return `https://wa.me/${withCountry}?text=${encodeURIComponent(text)}`;
 }
