@@ -1,0 +1,644 @@
+{
+  "name": "ListaPro — Gerador de Assets v2",
+  "active": false,
+  "isArchived": false,
+  "settings": {
+    "executionOrder": "v1",
+    "timezone": "America/Sao_Paulo",
+    "callerPolicy": "workflowsFromSameOwner",
+    "availableInMCP": false,
+    "saveExecutionProgress": true,
+    "saveDataErrorExecution": "all",
+    "saveDataSuccessExecution": "all",
+    "saveManualExecutions": true
+  },
+  "staticData": null,
+  "pinData": {},
+  "tags": [],
+  "nodes": [
+    {
+      "id": "webhook-receber",
+      "name": "receber_job",
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 2,
+      "position": [
+        -1200,
+        300
+      ],
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "listapro-gerar",
+        "responseMode": "responseNode",
+        "options": {}
+      },
+      "webhookId": "5457ae93-d290-474a-a135-fa73272171c4"
+    },
+    {
+      "id": "respond-202",
+      "name": "responder_202",
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1,
+      "position": [
+        -940,
+        160
+      ],
+      "parameters": {
+        "respondWith": "json",
+        "responseBody": "={{ JSON.stringify({ received: true, job_id: $json.body.job_id }) }}",
+        "options": {
+          "responseCode": 202
+        }
+      }
+    },
+    {
+      "id": "set-dados",
+      "name": "setar_dados",
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        -940,
+        300
+      ],
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "a1",
+              "name": "job_id",
+              "value": "={{ $json.body.job_id }}",
+              "type": "string"
+            },
+            {
+              "id": "a2",
+              "name": "imovel_id",
+              "value": "={{ $json.body.imovel_id }}",
+              "type": "string"
+            },
+            {
+              "id": "a3",
+              "name": "tenant_id",
+              "value": "={{ $json.body.tenant_id }}",
+              "type": "string"
+            },
+            {
+              "id": "a4",
+              "name": "callback_url",
+              "value": "={{ $json.body.callback_url }}",
+              "type": "string"
+            },
+            {
+              "id": "a5",
+              "name": "imovel",
+              "value": "={{ $json.body.imovel }}",
+              "type": "object"
+            },
+            {
+              "id": "a6",
+              "name": "agente",
+              "value": "={{ $json.body.agente }}",
+              "type": "object"
+            },
+            {
+              "id": "a7",
+              "name": "imobiliaria",
+              "value": "={{ $json.body.imobiliaria }}",
+              "type": "object"
+            },
+            {
+              "id": "a8",
+              "name": "ai_config",
+              "value": "={{ $json.body.ai_config }}",
+              "type": "object"
+            }
+          ]
+        },
+        "options": {}
+      }
+    },
+    {
+      "id": "http-status-processing",
+      "name": "atualizar_status_processing",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        -680,
+        300
+      ],
+      "parameters": {
+        "method": "PATCH",
+        "url": "={{ $env.SUPABASE_URL }}/rest/v1/listapro_jobs?id=eq.{{ $('setar_dados').item.json.job_id }}",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "apikey",
+              "value": "={{ $env.SUPABASE_SERVICE_KEY }}"
+            },
+            {
+              "name": "Authorization",
+              "value": "=Bearer {{ $env.SUPABASE_SERVICE_KEY }}"
+            },
+            {
+              "name": "Content-Type",
+              "value": "application/json"
+            },
+            {
+              "name": "Prefer",
+              "value": "return=minimal"
+            }
+          ]
+        },
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={ \"status\": \"processing\" }",
+        "options": {}
+      },
+      "continueOnFail": true
+    },
+    {
+      "id": "http-claude",
+      "name": "gerar_texto_claude",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        -420,
+        300
+      ],
+      "parameters": {
+        "method": "POST",
+        "url": "https://api.anthropic.com/v1/messages",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "x-api-key",
+              "value": "={{ $env.ANTHROPIC_API_KEY }}"
+            },
+            {
+              "name": "anthropic-version",
+              "value": "2023-06-01"
+            },
+            {
+              "name": "Content-Type",
+              "value": "application/json"
+            }
+          ]
+        },
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "{\"model\": \"claude-haiku-4-5-20251001\", \"max_tokens\": 2500, \"messages\": [{\"role\": \"user\", \"content\": \"=Voc\\u00ea \\u00e9 um copywriter especialista em imobili\\u00e1rias de alto padr\\u00e3o. Escreve em portugu\\u00eas do Brasil. Tom persuasivo, elegante, sem exageros vazios.\\n\\nCONTEXTO:\\n{{ JSON.stringify($('setar_dados').item.json.imovel) }}\\n\\nBRAND KIT:\\n{{ JSON.stringify($('setar_dados').item.json.imobiliaria.brand_kit) }}\\n\\nTAREFA: Retorne EXATAMENTE um JSON v\\u00e1lido (sem markdown, sem code fence) com essa estrutura:\\n\\n{\\n  \\\"descricao_longa\\\": \\\"texto de 800-1200 caracteres pra ficha do im\\u00f3vel\\\",\\n  \\\"legenda_post_instagram\\\": \\\"legenda at\\u00e9 2200 chars com emojis estrat\\u00e9gicos + 8-12 hashtags no final\\\",\\n  \\\"texto_story\\\": \\\"texto curto (m\\u00e1x 120 chars) pra overlay no story 9:16\\\",\\n  \\\"slides_carrusel\\\": [\\n    {\\\"titulo\\\": \\\"...\\\", \\\"descricao\\\": \\\"...\\\"},\\n    {\\\"titulo\\\": \\\"...\\\", \\\"descricao\\\": \\\"...\\\"},\\n    {\\\"titulo\\\": \\\"...\\\", \\\"descricao\\\": \\\"...\\\"},\\n    {\\\"titulo\\\": \\\"...\\\", \\\"descricao\\\": \\\"...\\\"},\\n    {\\\"titulo\\\": \\\"...\\\", \\\"descricao\\\": \\\"...\\\"}\\n  ],\\n  \\\"email_html\\\": \\\"HTML inline pronto pra Gmail\\\",\\n  \\\"voiceover_script\\\": \\\"texto corrido para TTS, sem emoji, com pontua\\u00e7\\u00e3o natural\\\",\\n  \\\"guion_escenas_revisado\\\": [\\n    {\\\"slug\\\": \\\"fachada\\\", \\\"titulo\\\": \\\"...\\\", \\\"texto\\\": \\\"...\\\", \\\"ordem\\\": 0}\\n  ]\\n}\\n\\nREGRAS:\\n- Portugu\\u00eas do Brasil sempre\\n- Nunca invente caracter\\u00edsticas (s\\u00f3 mencione o que est\\u00e1 no contexto)\\n- Pre\\u00e7o em R$ com formata\\u00e7\\u00e3o brasileira (R$ 8.500.000)\\n- Tom: {{ $('setar_dados').item.json.imovel.voiceover_tom || 'profissional' }}\\n- Retorne APENAS o JSON, sem texto antes ou depois\"}]}",
+        "options": {
+          "timeout": 90000
+        }
+      },
+      "retryOnFail": true,
+      "maxTries": 3,
+      "waitBetweenTries": 2000
+    },
+    {
+      "id": "code-parse-claude",
+      "name": "extrair_textos",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        -160,
+        300
+      ],
+      "parameters": {
+        "jsCode": "// Claude retorna { content: [{ type: 'text', text: '...' }] }\nconst raw = $input.first().json.content?.[0]?.text ?? \"\";\nconst cleaned = raw.trim().replace(/^```(?:json)?\\s*/i, \"\").replace(/\\s*```$/i, \"\");\n\nlet textos;\ntry {\n  textos = JSON.parse(cleaned);\n} catch (e) {\n  throw new Error(\"Claude não retornou JSON válido: \" + cleaned.slice(0, 300));\n}\n\nconst ctx = $('setar_dados').item.json;\n\nreturn [{\n  json: {\n    ...ctx,\n    textos: textos,\n    prompt_imagem_post: `Professional real estate marketing image, 1:1 square. ${ctx.imovel.tipo} in ${ctx.imovel.bairro}, ${ctx.imovel.cidade}. Modern luxury style, warm lighting, architectural photography. Overlay: property title \"${ctx.imovel.titulo}\", price \"R$ ${Number(ctx.imovel.preco).toLocaleString('pt-BR')}\", agency logo watermark bottom-right in color ${ctx.imobiliaria.brand_kit?.primary_color || '#C9A227'}. Clean serif typography for title. Subtle gradient background. No text artifacts.`,\n    prompt_imagem_story: `Professional Instagram Story, 9:16 vertical. ${ctx.imovel.tipo}, ${ctx.imovel.quartos} bedrooms, ${ctx.imovel.area_m2}m² in ${ctx.imovel.bairro}. Bold modern design, property photo top 60%, bottom 40% solid block in color ${ctx.imobiliaria.brand_kit?.primary_color || '#C9A227'} with text \"${textos.texto_story}\" in large white sans-serif, price \"R$ ${Number(ctx.imovel.preco).toLocaleString('pt-BR')}\" below. Swipe-up arrow at bottom edge. Mobile-first composition.`,\n  }\n}];\n",
+        "language": "javaScript"
+      }
+    },
+    {
+      "id": "http-openai-post",
+      "name": "gerar_post_openai",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        100,
+        140
+      ],
+      "parameters": {
+        "method": "POST",
+        "url": "https://api.openai.com/v1/images/generations",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Authorization",
+              "value": "=Bearer {{ $json.ai_config.api_key }}"
+            },
+            {
+              "name": "Content-Type",
+              "value": "application/json"
+            }
+          ]
+        },
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={\n  \"model\": \"gpt-image-1\",\n  \"prompt\": {{ JSON.stringify($json.prompt_imagem_post) }},\n  \"size\": \"1024x1024\",\n  \"quality\": \"medium\",\n  \"n\": 1,\n  \"response_format\": \"b64_json\"\n}",
+        "options": {
+          "timeout": 120000
+        }
+      },
+      "continueOnFail": true,
+      "retryOnFail": true,
+      "maxTries": 3,
+      "waitBetweenTries": 2000
+    },
+    {
+      "id": "http-openai-story",
+      "name": "gerar_story_openai",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        100,
+        300
+      ],
+      "parameters": {
+        "method": "POST",
+        "url": "https://api.openai.com/v1/images/generations",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Authorization",
+              "value": "=Bearer {{ $('extrair_textos').item.json.ai_config.api_key }}"
+            },
+            {
+              "name": "Content-Type",
+              "value": "application/json"
+            }
+          ]
+        },
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={\n  \"model\": \"gpt-image-1\",\n  \"prompt\": {{ JSON.stringify($('extrair_textos').item.json.prompt_imagem_story) }},\n  \"size\": \"1024x1536\",\n  \"quality\": \"medium\",\n  \"n\": 1,\n  \"response_format\": \"b64_json\"\n}",
+        "options": {
+          "timeout": 120000
+        }
+      },
+      "continueOnFail": true,
+      "retryOnFail": true,
+      "maxTries": 3,
+      "waitBetweenTries": 2000
+    },
+    {
+      "id": "http-upload-post",
+      "name": "upload_post_storage",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        360,
+        140
+      ],
+      "parameters": {
+        "method": "POST",
+        "url": "={{ $env.SUPABASE_URL }}/storage/v1/object/listapro/{{ $('extrair_textos').item.json.tenant_id }}/{{ $('extrair_textos').item.json.imovel_id }}/post.png",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "apikey",
+              "value": "={{ $env.SUPABASE_SERVICE_KEY }}"
+            },
+            {
+              "name": "Authorization",
+              "value": "=Bearer {{ $env.SUPABASE_SERVICE_KEY }}"
+            },
+            {
+              "name": "Content-Type",
+              "value": "image/png"
+            },
+            {
+              "name": "x-upsert",
+              "value": "true"
+            }
+          ]
+        },
+        "sendBody": true,
+        "contentType": "binaryData",
+        "bodyContentType": "binaryData",
+        "inputDataFieldName": "data",
+        "specifyBody": "raw",
+        "rawContentType": "image/png",
+        "body": "={{ Buffer.from($json.data[0].b64_json, 'base64') }}",
+        "options": {}
+      },
+      "continueOnFail": true
+    },
+    {
+      "id": "http-upload-story",
+      "name": "upload_story_storage",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        360,
+        300
+      ],
+      "parameters": {
+        "method": "POST",
+        "url": "={{ $env.SUPABASE_URL }}/storage/v1/object/listapro/{{ $('extrair_textos').item.json.tenant_id }}/{{ $('extrair_textos').item.json.imovel_id }}/story.png",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "apikey",
+              "value": "={{ $env.SUPABASE_SERVICE_KEY }}"
+            },
+            {
+              "name": "Authorization",
+              "value": "=Bearer {{ $env.SUPABASE_SERVICE_KEY }}"
+            },
+            {
+              "name": "Content-Type",
+              "value": "image/png"
+            },
+            {
+              "name": "x-upsert",
+              "value": "true"
+            }
+          ]
+        },
+        "sendBody": true,
+        "contentType": "binaryData",
+        "bodyContentType": "binaryData",
+        "specifyBody": "raw",
+        "rawContentType": "image/png",
+        "body": "={{ Buffer.from($json.data[0].b64_json, 'base64') }}",
+        "options": {}
+      },
+      "continueOnFail": true
+    },
+    {
+      "id": "merge-urls",
+      "name": "montar_resultado",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        620,
+        300
+      ],
+      "parameters": {
+        "jsCode": "// Coleta URLs dos uploads\nconst ctx = $('extrair_textos').item.json;\nconst supabaseUrl = $env.SUPABASE_URL;\n\nconst basePath = `${supabaseUrl}/storage/v1/object/public/listapro/${ctx.tenant_id}/${ctx.imovel_id}`;\n\nreturn [{\n  json: {\n    ...ctx,\n    formatos: {\n      pdf_url: null,  // Entrega 2b: PDF via puppeteer\n      post_url: `${basePath}/post.png`,\n      story_url: `${basePath}/story.png`,\n      carrusel_urls: [],  // Entrega 2c\n      email_html: ctx.textos.email_html,\n      audio_url: null,  // Entrega 3\n      video_url: null,  // Entrega 3\n    }\n  }\n}];\n",
+        "language": "javaScript"
+      }
+    },
+    {
+      "id": "http-update-imoveis",
+      "name": "salvar_imoveis_supabase",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        880,
+        300
+      ],
+      "parameters": {
+        "method": "PATCH",
+        "url": "={{ $env.SUPABASE_URL }}/rest/v1/imoveis?id=eq.{{ $json.imovel_id }}",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "apikey",
+              "value": "={{ $env.SUPABASE_SERVICE_KEY }}"
+            },
+            {
+              "name": "Authorization",
+              "value": "=Bearer {{ $env.SUPABASE_SERVICE_KEY }}"
+            },
+            {
+              "name": "Content-Type",
+              "value": "application/json"
+            },
+            {
+              "name": "Prefer",
+              "value": "return=minimal"
+            }
+          ]
+        },
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={\n  \"descricao\": {{ JSON.stringify($json.textos.descricao_longa) }},\n  \"formatos_gerados\": {{ JSON.stringify($json.formatos) }},\n  \"status_geracao\": \"pronto\",\n  \"publicado\": true,\n  \"gerado_at\": \"{{ $now.toISO() }}\"\n}",
+        "options": {}
+      },
+      "continueOnFail": true
+    },
+    {
+      "id": "http-update-jobs",
+      "name": "salvar_job_supabase",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        1140,
+        300
+      ],
+      "parameters": {
+        "method": "PATCH",
+        "url": "={{ $env.SUPABASE_URL }}/rest/v1/listapro_jobs?id=eq.{{ $json.job_id }}",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "apikey",
+              "value": "={{ $env.SUPABASE_SERVICE_KEY }}"
+            },
+            {
+              "name": "Authorization",
+              "value": "=Bearer {{ $env.SUPABASE_SERVICE_KEY }}"
+            },
+            {
+              "name": "Content-Type",
+              "value": "application/json"
+            },
+            {
+              "name": "Prefer",
+              "value": "return=minimal"
+            }
+          ]
+        },
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={\n  \"status\": \"done\",\n  \"resultado\": {{ JSON.stringify($json.formatos) }}\n}",
+        "options": {}
+      },
+      "continueOnFail": true
+    },
+    {
+      "id": "http-callback",
+      "name": "callback_nextjs",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        1400,
+        300
+      ],
+      "parameters": {
+        "method": "POST",
+        "url": "={{ $json.callback_url }}",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "x-webhook-secret",
+              "value": "={{ $env.N8N_WEBHOOK_SECRET }}"
+            },
+            {
+              "name": "Content-Type",
+              "value": "application/json"
+            }
+          ]
+        },
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={\n  \"status\": \"done\",\n  \"formatos\": {{ JSON.stringify($json.formatos) }},\n  \"descricao\": {{ JSON.stringify($json.textos.descricao_longa) }}\n}",
+        "options": {}
+      },
+      "continueOnFail": true
+    }
+  ],
+  "connections": {
+    "receber_job": {
+      "main": [
+        [
+          {
+            "node": "responder_202",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "setar_dados",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "setar_dados": {
+      "main": [
+        [
+          {
+            "node": "atualizar_status_processing",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "atualizar_status_processing": {
+      "main": [
+        [
+          {
+            "node": "gerar_texto_claude",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "gerar_texto_claude": {
+      "main": [
+        [
+          {
+            "node": "extrair_textos",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "extrair_textos": {
+      "main": [
+        [
+          {
+            "node": "gerar_post_openai",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "gerar_story_openai",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "gerar_post_openai": {
+      "main": [
+        [
+          {
+            "node": "upload_post_storage",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "gerar_story_openai": {
+      "main": [
+        [
+          {
+            "node": "upload_story_storage",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "upload_post_storage": {
+      "main": [
+        [
+          {
+            "node": "montar_resultado",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "upload_story_storage": {
+      "main": [
+        [
+          {
+            "node": "montar_resultado",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "montar_resultado": {
+      "main": [
+        [
+          {
+            "node": "salvar_imoveis_supabase",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "salvar_imoveis_supabase": {
+      "main": [
+        [
+          {
+            "node": "salvar_job_supabase",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "salvar_job_supabase": {
+      "main": [
+        [
+          {
+            "node": "callback_nextjs",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  }
+}

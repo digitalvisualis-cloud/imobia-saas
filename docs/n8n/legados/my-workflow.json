@@ -1,0 +1,363 @@
+{
+  "updatedAt": "2026-04-08T11:30:53.622Z",
+  "createdAt": "2026-04-08T11:30:11.854Z",
+  "id": "WS6A7VQH8MaBoEBS",
+  "name": "My workflow",
+  "description": null,
+  "active": false,
+  "isArchived": false,
+  "nodes": [
+    {
+      "parameters": {
+        "pollTimes": {
+          "item": [
+            {
+              "mode": "everyMinute"
+            }
+          ]
+        },
+        "triggerOn": "specificFolder",
+        "folderToWatch": {
+          "__rl": true,
+          "value": "1S7Bgdw5BRrR2lVCT4S_5BSy7Zn75iGmf",
+          "mode": "list",
+          "cachedResultName": "IMOB ANDRE",
+          "cachedResultUrl": "https://drive.google.com/drive/folders/1S7Bgdw5BRrR2lVCT4S_5BSy7Zn75iGmf"
+        },
+        "event": "fileCreated",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.googleDriveTrigger",
+      "typeVersion": 1,
+      "position": [
+        0,
+        768
+      ],
+      "id": "8276ce92-35b1-4bc0-9b70-4e5710ddd533",
+      "name": "Arquivo adicionado",
+      "credentials": {
+        "googleDriveOAuth2Api": {
+          "id": "RnZjANSiTVDqjOXR",
+          "name": "Google Drive andre"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 2
+          },
+          "conditions": [
+            {
+              "id": "801b8d7f-4c73-41b7-a630-9a8ace958dd8",
+              "leftValue": "={{ $json.mimeType }}",
+              "rightValue": "audio/",
+              "operator": {
+                "type": "string",
+                "operation": "startsWith"
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.filter",
+      "typeVersion": 2.2,
+      "position": [
+        224,
+        768
+      ],
+      "id": "f6cf0c5a-76bb-4915-910f-54cc8eb8c307",
+      "name": "É áudio?"
+    },
+    {
+      "parameters": {
+        "resource": "audio",
+        "operation": "transcribe",
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.openAi",
+      "typeVersion": 1.8,
+      "position": [
+        1104,
+        768
+      ],
+      "id": "e5a92266-dac9-4af8-8be0-2be83b2c548e",
+      "name": "Transcrever",
+      "credentials": {
+        "openAiApi": {
+          "id": "o2dGjNekswTmljmN",
+          "name": "OpenAi andre"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "operation": "download",
+        "fileId": {
+          "__rl": true,
+          "value": "={{ $json.id }}",
+          "mode": "id"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.googleDrive",
+      "typeVersion": 3,
+      "position": [
+        448,
+        768
+      ],
+      "id": "e02721fa-7a2d-40c4-bf3c-e08e101eec9c",
+      "name": "Download original",
+      "credentials": {
+        "googleDriveOAuth2Api": {
+          "id": "RnZjANSiTVDqjOXR",
+          "name": "Google Drive andre"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "operation": "createFromText",
+        "content": "={{ $json.text }}",
+        "name": "={{ $('Upload para transcode').item.json.public_id }} - Transcrição",
+        "driveId": {
+          "__rl": true,
+          "mode": "list"
+        },
+        "folderId": {
+          "__rl": true,
+          "mode": "list"
+        },
+        "options": {
+          "convertToGoogleDocument": true
+        }
+      },
+      "type": "n8n-nodes-base.googleDrive",
+      "typeVersion": 3,
+      "position": [
+        1328,
+        768
+      ],
+      "id": "15acc604-a362-4712-b39d-74315012a27f",
+      "name": "Upload transcrição",
+      "credentials": {
+        "googleDriveOAuth2Api": {
+          "id": "RnZjANSiTVDqjOXR",
+          "name": "Google Drive andre"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "content": "## Como configurar Cloudinary\n## [Criar conta Cloudinary](https://cloudinary.com/invites/lpov9zyyucivvxsnalc5/fqkod3fognpn2x5iqyor?t=default)\n\n\n### Chaves de API\n1. Na tela inicial, clicar em View API Keys\n2. Copiar \"Cloud name\", \"API key\" e \"API secret\"\n3. Configurar campos no N8N: \"Cloud name\" nas URLs, \"API key\" e \"API secret\" no corpo das requisições\n\n### Upload preset\n1. Ir nas configurações do Cloudinary (engrenagem canto inferior esquerdo)\n2. Clicar em \"Upload\"\n3. Clicar em \"Add Upload Preset\"\n4. Configurar campos corretamente:\n  a. Nome: **audio-transcode** (Se diferente, alterar no node \"Upload para transcode\" abaixo)\n  b. (IMPORTANTE!!) Signing mode: **Unsigned**\n5. Clicar em \"Save\"\n",
+        "height": 500,
+        "width": 740,
+        "color": 3
+      },
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [
+        672,
+        192
+      ],
+      "id": "db2c3fd5-d641-4e64-b794-3a0766be1014",
+      "name": "Sticky Note"
+    },
+    {
+      "parameters": {
+        "content": "[![fazer.ai](https://framerusercontent.com/images/HqY9djLTzyutSKnuLLqBr92KbM.png?scale-down-to=256)](https://fazer.ai?utm_source=n8n&utm_campaign=mindmap)\n\n## Esse é um template faça você mesmo do canal\n## Lucas Moreira\n### Gostou? Quer uma ajuda pra melhorar os processos da sua empresa? Entra lá no fazer.ai e manda uma mensagem pra gente\n\n\n### Inscreva-se no nosso canal no YouTube\n[![YouTube Lucas Moreira](https://img.shields.io/youtube/channel/subscribers/UCtmp6SxzLscu0GRTbgM8FTw?style=flat-square&logo=youtube&label=Inscreva-se&color=f00)](https://youtube.com/@eulucassmoreira?si=0lH7hwX9pukjhmPQ)\n\n### Siga nosso GitHub\n[![GitHub fazer.ai](https://img.shields.io/badge/github-%23121011.svg?style=for-the-badge&logo=github&logoColor=white&label)](https://github.com/fazer-ai)\n",
+        "height": 480,
+        "width": 630,
+        "color": 7
+      },
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [
+        0,
+        0
+      ],
+      "id": "a0611b2a-d2d0-4c73-9f4e-bc54018e0e28",
+      "name": "Sticky Note1"
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://api.cloudinary.com/v1_1/<seu Cloud name>/video/upload",
+        "sendBody": true,
+        "contentType": "multipart-form-data",
+        "bodyParameters": {
+          "parameters": [
+            {
+              "parameterType": "formBinaryData",
+              "name": "file",
+              "inputDataFieldName": "data"
+            },
+            {
+              "name": "api_key",
+              "value": "<sua API key>"
+            },
+            {
+              "name": "api_secret",
+              "value": "<sua API secret>"
+            },
+            {
+              "name": "public_id",
+              "value": "={{ $json.name.split('.').first() }}"
+            },
+            {
+              "name": "upload_preset",
+              "value": "audio-transcode"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        672,
+        768
+      ],
+      "id": "0fe9a922-7271-4210-a244-6e5ead493de1",
+      "name": "Upload para transcode"
+    },
+    {
+      "parameters": {
+        "content": "## Tutorial de instalação dependências\n\nhttps://gist.github.com/gabrieljablonski/712cecb621b47e2f25342b8088566e80\n\nhttps://github.com/fazer-ai/mcp-obsidian",
+        "height": 180,
+        "width": 640,
+        "color": 3
+      },
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [
+        0,
+        512
+      ],
+      "id": "e577c355-14b2-46e6-81d9-7068885acbf5",
+      "name": "Sticky Note2"
+    },
+    {
+      "parameters": {
+        "url": "=https://res.cloudinary.com/<seu Cloud name>/video/upload/ac_mp3,br_48k/{{ $json.public_id }}.mp3",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        880,
+        768
+      ],
+      "id": "0a8a3809-d1f9-49a9-b630-1131f2212183",
+      "name": "Download áudio transcodado"
+    }
+  ],
+  "connections": {
+    "Arquivo adicionado": {
+      "main": [
+        [
+          {
+            "node": "É áudio?",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "É áudio?": {
+      "main": [
+        [
+          {
+            "node": "Download original",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Transcrever": {
+      "main": [
+        [
+          {
+            "node": "Upload transcrição",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Download original": {
+      "main": [
+        [
+          {
+            "node": "Upload para transcode",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Upload para transcode": {
+      "main": [
+        [
+          {
+            "node": "Download áudio transcodado",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Download áudio transcodado": {
+      "main": [
+        [
+          {
+            "node": "Transcrever",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "settings": {
+    "executionOrder": "v1",
+    "binaryMode": "separate"
+  },
+  "staticData": null,
+  "meta": {
+    "templateCredsSetupCompleted": true
+  },
+  "pinData": {},
+  "versionId": "6222bef6-269a-4d41-93db-5f5bcab7774d",
+  "activeVersionId": null,
+  "versionCounter": 5,
+  "triggerCount": 0,
+  "shared": [
+    {
+      "updatedAt": "2026-04-08T11:30:11.874Z",
+      "createdAt": "2026-04-08T11:30:11.874Z",
+      "role": "workflow:owner",
+      "workflowId": "WS6A7VQH8MaBoEBS",
+      "projectId": "AKiCCH0oxaoQhr2Z",
+      "project": {
+        "updatedAt": "2026-03-27T14:30:55.615Z",
+        "createdAt": "2026-03-27T14:27:20.854Z",
+        "id": "AKiCCH0oxaoQhr2Z",
+        "name": "PABLO MEDINA <digitalvisualis@gmail.com>",
+        "type": "personal",
+        "icon": null,
+        "description": null,
+        "creatorId": "595fd4e5-a243-4d30-88ac-7327a99f627e"
+      }
+    }
+  ],
+  "tags": [],
+  "activeVersion": null
+}

@@ -25,8 +25,17 @@ export default {
     },
     extend: {
       fontFamily: {
-        display: ['"Cormorant Garamond"', 'serif'],
-        body: ['Inter', 'system-ui', 'sans-serif'],
+        // Usa CSS var --font-display / --font-body se o site público
+        // tiver uma fonte selecionada em /configuracoes; senão fallback.
+        display: [
+          'var(--font-display, "Cormorant Garamond")',
+          'serif',
+        ],
+        body: [
+          'var(--font-body, "Inter")',
+          'system-ui',
+          'sans-serif',
+        ],
       },
       colors: {
         border: 'hsl(var(--border))',

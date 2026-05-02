@@ -1,0 +1,94 @@
+{
+  "updatedAt": "2026-03-27T18:36:57.674Z",
+  "createdAt": "2026-03-27T18:12:00.515Z",
+  "id": "5oKxmWl0lB0XmQvm",
+  "name": "integracao com chatwoot",
+  "description": null,
+  "active": false,
+  "isArchived": false,
+  "nodes": [
+    {
+      "parameters": {
+        "url": "https://imob1.uazapi.com/chatwoot/config",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "token",
+              "value": "5a85d615-1d86-4314-bcd3-93bfaff8be9e"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.4,
+      "position": [
+        -112,
+        0
+      ],
+      "id": "861f7f38-ec60-4396-aeb6-46ec320553e5",
+      "name": "Obter infos"
+    },
+    {
+      "parameters": {
+        "method": "PUT",
+        "url": "https://imob1.uazapi.com/chatwoot/config",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "token",
+              "value": "5a85d615-1d86-4314-bcd3-93bfaff8be9e"
+            }
+          ]
+        },
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "{\n  \"enabled\": true,\n  \"url\": \"https://imobflow-chatwoot.ae01aa.easypanel.host\",\n  \"access_token\": \"Bav4pr74Rp9oMqx69D7TYXbS\",\n  \"account_id\": 2,\n  \"inbox_id\": 1,\n  \"ignore_groups\": false,\n  \"sign_messages\": false,\n  \"create_new_conversation\": false\n}",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.4,
+      "position": [
+        -96,
+        240
+      ],
+      "id": "2d34e1ea-8a5f-4d83-8023-562efb905ea2",
+      "name": "atualizar imob"
+    }
+  ],
+  "connections": {},
+  "settings": {
+    "executionOrder": "v1",
+    "binaryMode": "separate"
+  },
+  "staticData": null,
+  "meta": null,
+  "pinData": {},
+  "versionId": "8c227af7-a699-42fc-8e21-6c9fd8b081b7",
+  "activeVersionId": null,
+  "versionCounter": 23,
+  "triggerCount": 0,
+  "shared": [
+    {
+      "updatedAt": "2026-03-27T18:12:00.523Z",
+      "createdAt": "2026-03-27T18:12:00.523Z",
+      "role": "workflow:owner",
+      "workflowId": "5oKxmWl0lB0XmQvm",
+      "projectId": "AKiCCH0oxaoQhr2Z",
+      "project": {
+        "updatedAt": "2026-03-27T14:30:55.615Z",
+        "createdAt": "2026-03-27T14:27:20.854Z",
+        "id": "AKiCCH0oxaoQhr2Z",
+        "name": "PABLO MEDINA <digitalvisualis@gmail.com>",
+        "type": "personal",
+        "icon": null,
+        "description": null,
+        "creatorId": "595fd4e5-a243-4d30-88ac-7327a99f627e"
+      }
+    }
+  ],
+  "tags": [],
+  "activeVersion": null
+}

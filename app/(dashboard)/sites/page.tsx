@@ -1,50 +1,84 @@
 import { auth } from '@/auth';
 import { redirect } from 'next/navigation';
 import { prisma } from '@/lib/prisma';
-import { mergeSiteConfig } from '@/lib/site-config';
-import SitesClient from './SitesClient';
+import { mergeCustomization, type ThemeId } from '@/types/site-customization';
+import { buildImoveisPublic, buildTenantPublic } from '@/lib/build-tenant-public';
+import SiteEditorClient from './SiteEditorClient';
 
 export const dynamic = 'force-dynamic';
+
+function isThemeId(v: unknown): v is ThemeId {
+  return v === 'brisa' || v === 'aura';
+}
 
 export default async function SitesPage() {
   const session = await auth();
   if (!session?.user) redirect('/login');
   const tenantId = (session.user as any).tenantId as string;
 
-  const [site, marca, totalImoveis] = await Promise.all([
-    prisma.site.findUnique({ where: { tenantId } }),
-    prisma.configMarca.findUnique({ where: { tenantId } }),
-    prisma.imovel.count({ where: { tenantId, publicado: true } }),
+  const [tenant, imoveis] = await Promise.all([
+    prisma.tenant.findUnique({
+      where: { id: tenantId },
+      include: { marca: true, site: true },
+    }),
+    prisma.imovel.findMany({
+      where: { tenantId, publicado: true },
+      orderBy: [{ destaque: 'desc' }, { createdAt: 'desc' }],
+      take: 30,
+    }),
   ]);
 
-  // Casts em (site as any) porque o Prisma client precisa ser regenerado
-  // depois de adicionar `templateId` e `config` no schema. Rodar:
-  //   npx prisma generate
+  if (!tenant) redirect('/login');
+
+  // Garante um Site row pra esse tenant
+  let site = tenant.site;
+  if (!site) {
+    site = await prisma.site.create({
+      data: {
+        tenantId,
+        slug: tenant.slug,
+        publicado: false,
+        templateId: 'brisa',
+      },
+    });
+  }
+
   const siteAny = site as any;
+  const rawConfig = (siteAny.config ?? {}) as Record<string, unknown>;
+  const themeId: ThemeId = isThemeId(siteAny.templateId) ? siteAny.templateId : 'brisa';
+
+  // Formato no DB:
+  //   { brisa: {...}, aura: {...} }  ← novo (multi-tema)
+  //   { ...customization }           ← legacy: aplica ao tema ativo
+  const isMultiTheme =
+    rawConfig &&
+    typeof rawConfig === 'object' &&
+    ('brisa' in rawConfig || 'aura' in rawConfig);
+
+  const configBrisa = mergeCustomization(
+    'brisa',
+    isMultiTheme ? rawConfig.brisa : themeId === 'brisa' ? rawConfig : null,
+  );
+  const configAura = mergeCustomization(
+    'aura',
+    isMultiTheme ? rawConfig.aura : themeId === 'aura' ? rawConfig : null,
+  );
+
+  const tenantPublic = buildTenantPublic(tenant);
+  const imoveisPublic = buildImoveisPublic(imoveis);
 
   return (
-    <SitesClient
-      site={
-        site
-          ? {
-              slug: site.slug,
-              publicado: site.publicado,
-              titulo: site.titulo,
-              dominio: site.dominio,
-              templateId: siteAny.templateId ?? 'elegance',
-              config: mergeSiteConfig(siteAny.config),
-            }
-          : null
-      }
-      marca={{
-        nomeEmpresa: marca?.nomeEmpresa ?? null,
-        slogan: marca?.slogan ?? null,
-        descricao: marca?.descricao ?? null,
-        logoUrl: marca?.logoUrl ?? null,
-        corPrimaria: marca?.corPrimaria ?? '#c5a64f',
-        corSecundaria: marca?.corSecundaria ?? '#1a2e1a',
+    <SiteEditorClient
+      site={{
+        publicado: site.publicado,
+        slug: site.slug,
+        dominio: site.dominio,
+        themeId,
+        configBrisa,
+        configAura,
       }}
-      totalImoveis={totalImoveis}
+      tenant={tenantPublic}
+      imoveis={imoveisPublic}
     />
   );
 }

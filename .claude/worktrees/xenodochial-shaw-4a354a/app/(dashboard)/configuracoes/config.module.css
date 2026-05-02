@@ -1,0 +1,41 @@
+.tabs { display: flex; gap: 4px; margin-bottom: 24px; border-bottom: 1px solid var(--border); flex-wrap: wrap; }
+.tab { padding: 10px 18px; font-size: 14px; font-weight: 500; color: var(--text-muted); background: transparent; border: none; cursor: pointer; font-family: inherit; border-bottom: 2px solid transparent; transition: all 0.15s; margin-bottom: -1px; }
+.tab:hover { color: var(--text-primary); }
+.tabActive { color: var(--accent-light); border-bottom-color: var(--accent); }
+
+.section { max-width: 720px; }
+.grid2 { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; }
+
+.avatarRow { display: flex; align-items: center; gap: 16px; }
+.avatarBig {
+  width: 72px; height: 72px; border-radius: 50%;
+  background: linear-gradient(135deg, var(--accent), var(--blue));
+  display: flex; align-items: center; justify-content: center;
+  font-size: 1.5rem; font-weight: 800; color: #fff; flex-shrink: 0;
+}
+
+/* Colors */
+.colorGrid { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; margin-bottom: 16px; }
+.colorInput { display: flex; gap: 8px; align-items: center; }
+.colorPicker { width: 42px; height: 42px; padding: 2px; border: 1px solid var(--border); border-radius: var(--radius-sm); cursor: pointer; background: transparent; }
+.colorPreview { border-radius: var(--radius); padding: 20px; color: #fff; font-weight: 600; text-align: center; margin-top: 8px; }
+.palette { width: 36px; height: 36px; border-radius: 50%; border: 2px solid transparent; cursor: pointer; transition: transform 0.15s; }
+.palette:hover { transform: scale(1.15); border-color: #fff; }
+
+/* Logo */
+.logoUpload { display: flex; align-items: center; gap: 16px; padding: 16px; background: var(--bg-hover); border-radius: var(--radius); border: 1px dashed var(--border); }
+.logoPreview { display: flex; align-items: center; font-size: 1.5rem; }
+
+/* Manual */
+.manualUpload { display: flex; align-items: center; gap: 12px; padding: 14px; background: var(--bg-hover); border-radius: var(--radius); border: 1px dashed var(--border); }
+
+/* Info box */
+.infoBox { padding: 12px 16px; background: var(--accent-glow); border: 1px solid rgba(124,58,237,0.3); border-radius: var(--radius-sm); font-size: 14px; color: var(--accent-light); }
+
+/* Usage */
+.usageGrid { display: flex; flex-direction: column; gap: 12px; }
+.usageItem {}
+.usageBar { height: 6px; background: var(--bg-hover); border-radius: 100px; overflow: hidden; }
+.usageFill { height: 100%; background: linear-gradient(90deg, var(--accent), var(--blue)); border-radius: 100px; transition: width 0.4s; }
+
+@media (max-width: 600px) { .grid2, .colorGrid { grid-template-columns: 1fr; } }

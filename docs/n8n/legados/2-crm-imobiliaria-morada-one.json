@@ -1,0 +1,1388 @@
+{
+  "updatedAt": "2026-03-27T19:06:35.645Z",
+  "createdAt": "2026-03-27T17:22:28.294Z",
+  "id": "XYZKEwDIDJwYKoLL",
+  "name": "2- CRM | Imobiliaria Morada One",
+  "description": null,
+  "active": true,
+  "isArchived": false,
+  "nodes": [
+    {
+      "parameters": {
+        "workflowInputs": {
+          "values": [
+            {
+              "name": "whatsapp_lead"
+            },
+            {
+              "name": "id_conta_chatwoot",
+              "type": "number"
+            },
+            {
+              "name": "id_conversa_chatwoot",
+              "type": "number"
+            },
+            {
+              "name": "id_lead_chatwoot",
+              "type": "number"
+            },
+            {
+              "name": "inbox_id_chatwoot",
+              "type": "number"
+            }
+          ]
+        }
+      },
+      "type": "n8n-nodes-base.executeWorkflowTrigger",
+      "typeVersion": 1.1,
+      "position": [
+        -576,
+        320
+      ],
+      "id": "18275c2f-c439-4f73-abf0-2b68ad2c6a70",
+      "name": "When Executed by Another Workflow"
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "cd7b138e-2a18-474c-b072-8ec155b10715",
+              "name": "whatsapp_lead",
+              "value": "={{ $json.whatsapp_lead }}",
+              "type": "string"
+            },
+            {
+              "id": "ccb92d28-c926-4709-98b3-758bb1995c4a",
+              "name": "id_conta_chatwoot",
+              "value": "={{ $json.id_conta_chatwoot }}",
+              "type": "string"
+            },
+            {
+              "id": "d660961e-2609-4b30-b05e-3dd77a01c1ff",
+              "name": "id_conversa_chatwoot",
+              "value": "={{ $json.id_conversa_chatwoot }}",
+              "type": "string"
+            },
+            {
+              "id": "bdfacc00-0a2b-45ba-aedc-5ddb4263a468",
+              "name": "id_lead_chatwoot",
+              "value": "={{ $json.id_lead_chatwoot }}",
+              "type": "string"
+            },
+            {
+              "id": "41972627-5783-48fb-8983-c64fe6e3b988",
+              "name": "inbox_id_chatwoot",
+              "value": "={{ $json.inbox_id_chatwoot }}",
+              "type": "string"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        -240,
+        320
+      ],
+      "id": "310f56cb-d3a9-4465-b862-618a2190ca32",
+      "name": "setarInfo1"
+    },
+    {
+      "parameters": {
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.memoryManager",
+      "typeVersion": 1.1,
+      "position": [
+        1344,
+        416
+      ],
+      "id": "02d33bb4-3948-45c9-a9f1-280871b53ed8",
+      "name": "Chat Memory Manager1"
+    },
+    {
+      "parameters": {
+        "content": "# Puxar Histórico da conversa",
+        "height": 564,
+        "width": 460,
+        "color": 4
+      },
+      "type": "n8n-nodes-base.stickyNote",
+      "position": [
+        1216,
+        192
+      ],
+      "typeVersion": 1,
+      "id": "f28da9d9-cbb3-4668-866f-ab799dce9459",
+      "name": "Sticky Note9"
+    },
+    {
+      "parameters": {
+        "operation": "update",
+        "tableId": "IMOBILIARIA_ANDRE",
+        "filters": {
+          "conditions": [
+            {
+              "keyName": "Whatsapp",
+              "condition": "eq",
+              "keyValue": "={{ $('setarInfo1').item.json.whatsapp_lead }}"
+            }
+          ]
+        },
+        "fieldsUi": {
+          "fieldValues": [
+            {
+              "fieldId": "Follow UP 1",
+              "fieldValue": "null"
+            },
+            {
+              "fieldId": "Follow UP 2",
+              "fieldValue": "null"
+            },
+            {
+              "fieldId": "Follow UP 3",
+              "fieldValue": "null"
+            },
+            {
+              "fieldId": "Timestamp ultima msg",
+              "fieldValue": "={{ $now }}"
+            }
+          ]
+        }
+      },
+      "type": "n8n-nodes-base.supabase",
+      "typeVersion": 1,
+      "position": [
+        912,
+        224
+      ],
+      "id": "5865c2a2-ee8a-473e-b214-f43dba782abb",
+      "name": "atualizaFollowUP",
+      "credentials": {
+        "supabaseApi": {
+          "id": "5FjTcJdDLCf35qXe",
+          "name": "Supabase andre"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "content": "# Deixa \"null\" em todos os campos do Follow Up e atualizar o Timestamp",
+        "height": 500,
+        "width": 424,
+        "color": 3
+      },
+      "type": "n8n-nodes-base.stickyNote",
+      "position": [
+        752,
+        0
+      ],
+      "typeVersion": 1,
+      "id": "653c5f27-5127-4c57-a567-7e4037f81df5",
+      "name": "Sticky Note"
+    },
+    {
+      "parameters": {
+        "content": "# Gatilho vem do SDR",
+        "height": 500,
+        "width": 360,
+        "color": 7
+      },
+      "type": "n8n-nodes-base.stickyNote",
+      "position": [
+        -720,
+        112
+      ],
+      "typeVersion": 1,
+      "id": "aeef1a28-619a-4f90-9f88-f8e175773194",
+      "name": "Sticky Note1"
+    },
+    {
+      "parameters": {
+        "content": "# Seta informações",
+        "height": 500,
+        "width": 316,
+        "color": 4
+      },
+      "type": "n8n-nodes-base.stickyNote",
+      "position": [
+        -336,
+        112
+      ],
+      "typeVersion": 1,
+      "id": "d1fa9a1f-037a-45b2-91bb-450421951156",
+      "name": "Sticky Note2"
+    },
+    {
+      "parameters": {
+        "content": "# Resumo da Conversa",
+        "height": 564,
+        "width": 580,
+        "color": 2
+      },
+      "type": "n8n-nodes-base.stickyNote",
+      "position": [
+        1712,
+        192
+      ],
+      "typeVersion": 1,
+      "id": "614bacd5-a65a-4db0-ada0-89c4ab1156ba",
+      "name": "Sticky Note10"
+    },
+    {
+      "parameters": {
+        "model": {
+          "__rl": true,
+          "value": "gpt-4o-mini",
+          "mode": "list",
+          "cachedResultName": "gpt-4o-mini"
+        },
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.lmChatOpenAi",
+      "typeVersion": 1.2,
+      "position": [
+        1776,
+        640
+      ],
+      "id": "d6fc5bfb-a9e9-452c-85f1-cdfca8604d8b",
+      "name": "OpenAI Chat Model3",
+      "credentials": {
+        "openAiApi": {
+          "id": "o2dGjNekswTmljmN",
+          "name": "OpenAi andre"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "jsonSchemaExample": "{\n  \"Nome\": \"Carolina Lopes\",\n  \"Tipo de imovel\": \"Casa\",\n  \"Finalidade\": \"Aluguel\",\n  \"Bairro desejado\": \"Zona Norte de São Paulo, Santana, Tucuruvi\",\n  \"Resumo_conversa\": \"A cliente Carolina Lopes demonstrou interesse em alugar uma casa na Zona Norte de São Paulo, comentou que busca um imóvel com quintal e espaço para pet. Disse que pretende se mudar no próximo mês e quer visitar opções ainda nesta semana.\"\n}\n"
+      },
+      "type": "@n8n/n8n-nodes-langchain.outputParserStructured",
+      "typeVersion": 1.2,
+      "position": [
+        2112,
+        608
+      ],
+      "id": "00cb4cad-56af-408f-ade1-fd6326b75a32",
+      "name": "Structured Output Parser"
+    },
+    {
+      "parameters": {
+        "operation": "update",
+        "tableId": "IMOBILIARIA_ANDRE",
+        "filters": {
+          "conditions": [
+            {
+              "keyName": "Whatsapp",
+              "condition": "eq",
+              "keyValue": "={{ $('setarInfo1').item.json.whatsapp_lead }}"
+            }
+          ]
+        },
+        "fieldsUi": {
+          "fieldValues": [
+            {
+              "fieldId": "Nome",
+              "fieldValue": "={{ $json.output.Nome }}"
+            },
+            {
+              "fieldId": "Tipo de imovel",
+              "fieldValue": "={{ $json.output['Tipo de imovel'] }}"
+            },
+            {
+              "fieldId": "Finalidade",
+              "fieldValue": "={{ $json.output.Finalidade }}"
+            },
+            {
+              "fieldId": "Bairro desejado",
+              "fieldValue": "={{ $json.output['Bairro desejado'] }}"
+            },
+            {
+              "fieldId": "Resumo da conversa",
+              "fieldValue": "={{ $json.output.Resumo_conversa }}"
+            }
+          ]
+        }
+      },
+      "type": "n8n-nodes-base.supabase",
+      "typeVersion": 1,
+      "position": [
+        2464,
+        416
+      ],
+      "id": "78bd88d1-6c55-49ba-9e60-74403c3083af",
+      "name": "atualizarCRM",
+      "credentials": {
+        "supabaseApi": {
+          "id": "5FjTcJdDLCf35qXe",
+          "name": "Supabase andre"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "promptType": "define",
+        "text": "={{ $json.messages.map(m => `Usuário: ${m.human}\\nIA: ${m.ai}`).join('\\n\\n') }}",
+        "hasOutputParser": true,
+        "options": {
+          "systemMessage": "=Dia e hora atual: {{ $now }}\n\n## IDENTIDADE\n\n- Você é um agente IA responsável por atualizar o CRM do **corretor Caique Lima**, que atua com imóveis selecionados em São Paulo.  \n- Sua função é ler toda a conversa entre o **corretor e o cliente**, e gerar um resumo claro, objetivo e estratégico.  \n- Esse resumo será utilizado para manter o histórico atualizado e facilitar o acompanhamento futuro do cliente.\n- Você **nunca inventa informações**. Só preenche com base no que foi de fato conversado entre o corretor e o cliente.\n\n## FUNÇÃO\n\n-   Você deve **registrar os dados dos atendimentos no CRM imobiliário**.\n-   Antes de preencher qualquer campo, **leia com atenção toda a conversa entre o corretor e o cliente** para garantir que os dados estejam corretos e completos.\n\n### Campos obrigatórios\n\n-   **Nome**\n    -   Registre **exatamente o nome informado pelo cliente**.\n    -   Se for apenas o primeiro nome, salve apenas ele.\n    -   Nunca invente ou complete o nome por conta própria.\n    -  Lembre de deixar a primeira letra do nome em maiúscula.\n        \n-   **Tipo de imóvel**\n    -   Opções válidas: **Apartamento** ou **Casa**.\n    -   Se o cliente não deixar claro, deixar em branco.\n        \n-   **Finalidade**\n    -   Opções válidas: **Compra**, **Aluguel** ou **Investimento**.\n    -   Se o cliente não mencionar, deixar em branco.\n        \n-   **Bairro desejado**\n    -   Registrar todos os bairros, cidades ou regiões mencionadas pelo cliente. Se forem vários, separar por vírgula (ex: “Vila Mariana, Moema, Ipiranga”). Se nenhum for citado, deixar em branco.\n    -   Se não for citado, deixar em branco.\n        \n-   **Resumo_conversa**\n    -   Escreva um resumo **claro, natural e direto**, mencionando o **nome do cliente** e o que ele disse ou perguntou.\n    -   Foque em pontos como:\n        -   Tipo de imóvel e características desejadas.\n        -   Motivo da busca (mudança, investimento, família, etc).\n        -   Região ou condomínio de interesse.\n        -   Faixa de preço mencionada.\n        -   Se demonstrou interesse em agendar visita ou saber mais detalhes.\n    -   Ignore totalmente as falas do corretor.\n    -   Escreva sempre em **texto corrido**, sem listas ou quebras de linha.\n\n### **EXEMPLOS DE RESUMO DE CONVERSA**\n\n#### Exemplo 1:\n\nO cliente Felipe Moura entrou em contato procurando um apartamento para compra na região da Vila Mariana, com dois quartos e varanda. Disse que tem orçamento de até R$ 900 mil e gostaria de saber se há opções com vaga de garagem.\n\n#### Exemplo 2:\n\nA cliente Carolina Lopes demonstrou interesse em alugar uma casa na Zona Norte de São Paulo, comentou que busca um imóvel com quintal e espaço para pet. Disse que pretende se mudar no próximo mês e quer visitar opções ainda nesta semana.\n\n#### Exemplo 3:\n\nO cliente Rafael Andrade demonstrou interesse em comprar o apto do lançamento Trisul, ele agendou uma visita para o dia 18/10 as 15horas."
+        }
+      },
+      "type": "@n8n/n8n-nodes-langchain.agent",
+      "typeVersion": 1.8,
+      "position": [
+        1856,
+        416
+      ],
+      "id": "6b76ff09-b52d-4f91-a6f0-24275c5432c1",
+      "name": "CRM"
+    },
+    {
+      "parameters": {
+        "content": "# Verifica se o usuário existe e cadastra ele no Banco de dados.",
+        "height": 792,
+        "width": 720,
+        "color": 6
+      },
+      "type": "n8n-nodes-base.stickyNote",
+      "position": [
+        0,
+        0
+      ],
+      "typeVersion": 1,
+      "id": "5d9681ed-54f7-46c8-96be-8709cbc32469",
+      "name": "Sticky Note23"
+    },
+    {
+      "parameters": {
+        "rules": {
+          "values": [
+            {
+              "conditions": {
+                "options": {
+                  "caseSensitive": true,
+                  "leftValue": "",
+                  "typeValidation": "strict",
+                  "version": 2
+                },
+                "conditions": [
+                  {
+                    "id": "32a5f010-2252-4057-acb7-a085648e3a14",
+                    "leftValue": "={{ $json.Whatsapp.toString() }}",
+                    "rightValue": "",
+                    "operator": {
+                      "type": "string",
+                      "operation": "notEmpty",
+                      "singleValue": true
+                    }
+                  }
+                ],
+                "combinator": "and"
+              },
+              "renameOutput": true,
+              "outputKey": "Existe"
+            },
+            {
+              "conditions": {
+                "options": {
+                  "caseSensitive": true,
+                  "leftValue": "",
+                  "typeValidation": "strict",
+                  "version": 2
+                },
+                "conditions": [
+                  {
+                    "leftValue": "={{ $json.Whatsapp.toString() }}",
+                    "rightValue": "",
+                    "operator": {
+                      "type": "string",
+                      "operation": "empty",
+                      "singleValue": true
+                    },
+                    "id": "c71b31fe-c16a-4e57-a5b5-7d115351d0ee"
+                  }
+                ],
+                "combinator": "and"
+              },
+              "renameOutput": true,
+              "outputKey": "Não existe"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.switch",
+      "typeVersion": 3.2,
+      "position": [
+        368,
+        320
+      ],
+      "id": "f44e7f30-afe7-42e3-b6b1-396a1fbcbf25",
+      "name": "Switch4"
+    },
+    {
+      "parameters": {
+        "operation": "get",
+        "tableId": "IMOBILIARIA_ANDRE",
+        "filters": {
+          "conditions": [
+            {
+              "keyName": "Whatsapp",
+              "keyValue": "={{ $json.whatsapp_lead }}"
+            }
+          ]
+        }
+      },
+      "type": "n8n-nodes-base.supabase",
+      "typeVersion": 1,
+      "position": [
+        80,
+        320
+      ],
+      "id": "dad7eff8-066f-4c3b-8d05-076eb9db1c2e",
+      "name": "PuxarNumeroLead",
+      "alwaysOutputData": true,
+      "credentials": {
+        "supabaseApi": {
+          "id": "5FjTcJdDLCf35qXe",
+          "name": "Supabase andre"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "tableId": "IMOBILIARIA_ANDRE",
+        "fieldsUi": {
+          "fieldValues": [
+            {
+              "fieldId": "Inicio do atendimento",
+              "fieldValue": "={{ $now }}"
+            },
+            {
+              "fieldId": "Whatsapp",
+              "fieldValue": "={{ $('setarInfo1').item.json.whatsapp_lead }}"
+            },
+            {
+              "fieldId": "IDConta ChatWoot",
+              "fieldValue": "={{ $('setarInfo1').item.json.id_conta_chatwoot }}"
+            },
+            {
+              "fieldId": "IDConversa ChatWoot",
+              "fieldValue": "={{ $('setarInfo1').item.json.id_conversa_chatwoot }}"
+            },
+            {
+              "fieldId": "IDLead ChatWoot",
+              "fieldValue": "={{ $('setarInfo1').item.json.id_lead_chatwoot }}"
+            },
+            {
+              "fieldId": "InboxID ChatWoot",
+              "fieldValue": "={{ $('setarInfo1').item.json.inbox_id_chatwoot }}"
+            }
+          ]
+        }
+      },
+      "type": "n8n-nodes-base.supabase",
+      "typeVersion": 1,
+      "position": [
+        544,
+        592
+      ],
+      "id": "551a9680-90be-4f20-9a5d-0ead939c3ca7",
+      "name": "CriarUsuario",
+      "credentials": {
+        "supabaseApi": {
+          "id": "5FjTcJdDLCf35qXe",
+          "name": "Supabase andre"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "sessionIdType": "customKey",
+        "sessionKey": "={{ $('setarInfo1').item.json.whatsapp_lead }}",
+        "contextWindowLength": 40
+      },
+      "type": "@n8n/n8n-nodes-langchain.memoryPostgresChat",
+      "typeVersion": 1.3,
+      "position": [
+        1264,
+        608
+      ],
+      "id": "efa0c932-f1f6-47f2-ad49-45e1e4a06fd5",
+      "name": "memoria",
+      "credentials": {
+        "postgres": {
+          "id": "nkoxAzqCaGBsen34",
+          "name": "Postgres account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "content": "# Atualiza CRM",
+        "height": 564,
+        "width": 340,
+        "color": 5
+      },
+      "type": "n8n-nodes-base.stickyNote",
+      "position": [
+        2336,
+        192
+      ],
+      "typeVersion": 1,
+      "id": "2dfeeb07-f7b2-4173-baba-521a1bb006e3",
+      "name": "Sticky Note11"
+    }
+  ],
+  "connections": {
+    "When Executed by Another Workflow": {
+      "main": [
+        [
+          {
+            "node": "setarInfo1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "setarInfo1": {
+      "main": [
+        [
+          {
+            "node": "PuxarNumeroLead",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Chat Memory Manager1": {
+      "main": [
+        [
+          {
+            "node": "CRM",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "atualizaFollowUP": {
+      "main": [
+        [
+          {
+            "node": "Chat Memory Manager1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "OpenAI Chat Model3": {
+      "ai_languageModel": [
+        [
+          {
+            "node": "CRM",
+            "type": "ai_languageModel",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Structured Output Parser": {
+      "ai_outputParser": [
+        [
+          {
+            "node": "CRM",
+            "type": "ai_outputParser",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "CRM": {
+      "main": [
+        [
+          {
+            "node": "atualizarCRM",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Switch4": {
+      "main": [
+        [
+          {
+            "node": "atualizaFollowUP",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "CriarUsuario",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "PuxarNumeroLead": {
+      "main": [
+        [
+          {
+            "node": "Switch4",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "CriarUsuario": {
+      "main": [
+        [
+          {
+            "node": "Chat Memory Manager1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "memoria": {
+      "ai_memory": [
+        [
+          {
+            "node": "Chat Memory Manager1",
+            "type": "ai_memory",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "settings": {
+    "executionOrder": "v1",
+    "binaryMode": "separate",
+    "timeSavedMode": "fixed",
+    "timezone": "America/Sao_Paulo",
+    "callerPolicy": "workflowsFromSameOwner",
+    "availableInMCP": false
+  },
+  "staticData": null,
+  "meta": {
+    "templateCredsSetupCompleted": true
+  },
+  "pinData": {},
+  "versionId": "dde2020b-fe04-452b-9de6-54238273fbf0",
+  "activeVersionId": "dde2020b-fe04-452b-9de6-54238273fbf0",
+  "versionCounter": 14,
+  "triggerCount": 0,
+  "shared": [
+    {
+      "updatedAt": "2026-03-27T17:22:28.307Z",
+      "createdAt": "2026-03-27T17:22:28.307Z",
+      "role": "workflow:owner",
+      "workflowId": "XYZKEwDIDJwYKoLL",
+      "projectId": "AKiCCH0oxaoQhr2Z",
+      "project": {
+        "updatedAt": "2026-03-27T14:30:55.615Z",
+        "createdAt": "2026-03-27T14:27:20.854Z",
+        "id": "AKiCCH0oxaoQhr2Z",
+        "name": "PABLO MEDINA <digitalvisualis@gmail.com>",
+        "type": "personal",
+        "icon": null,
+        "description": null,
+        "creatorId": "595fd4e5-a243-4d30-88ac-7327a99f627e"
+      }
+    }
+  ],
+  "tags": [],
+  "activeVersion": {
+    "updatedAt": "2026-03-27T19:07:00.000Z",
+    "createdAt": "2026-03-27T19:06:35.647Z",
+    "versionId": "dde2020b-fe04-452b-9de6-54238273fbf0",
+    "workflowId": "XYZKEwDIDJwYKoLL",
+    "nodes": [
+      {
+        "parameters": {
+          "workflowInputs": {
+            "values": [
+              {
+                "name": "whatsapp_lead"
+              },
+              {
+                "name": "id_conta_chatwoot",
+                "type": "number"
+              },
+              {
+                "name": "id_conversa_chatwoot",
+                "type": "number"
+              },
+              {
+                "name": "id_lead_chatwoot",
+                "type": "number"
+              },
+              {
+                "name": "inbox_id_chatwoot",
+                "type": "number"
+              }
+            ]
+          }
+        },
+        "type": "n8n-nodes-base.executeWorkflowTrigger",
+        "typeVersion": 1.1,
+        "position": [
+          -576,
+          320
+        ],
+        "id": "18275c2f-c439-4f73-abf0-2b68ad2c6a70",
+        "name": "When Executed by Another Workflow"
+      },
+      {
+        "parameters": {
+          "assignments": {
+            "assignments": [
+              {
+                "id": "cd7b138e-2a18-474c-b072-8ec155b10715",
+                "name": "whatsapp_lead",
+                "value": "={{ $json.whatsapp_lead }}",
+                "type": "string"
+              },
+              {
+                "id": "ccb92d28-c926-4709-98b3-758bb1995c4a",
+                "name": "id_conta_chatwoot",
+                "value": "={{ $json.id_conta_chatwoot }}",
+                "type": "string"
+              },
+              {
+                "id": "d660961e-2609-4b30-b05e-3dd77a01c1ff",
+                "name": "id_conversa_chatwoot",
+                "value": "={{ $json.id_conversa_chatwoot }}",
+                "type": "string"
+              },
+              {
+                "id": "bdfacc00-0a2b-45ba-aedc-5ddb4263a468",
+                "name": "id_lead_chatwoot",
+                "value": "={{ $json.id_lead_chatwoot }}",
+                "type": "string"
+              },
+              {
+                "id": "41972627-5783-48fb-8983-c64fe6e3b988",
+                "name": "inbox_id_chatwoot",
+                "value": "={{ $json.inbox_id_chatwoot }}",
+                "type": "string"
+              }
+            ]
+          },
+          "options": {}
+        },
+        "type": "n8n-nodes-base.set",
+        "typeVersion": 3.4,
+        "position": [
+          -240,
+          320
+        ],
+        "id": "310f56cb-d3a9-4465-b862-618a2190ca32",
+        "name": "setarInfo1"
+      },
+      {
+        "parameters": {
+          "options": {}
+        },
+        "type": "@n8n/n8n-nodes-langchain.memoryManager",
+        "typeVersion": 1.1,
+        "position": [
+          1344,
+          416
+        ],
+        "id": "02d33bb4-3948-45c9-a9f1-280871b53ed8",
+        "name": "Chat Memory Manager1"
+      },
+      {
+        "parameters": {
+          "content": "# Puxar Histórico da conversa",
+          "height": 564,
+          "width": 460,
+          "color": 4
+        },
+        "type": "n8n-nodes-base.stickyNote",
+        "position": [
+          1216,
+          192
+        ],
+        "typeVersion": 1,
+        "id": "f28da9d9-cbb3-4668-866f-ab799dce9459",
+        "name": "Sticky Note9"
+      },
+      {
+        "parameters": {
+          "operation": "update",
+          "tableId": "IMOBILIARIA_ANDRE",
+          "filters": {
+            "conditions": [
+              {
+                "keyName": "Whatsapp",
+                "condition": "eq",
+                "keyValue": "={{ $('setarInfo1').item.json.whatsapp_lead }}"
+              }
+            ]
+          },
+          "fieldsUi": {
+            "fieldValues": [
+              {
+                "fieldId": "Follow UP 1",
+                "fieldValue": "null"
+              },
+              {
+                "fieldId": "Follow UP 2",
+                "fieldValue": "null"
+              },
+              {
+                "fieldId": "Follow UP 3",
+                "fieldValue": "null"
+              },
+              {
+                "fieldId": "Timestamp ultima msg",
+                "fieldValue": "={{ $now }}"
+              }
+            ]
+          }
+        },
+        "type": "n8n-nodes-base.supabase",
+        "typeVersion": 1,
+        "position": [
+          912,
+          224
+        ],
+        "id": "5865c2a2-ee8a-473e-b214-f43dba782abb",
+        "name": "atualizaFollowUP",
+        "credentials": {
+          "supabaseApi": {
+            "id": "5FjTcJdDLCf35qXe",
+            "name": "Supabase andre"
+          }
+        }
+      },
+      {
+        "parameters": {
+          "content": "# Deixa \"null\" em todos os campos do Follow Up e atualizar o Timestamp",
+          "height": 500,
+          "width": 424,
+          "color": 3
+        },
+        "type": "n8n-nodes-base.stickyNote",
+        "position": [
+          752,
+          0
+        ],
+        "typeVersion": 1,
+        "id": "653c5f27-5127-4c57-a567-7e4037f81df5",
+        "name": "Sticky Note"
+      },
+      {
+        "parameters": {
+          "content": "# Gatilho vem do SDR",
+          "height": 500,
+          "width": 360,
+          "color": 7
+        },
+        "type": "n8n-nodes-base.stickyNote",
+        "position": [
+          -720,
+          112
+        ],
+        "typeVersion": 1,
+        "id": "aeef1a28-619a-4f90-9f88-f8e175773194",
+        "name": "Sticky Note1"
+      },
+      {
+        "parameters": {
+          "content": "# Seta informações",
+          "height": 500,
+          "width": 316,
+          "color": 4
+        },
+        "type": "n8n-nodes-base.stickyNote",
+        "position": [
+          -336,
+          112
+        ],
+        "typeVersion": 1,
+        "id": "d1fa9a1f-037a-45b2-91bb-450421951156",
+        "name": "Sticky Note2"
+      },
+      {
+        "parameters": {
+          "content": "# Resumo da Conversa",
+          "height": 564,
+          "width": 580,
+          "color": 2
+        },
+        "type": "n8n-nodes-base.stickyNote",
+        "position": [
+          1712,
+          192
+        ],
+        "typeVersion": 1,
+        "id": "614bacd5-a65a-4db0-ada0-89c4ab1156ba",
+        "name": "Sticky Note10"
+      },
+      {
+        "parameters": {
+          "model": {
+            "__rl": true,
+            "value": "gpt-4o-mini",
+            "mode": "list",
+            "cachedResultName": "gpt-4o-mini"
+          },
+          "options": {}
+        },
+        "type": "@n8n/n8n-nodes-langchain.lmChatOpenAi",
+        "typeVersion": 1.2,
+        "position": [
+          1776,
+          640
+        ],
+        "id": "d6fc5bfb-a9e9-452c-85f1-cdfca8604d8b",
+        "name": "OpenAI Chat Model3",
+        "credentials": {
+          "openAiApi": {
+            "id": "o2dGjNekswTmljmN",
+            "name": "OpenAi andre"
+          }
+        }
+      },
+      {
+        "parameters": {
+          "jsonSchemaExample": "{\n  \"Nome\": \"Carolina Lopes\",\n  \"Tipo de imovel\": \"Casa\",\n  \"Finalidade\": \"Aluguel\",\n  \"Bairro desejado\": \"Zona Norte de São Paulo, Santana, Tucuruvi\",\n  \"Resumo_conversa\": \"A cliente Carolina Lopes demonstrou interesse em alugar uma casa na Zona Norte de São Paulo, comentou que busca um imóvel com quintal e espaço para pet. Disse que pretende se mudar no próximo mês e quer visitar opções ainda nesta semana.\"\n}\n"
+        },
+        "type": "@n8n/n8n-nodes-langchain.outputParserStructured",
+        "typeVersion": 1.2,
+        "position": [
+          2112,
+          608
+        ],
+        "id": "00cb4cad-56af-408f-ade1-fd6326b75a32",
+        "name": "Structured Output Parser"
+      },
+      {
+        "parameters": {
+          "operation": "update",
+          "tableId": "IMOBILIARIA_ANDRE",
+          "filters": {
+            "conditions": [
+              {
+                "keyName": "Whatsapp",
+                "condition": "eq",
+                "keyValue": "={{ $('setarInfo1').item.json.whatsapp_lead }}"
+              }
+            ]
+          },
+          "fieldsUi": {
+            "fieldValues": [
+              {
+                "fieldId": "Nome",
+                "fieldValue": "={{ $json.output.Nome }}"
+              },
+              {
+                "fieldId": "Tipo de imovel",
+                "fieldValue": "={{ $json.output['Tipo de imovel'] }}"
+              },
+              {
+                "fieldId": "Finalidade",
+                "fieldValue": "={{ $json.output.Finalidade }}"
+              },
+              {
+                "fieldId": "Bairro desejado",
+                "fieldValue": "={{ $json.output['Bairro desejado'] }}"
+              },
+              {
+                "fieldId": "Resumo da conversa",
+                "fieldValue": "={{ $json.output.Resumo_conversa }}"
+              }
+            ]
+          }
+        },
+        "type": "n8n-nodes-base.supabase",
+        "typeVersion": 1,
+        "position": [
+          2464,
+          416
+        ],
+        "id": "78bd88d1-6c55-49ba-9e60-74403c3083af",
+        "name": "atualizarCRM",
+        "credentials": {
+          "supabaseApi": {
+            "id": "5FjTcJdDLCf35qXe",
+            "name": "Supabase andre"
+          }
+        }
+      },
+      {
+        "parameters": {
+          "promptType": "define",
+          "text": "={{ $json.messages.map(m => `Usuário: ${m.human}\\nIA: ${m.ai}`).join('\\n\\n') }}",
+          "hasOutputParser": true,
+          "options": {
+            "systemMessage": "=Dia e hora atual: {{ $now }}\n\n## IDENTIDADE\n\n- Você é um agente IA responsável por atualizar o CRM do **corretor Caique Lima**, que atua com imóveis selecionados em São Paulo.  \n- Sua função é ler toda a conversa entre o **corretor e o cliente**, e gerar um resumo claro, objetivo e estratégico.  \n- Esse resumo será utilizado para manter o histórico atualizado e facilitar o acompanhamento futuro do cliente.\n- Você **nunca inventa informações**. Só preenche com base no que foi de fato conversado entre o corretor e o cliente.\n\n## FUNÇÃO\n\n-   Você deve **registrar os dados dos atendimentos no CRM imobiliário**.\n-   Antes de preencher qualquer campo, **leia com atenção toda a conversa entre o corretor e o cliente** para garantir que os dados estejam corretos e completos.\n\n### Campos obrigatórios\n\n-   **Nome**\n    -   Registre **exatamente o nome informado pelo cliente**.\n    -   Se for apenas o primeiro nome, salve apenas ele.\n    -   Nunca invente ou complete o nome por conta própria.\n    -  Lembre de deixar a primeira letra do nome em maiúscula.\n        \n-   **Tipo de imóvel**\n    -   Opções válidas: **Apartamento** ou **Casa**.\n    -   Se o cliente não deixar claro, deixar em branco.\n        \n-   **Finalidade**\n    -   Opções válidas: **Compra**, **Aluguel** ou **Investimento**.\n    -   Se o cliente não mencionar, deixar em branco.\n        \n-   **Bairro desejado**\n    -   Registrar todos os bairros, cidades ou regiões mencionadas pelo cliente. Se forem vários, separar por vírgula (ex: “Vila Mariana, Moema, Ipiranga”). Se nenhum for citado, deixar em branco.\n    -   Se não for citado, deixar em branco.\n        \n-   **Resumo_conversa**\n    -   Escreva um resumo **claro, natural e direto**, mencionando o **nome do cliente** e o que ele disse ou perguntou.\n    -   Foque em pontos como:\n        -   Tipo de imóvel e características desejadas.\n        -   Motivo da busca (mudança, investimento, família, etc).\n        -   Região ou condomínio de interesse.\n        -   Faixa de preço mencionada.\n        -   Se demonstrou interesse em agendar visita ou saber mais detalhes.\n    -   Ignore totalmente as falas do corretor.\n    -   Escreva sempre em **texto corrido**, sem listas ou quebras de linha.\n\n### **EXEMPLOS DE RESUMO DE CONVERSA**\n\n#### Exemplo 1:\n\nO cliente Felipe Moura entrou em contato procurando um apartamento para compra na região da Vila Mariana, com dois quartos e varanda. Disse que tem orçamento de até R$ 900 mil e gostaria de saber se há opções com vaga de garagem.\n\n#### Exemplo 2:\n\nA cliente Carolina Lopes demonstrou interesse em alugar uma casa na Zona Norte de São Paulo, comentou que busca um imóvel com quintal e espaço para pet. Disse que pretende se mudar no próximo mês e quer visitar opções ainda nesta semana.\n\n#### Exemplo 3:\n\nO cliente Rafael Andrade demonstrou interesse em comprar o apto do lançamento Trisul, ele agendou uma visita para o dia 18/10 as 15horas."
+          }
+        },
+        "type": "@n8n/n8n-nodes-langchain.agent",
+        "typeVersion": 1.8,
+        "position": [
+          1856,
+          416
+        ],
+        "id": "6b76ff09-b52d-4f91-a6f0-24275c5432c1",
+        "name": "CRM"
+      },
+      {
+        "parameters": {
+          "content": "# Verifica se o usuário existe e cadastra ele no Banco de dados.",
+          "height": 792,
+          "width": 720,
+          "color": 6
+        },
+        "type": "n8n-nodes-base.stickyNote",
+        "position": [
+          0,
+          0
+        ],
+        "typeVersion": 1,
+        "id": "5d9681ed-54f7-46c8-96be-8709cbc32469",
+        "name": "Sticky Note23"
+      },
+      {
+        "parameters": {
+          "rules": {
+            "values": [
+              {
+                "conditions": {
+                  "options": {
+                    "caseSensitive": true,
+                    "leftValue": "",
+                    "typeValidation": "strict",
+                    "version": 2
+                  },
+                  "conditions": [
+                    {
+                      "id": "32a5f010-2252-4057-acb7-a085648e3a14",
+                      "leftValue": "={{ $json.Whatsapp.toString() }}",
+                      "rightValue": "",
+                      "operator": {
+                        "type": "string",
+                        "operation": "notEmpty",
+                        "singleValue": true
+                      }
+                    }
+                  ],
+                  "combinator": "and"
+                },
+                "renameOutput": true,
+                "outputKey": "Existe"
+              },
+              {
+                "conditions": {
+                  "options": {
+                    "caseSensitive": true,
+                    "leftValue": "",
+                    "typeValidation": "strict",
+                    "version": 2
+                  },
+                  "conditions": [
+                    {
+                      "leftValue": "={{ $json.Whatsapp.toString() }}",
+                      "rightValue": "",
+                      "operator": {
+                        "type": "string",
+                        "operation": "empty",
+                        "singleValue": true
+                      },
+                      "id": "c71b31fe-c16a-4e57-a5b5-7d115351d0ee"
+                    }
+                  ],
+                  "combinator": "and"
+                },
+                "renameOutput": true,
+                "outputKey": "Não existe"
+              }
+            ]
+          },
+          "options": {}
+        },
+        "type": "n8n-nodes-base.switch",
+        "typeVersion": 3.2,
+        "position": [
+          368,
+          320
+        ],
+        "id": "f44e7f30-afe7-42e3-b6b1-396a1fbcbf25",
+        "name": "Switch4"
+      },
+      {
+        "parameters": {
+          "operation": "get",
+          "tableId": "IMOBILIARIA_ANDRE",
+          "filters": {
+            "conditions": [
+              {
+                "keyName": "Whatsapp",
+                "keyValue": "={{ $json.whatsapp_lead }}"
+              }
+            ]
+          }
+        },
+        "type": "n8n-nodes-base.supabase",
+        "typeVersion": 1,
+        "position": [
+          80,
+          320
+        ],
+        "id": "dad7eff8-066f-4c3b-8d05-076eb9db1c2e",
+        "name": "PuxarNumeroLead",
+        "alwaysOutputData": true,
+        "credentials": {
+          "supabaseApi": {
+            "id": "5FjTcJdDLCf35qXe",
+            "name": "Supabase andre"
+          }
+        }
+      },
+      {
+        "parameters": {
+          "tableId": "IMOBILIARIA_ANDRE",
+          "fieldsUi": {
+            "fieldValues": [
+              {
+                "fieldId": "Inicio do atendimento",
+                "fieldValue": "={{ $now }}"
+              },
+              {
+                "fieldId": "Whatsapp",
+                "fieldValue": "={{ $('setarInfo1').item.json.whatsapp_lead }}"
+              },
+              {
+                "fieldId": "IDConta ChatWoot",
+                "fieldValue": "={{ $('setarInfo1').item.json.id_conta_chatwoot }}"
+              },
+              {
+                "fieldId": "IDConversa ChatWoot",
+                "fieldValue": "={{ $('setarInfo1').item.json.id_conversa_chatwoot }}"
+              },
+              {
+                "fieldId": "IDLead ChatWoot",
+                "fieldValue": "={{ $('setarInfo1').item.json.id_lead_chatwoot }}"
+              },
+              {
+                "fieldId": "InboxID ChatWoot",
+                "fieldValue": "={{ $('setarInfo1').item.json.inbox_id_chatwoot }}"
+              }
+            ]
+          }
+        },
+        "type": "n8n-nodes-base.supabase",
+        "typeVersion": 1,
+        "position": [
+          544,
+          592
+        ],
+        "id": "551a9680-90be-4f20-9a5d-0ead939c3ca7",
+        "name": "CriarUsuario",
+        "credentials": {
+          "supabaseApi": {
+            "id": "5FjTcJdDLCf35qXe",
+            "name": "Supabase andre"
+          }
+        }
+      },
+      {
+        "parameters": {
+          "sessionIdType": "customKey",
+          "sessionKey": "={{ $('setarInfo1').item.json.whatsapp_lead }}",
+          "contextWindowLength": 40
+        },
+        "type": "@n8n/n8n-nodes-langchain.memoryPostgresChat",
+        "typeVersion": 1.3,
+        "position": [
+          1264,
+          608
+        ],
+        "id": "efa0c932-f1f6-47f2-ad49-45e1e4a06fd5",
+        "name": "memoria",
+        "credentials": {
+          "postgres": {
+            "id": "nkoxAzqCaGBsen34",
+            "name": "Postgres account"
+          }
+        }
+      },
+      {
+        "parameters": {
+          "content": "# Atualiza CRM",
+          "height": 564,
+          "width": 340,
+          "color": 5
+        },
+        "type": "n8n-nodes-base.stickyNote",
+        "position": [
+          2336,
+          192
+        ],
+        "typeVersion": 1,
+        "id": "2dfeeb07-f7b2-4173-baba-521a1bb006e3",
+        "name": "Sticky Note11"
+      }
+    ],
+    "connections": {
+      "When Executed by Another Workflow": {
+        "main": [
+          [
+            {
+              "node": "setarInfo1",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "setarInfo1": {
+        "main": [
+          [
+            {
+              "node": "PuxarNumeroLead",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "Chat Memory Manager1": {
+        "main": [
+          [
+            {
+              "node": "CRM",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "atualizaFollowUP": {
+        "main": [
+          [
+            {
+              "node": "Chat Memory Manager1",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "OpenAI Chat Model3": {
+        "ai_languageModel": [
+          [
+            {
+              "node": "CRM",
+              "type": "ai_languageModel",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "Structured Output Parser": {
+        "ai_outputParser": [
+          [
+            {
+              "node": "CRM",
+              "type": "ai_outputParser",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "CRM": {
+        "main": [
+          [
+            {
+              "node": "atualizarCRM",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "Switch4": {
+        "main": [
+          [
+            {
+              "node": "atualizaFollowUP",
+              "type": "main",
+              "index": 0
+            }
+          ],
+          [
+            {
+              "node": "CriarUsuario",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "PuxarNumeroLead": {
+        "main": [
+          [
+            {
+              "node": "Switch4",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "CriarUsuario": {
+        "main": [
+          [
+            {
+              "node": "Chat Memory Manager1",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "memoria": {
+        "ai_memory": [
+          [
+            {
+              "node": "Chat Memory Manager1",
+              "type": "ai_memory",
+              "index": 0
+            }
+          ]
+        ]
+      }
+    },
+    "authors": "PABLO MEDINA",
+    "name": "Version dde2020b",
+    "description": "",
+    "autosaved": true,
+    "workflowPublishHistory": [
+      {
+        "createdAt": "2026-03-27T19:07:00.272Z",
+        "id": 7,
+        "workflowId": "XYZKEwDIDJwYKoLL",
+        "versionId": "dde2020b-fe04-452b-9de6-54238273fbf0",
+        "event": "activated",
+        "userId": "595fd4e5-a243-4d30-88ac-7327a99f627e"
+      }
+    ]
+  }
+}

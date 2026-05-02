@@ -54,6 +54,8 @@ export default async function ConfiguracoesPage() {
         faviconUrl: tenant.marca?.faviconUrl ?? '',
         corPrimaria: tenant.marca?.corPrimaria ?? '#c5a64f',
         corSecundaria: tenant.marca?.corSecundaria ?? '#1a2e1a',
+        fonteTitulo: (tenant.marca as any)?.fonteTitulo ?? 'cormorant',
+        fonteCorpo: (tenant.marca as any)?.fonteCorpo ?? 'inter',
         email: tenant.marca?.email ?? '',
         whatsapp: tenant.marca?.whatsapp ?? '',
         telefone: tenant.marca?.telefone ?? '',
