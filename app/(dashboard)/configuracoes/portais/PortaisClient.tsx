@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect, useMemo } from 'react';
+import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import {
   Globe,
@@ -80,10 +80,11 @@ export default function PortaisClient({
   const [rotating, setRotating] = useState(false);
   const [stats, setStats] = useState<any>(null);
 
-  // Base URL — quando rodando local fica em localhost:3005, em prod, o NEXTAUTH_URL
-  const baseUrl = useMemo(() => {
-    if (typeof window === 'undefined') return '';
-    return window.location.origin;
+  // Base URL — string vazia no SSR e na primeira renderização do client (URL fica
+  // relativa, casa o markup do server) e absoluta após hidratar.
+  const [baseUrl, setBaseUrl] = useState('');
+  useEffect(() => {
+    setBaseUrl(window.location.origin);
   }, []);
 
   // Carrega stats em background

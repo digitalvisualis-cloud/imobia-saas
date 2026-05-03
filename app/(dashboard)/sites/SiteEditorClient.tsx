@@ -1,10 +1,9 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { ExternalLink, Globe, Eye, EyeOff, Copy, Check, Monitor, Smartphone } from 'lucide-react';
 import { CustomizerPanel } from '@/components/customizer/CustomizerPanel';
-import { ThemeRenderer } from '@/components/themes/ThemeRenderer';
-import { useSiteStore, useThemeConfig } from '@/lib/site-store';
+import { useSiteStore } from '@/lib/site-store';
 import type { Customization, ThemeId } from '@/types/site-customization';
 import type { ImovelPublic, TenantPublic } from '@/app/_templates/types';
 import { toast } from '@/lib/toast';
@@ -31,8 +30,6 @@ export default function SiteEditorClient({ site, tenant, imoveis }: Props) {
   const hydrate = useSiteStore((s) => s.hydrate);
   const setActiveTheme = useSiteStore((s) => s.setActiveTheme);
   const markSaved = useSiteStore((s) => s.markSaved);
-  const activeTheme = useSiteStore((s) => s.activeTheme);
-  const config = useThemeConfig(activeTheme);
 
   const [saving, setSaving] = useState(false);
   const [savedAt, setSavedAt] = useState<number | null>(null);
@@ -40,22 +37,59 @@ export default function SiteEditorClient({ site, tenant, imoveis }: Props) {
   const [publicado, setPublicado] = useState(site.publicado);
   const [viewport, setViewport] = useState<Viewport>('desktop');
   const [copiedUrl, setCopiedUrl] = useState(false);
+  const [origin, setOrigin] = useState<string>('');
+  const iframeRef = useRef<HTMLIFrameElement>(null);
 
-  // Hidrata o store com a config salva ao montar
+  useEffect(() => {
+    setOrigin(window.location.origin);
+  }, []);
+
+  // Hidrata o store com a config salva ao montar e escreve o estado inicial
+  // no localStorage. O subscribe abaixo só observa MUDANÇAS, não dispara no
+  // mount — por isso a escrita inicial é manual aqui.
   useEffect(() => {
     hydrate('brisa', site.configBrisa);
     hydrate('aura', site.configAura);
     setActiveTheme(site.themeId);
-    // markSaved depois de hidratar pra que dirty=false
     markSaved();
+    try {
+      localStorage.setItem(
+        'site-preview-data',
+        JSON.stringify({ tenant, imoveis }),
+      );
+      const s = useSiteStore.getState();
+      localStorage.setItem(
+        'site-preview-state',
+        JSON.stringify({
+          theme: s.activeTheme,
+          config: s.byTheme[s.activeTheme],
+        }),
+      );
+    } catch {
+      /* localStorage cheio? ignora */
+    }
     // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
+  // Sincroniza mudanças do Zustand → localStorage. localStorage dispara
+  // `storage` event no iframe (mesma origin, documento diferente), que reage.
+  useEffect(() => {
+    const unsub = useSiteStore.subscribe((s) => {
+      try {
+        localStorage.setItem(
+          'site-preview-state',
+          JSON.stringify({ theme: s.activeTheme, config: s.byTheme[s.activeTheme] }),
+        );
+      } catch {
+        /* ignore */
+      }
+    });
+    return unsub;
   }, []);
 
   const siteUrl = site.dominio
     ? `https://${site.dominio}`
-    : typeof window !== 'undefined'
-      ? `${window.location.origin}/s/${site.slug}`
-      : `/s/${site.slug}`;
+    : `${origin}/s/${site.slug}`;
 
   async function handleSave() {
     setSaving(true);
@@ -197,27 +231,32 @@ export default function SiteEditorClient({ site, tenant, imoveis }: Props) {
           <div
             className={cn(
               'mx-auto overflow-hidden rounded-lg bg-white shadow-lg transition-all',
-              viewport === 'desktop' ? 'max-w-full' : 'max-w-[420px]',
+              viewport === 'desktop' ? 'max-w-full' : 'w-[414px]',
             )}
+            style={
+              viewport === 'mobile'
+                ? {
+                    border: '8px solid #1e293b',
+                    borderRadius: 36,
+                  }
+                : undefined
+            }
           >
-            <div
-              className="origin-top transition-transform"
-              style={
-                viewport === 'mobile'
-                  ? { transform: 'scale(1)', maxWidth: 420 }
-                  : undefined
-              }
-            >
-              <ThemeRenderer
-                theme={activeTheme}
-                config={config}
-                tenant={tenant}
-                imoveis={imoveis}
-              />
-            </div>
+            <iframe
+              ref={iframeRef}
+              src="/preview/site"
+              title="Preview"
+              className="w-full"
+              style={{
+                height: viewport === 'mobile' ? 720 : 'calc(100vh - 120px)',
+                border: 0,
+                background: 'white',
+              }}
+            />
           </div>
         </div>
       </div>
     </div>
   );
 }
+

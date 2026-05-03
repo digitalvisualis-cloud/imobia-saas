@@ -29,13 +29,13 @@ export function BrisaCard({ imovel, slug }: Props) {
           {imovel.operacao.toLowerCase()}
         </span>
       </div>
-      <div className="p-5">
-        <p className="text-[11px] font-medium uppercase tracking-[0.15em] opacity-60">
+      <div className="p-4 sm:p-5">
+        <p className="text-[10px] font-medium uppercase tracking-[0.12em] opacity-60 sm:text-[11px] sm:tracking-[0.15em]">
           {imovel.bairro ?? '—'} {imovel.cidade && `· ${imovel.cidade}`}
         </p>
         <h3
           style={{ fontFamily: 'var(--t-font-heading)' }}
-          className="mt-1.5 text-lg font-semibold leading-snug"
+          className="mt-1.5 text-base font-semibold leading-snug sm:text-lg"
         >
           {imovel.titulo}
         </h3>

@@ -9,8 +9,24 @@ import {
 import type { Customization } from '@/types/site-customization';
 import type { TenantPublic } from '@/app/_templates/types';
 
+// Mapeia paths legados (de configs salvos antes) pro formato atual com filtros.
+const LEGACY_PATH_REWRITE: Record<string, string> = {
+  '/comprar': '/?op=venda',
+  '/alugar': '/?op=aluguel',
+  '/sobre': '/#sobre',
+};
+
 function resolveTo(slug: string, to: string) {
-  return `/s/${slug}${to === '/' ? '' : to}`;
+  const rewritten = LEGACY_PATH_REWRITE[to] ?? to;
+  return `/s/${slug}${rewritten === '/' ? '' : rewritten}`;
+}
+
+// Quando o cliente não mudou o nome da empresa no editor, o config ainda guarda
+// "Sua Imobiliária" (o placeholder default). Cai pro nome real do tenant.
+function resolveBrandName(config: Customization, tenant: TenantPublic): string {
+  const fromConfig = config.header.brandName?.trim();
+  if (fromConfig && fromConfig !== 'Sua Imobiliária') return fromConfig;
+  return tenant.marca?.nomeEmpresa?.trim() || tenant.nome || fromConfig || 'Sua Imobiliária';
 }
 
 interface ChromeProps {
@@ -19,6 +35,7 @@ interface ChromeProps {
 }
 
 export function BrisaHeader({ config, tenant }: ChromeProps) {
+  const brandName = resolveBrandName(config, tenant);
   return (
     <header
       className="sticky top-0 z-30 w-full backdrop-blur"
@@ -37,14 +54,14 @@ export function BrisaHeader({ config, tenant }: ChromeProps) {
               fontFamily: 'var(--t-font-heading)',
             }}
           >
-            {config.header.brandName.charAt(0)}
+            {brandName.charAt(0)}
           </div>
           <div className="leading-tight">
             <div
               style={{ fontFamily: 'var(--t-font-heading)' }}
               className="text-base font-semibold"
             >
-              {config.header.brandName}
+              {brandName}
             </div>
             {tenant.marca?.endereco && (
               <div className="text-[10px] uppercase tracking-[0.2em] opacity-60">
@@ -77,6 +94,8 @@ export function BrisaHeader({ config, tenant }: ChromeProps) {
 }
 
 export function BrisaFooter({ config, tenant }: ChromeProps) {
+  const brandName = resolveBrandName(config, tenant);
+  const slug = tenant.slug;
   return (
     <footer
       id="contato"
@@ -92,7 +111,7 @@ export function BrisaFooter({ config, tenant }: ChromeProps) {
             style={{ fontFamily: 'var(--t-font-heading)' }}
             className="text-xl font-semibold"
           >
-            {config.header.brandName}
+            {brandName}
           </div>
           {tenant.marca?.endereco && (
             <p className="mt-3 text-sm opacity-70">{tenant.marca.endereco}</p>
@@ -112,20 +131,39 @@ export function BrisaFooter({ config, tenant }: ChromeProps) {
           <div className="mb-3 text-xs font-semibold uppercase tracking-wider opacity-60">
             Imóveis
           </div>
-          <ul className="space-y-1.5 text-sm opacity-80">
-            <li>Comprar</li>
-            <li>Alugar</li>
-            <li>Lançamentos</li>
+          <ul className="space-y-1.5 text-sm">
+            <li>
+              <Link href={`/s/${slug}?op=venda`} className="opacity-80 hover:opacity-100">
+                Comprar
+              </Link>
+            </li>
+            <li>
+              <Link href={`/s/${slug}?op=aluguel`} className="opacity-80 hover:opacity-100">
+                Alugar
+              </Link>
+            </li>
+            <li>
+              <Link
+                href={`/s/${slug}?op=lancamento`}
+                className="opacity-80 hover:opacity-100"
+              >
+                Lançamentos
+              </Link>
+            </li>
           </ul>
         </div>
         <div>
           <div className="mb-3 text-xs font-semibold uppercase tracking-wider opacity-60">
             Empresa
           </div>
-          <ul className="space-y-1.5 text-sm opacity-80">
-            <li>Sobre nós</li>
-            <li>Política de privacidade</li>
-            <li>Termos de uso</li>
+          <ul className="space-y-1.5 text-sm">
+            <li>
+              <Link href={`/s/${slug}#sobre`} className="opacity-80 hover:opacity-100">
+                Sobre nós
+              </Link>
+            </li>
+            <li className="opacity-50">Política de privacidade</li>
+            <li className="opacity-50">Termos de uso</li>
           </ul>
         </div>
       </div>
@@ -133,7 +171,7 @@ export function BrisaFooter({ config, tenant }: ChromeProps) {
         className="border-t py-5 text-center text-xs opacity-60"
         style={{ borderColor: 'rgb(var(--t-fg-rgb) / 0.08)' }}
       >
-        © {new Date().getFullYear()} {config.header.brandName}. Todos os direitos reservados.
+        © {new Date().getFullYear()} {brandName}. Todos os direitos reservados.
       </div>
     </footer>
   );

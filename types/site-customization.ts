@@ -92,9 +92,9 @@ const COMMON_HEADER: HeaderConfig = {
   brandName: 'Sua Imobiliária',
   links: [
     { label: 'Início', to: '/' },
-    { label: 'Comprar', to: '/comprar' },
-    { label: 'Alugar', to: '/alugar' },
-    { label: 'Sobre', to: '/sobre' },
+    { label: 'Comprar', to: '/?op=venda' },
+    { label: 'Alugar', to: '/?op=aluguel' },
+    { label: 'Sobre', to: '/#sobre' },
   ],
   ctaLabel: 'Fale conosco',
   ctaHref: '#contato',

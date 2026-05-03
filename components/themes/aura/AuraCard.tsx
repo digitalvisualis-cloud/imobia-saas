@@ -31,11 +31,11 @@ export function AuraCard({ imovel, slug, large = false }: Props) {
           </p>
           <h3
             style={{ fontFamily: 'var(--t-font-heading)' }}
-            className="mt-2 text-2xl leading-[1.15] md:text-3xl"
+            className="mt-2 text-lg leading-[1.15] sm:text-2xl md:text-3xl"
           >
             {imovel.titulo}
           </h3>
-          <p className="mt-2 text-sm opacity-65">
+          <p className="mt-2 text-xs opacity-65 sm:text-sm">
             {imovel.areaM2 != null && `${imovel.areaM2} m²`}
             {imovel.quartos > 0 && ` · ${imovel.quartos} dormitórios`}
             {imovel.vagas > 0 && ` · ${imovel.vagas} vagas`}

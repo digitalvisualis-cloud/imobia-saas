@@ -9,7 +9,6 @@ import {
   KeyRound,
   Plus,
   TrendingUp,
-  Users,
   MessageSquare,
   Calendar,
   Globe,
@@ -88,7 +87,6 @@ export default function DashboardLayout({
       label: 'CRM',
       items: [
         { name: 'Negócios', href: '/leads', icon: TrendingUp },
-        { name: 'Contatos', href: '/contatos', icon: Users },
         { name: 'Leads (chatbot)', href: '/leads-inbox', icon: MessageSquare },
         { name: 'Agenda', href: '/agenda', icon: Calendar },
       ],
@@ -96,16 +94,7 @@ export default function DashboardLayout({
     {
       label: 'Marketing',
       items: [
-        ...(siteSlug
-          ? [
-              {
-                name: 'Meu Site',
-                href: `/s/${siteSlug}`,
-                icon: Globe,
-                external: true,
-              },
-            ]
-          : [{ name: 'Configurar Site', href: '/sites', icon: Globe }]),
+        { name: 'Meu Site', href: '/sites', icon: Globe },
         { name: 'Conteúdo IA', href: '/conteudo', icon: Sparkles },
         {
           name: 'Anunciar em portais',

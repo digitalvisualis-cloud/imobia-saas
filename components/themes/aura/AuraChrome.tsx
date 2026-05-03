@@ -9,8 +9,22 @@ import {
 import type { Customization } from '@/types/site-customization';
 import type { TenantPublic } from '@/app/_templates/types';
 
+// Mapeia paths legados (de configs salvos antes) pro formato atual com filtros.
+const LEGACY_PATH_REWRITE: Record<string, string> = {
+  '/comprar': '/?op=venda',
+  '/alugar': '/?op=aluguel',
+  '/sobre': '/#sobre',
+};
+
 function resolveTo(slug: string, to: string) {
-  return `/s/${slug}${to === '/' ? '' : to}`;
+  const rewritten = LEGACY_PATH_REWRITE[to] ?? to;
+  return `/s/${slug}${rewritten === '/' ? '' : rewritten}`;
+}
+
+function resolveBrandName(config: Customization, tenant: TenantPublic): string {
+  const fromConfig = config.header.brandName?.trim();
+  if (fromConfig && fromConfig !== 'Sua Imobiliária') return fromConfig;
+  return tenant.marca?.nomeEmpresa?.trim() || tenant.nome || fromConfig || 'Sua Imobiliária';
 }
 
 interface ChromeProps {
@@ -19,17 +33,18 @@ interface ChromeProps {
 }
 
 export function AuraHeader({ config, tenant }: ChromeProps) {
+  const brandName = resolveBrandName(config, tenant);
   return (
     <header className="absolute left-0 right-0 top-0 z-30">
-      <div className="mx-auto flex max-w-[1500px] items-center justify-between px-8 py-7">
+      <div className="mx-auto flex max-w-[1500px] items-center justify-between px-4 py-4 sm:px-8 sm:py-7">
         <Link href={`/s/${tenant.slug}`} className="text-white">
           <div
             style={{ fontFamily: 'var(--t-font-heading)' }}
-            className="text-xl tracking-wide"
+            className="text-base tracking-wide sm:text-xl"
           >
-            {config.header.brandName.toUpperCase()}
+            {brandName.toUpperCase()}
           </div>
-          <div className="mt-0.5 text-[9px] tracking-[0.4em] opacity-70">
+          <div className="mt-0.5 text-[8px] tracking-[0.3em] opacity-70 sm:text-[9px] sm:tracking-[0.4em]">
             REAL ESTATE
           </div>
         </Link>
@@ -62,19 +77,21 @@ export function AuraHeader({ config, tenant }: ChromeProps) {
 }
 
 export function AuraFooter({ config, tenant }: ChromeProps) {
+  const brandName = resolveBrandName(config, tenant);
+  const slug = tenant.slug;
   return (
     <footer
       id="contato"
       className="mt-32"
       style={{ background: 'var(--t-primary)', color: 'var(--t-bg)' }}
     >
-      <div className="mx-auto grid max-w-[1500px] gap-12 px-8 py-20 md:grid-cols-12">
+      <div className="mx-auto grid max-w-[1500px] gap-8 px-4 py-12 sm:gap-12 sm:px-8 sm:py-20 md:grid-cols-12">
         <div className="md:col-span-5">
           <div
             style={{ fontFamily: 'var(--t-font-heading)' }}
-            className="text-4xl leading-tight"
+            className="text-2xl leading-tight sm:text-4xl"
           >
-            {config.header.brandName}.
+            {brandName}.
             <br />
             <span style={{ color: 'var(--t-secondary)' }}>Curated estates.</span>
           </div>
@@ -84,8 +101,16 @@ export function AuraFooter({ config, tenant }: ChromeProps) {
           </p>
           <SocialRow social={config.social} />
         </div>
-        <FCol titulo="Navegação" items={['Coleção', 'Lançamentos', 'Off-market', 'Comercial']} />
-        <FCol titulo="Estúdio" items={['Sobre', 'Time', 'Imprensa', 'Carreira']} />
+        <FCol
+          titulo="Navegação"
+          items={[
+            { label: 'Coleção', href: `/s/${slug}` },
+            { label: 'Lançamentos', href: `/s/${slug}?op=lancamento` },
+            { label: 'À venda', href: `/s/${slug}?op=venda` },
+            { label: 'Aluguel', href: `/s/${slug}?op=aluguel` },
+          ]}
+        />
+        <FCol titulo="Estúdio" items={[{ label: 'Sobre', href: `/s/${slug}#sobre` }]} />
         <div className="md:col-span-3">
           <div className="text-[11px] uppercase tracking-[0.3em] opacity-60">Contato</div>
           {tenant.marca?.endereco && (
@@ -103,19 +128,23 @@ export function AuraFooter({ config, tenant }: ChromeProps) {
         className="mx-auto max-w-[1500px] border-t px-8 py-7 text-[11px] uppercase tracking-[0.2em] opacity-60"
         style={{ borderColor: 'rgb(255 255 255 / 0.1)' }}
       >
-        © {new Date().getFullYear()} {config.header.brandName} · Todos os direitos reservados
+        © {new Date().getFullYear()} {brandName} · Todos os direitos reservados
       </div>
     </footer>
   );
 }
 
-function FCol({ titulo, items }: { titulo: string; items: string[] }) {
+function FCol({ titulo, items }: { titulo: string; items: Array<{ label: string; href: string }> }) {
   return (
     <div className="md:col-span-2">
       <div className="text-[11px] uppercase tracking-[0.3em] opacity-60">{titulo}</div>
-      <ul className="mt-4 space-y-2.5 text-sm opacity-90">
+      <ul className="mt-4 space-y-2.5 text-sm">
         {items.map((i) => (
-          <li key={i}>{i}</li>
+          <li key={i.label}>
+            <Link href={i.href} className="opacity-90 hover:opacity-100">
+              {i.label}
+            </Link>
+          </li>
         ))}
       </ul>
     </div>

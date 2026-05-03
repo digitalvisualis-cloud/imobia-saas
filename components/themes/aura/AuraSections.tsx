@@ -35,29 +35,29 @@ export function AuraHero({ tenant, imoveis }: SectionProps) {
         }}
       />
 
-      <div className="relative z-10 flex h-full flex-col justify-end px-8 pb-16 text-white md:px-14 md:pb-20">
+      <div className="relative z-10 flex h-full flex-col justify-end px-4 pb-10 text-white sm:px-8 sm:pb-16 md:px-14 md:pb-20">
         <div className="mx-auto w-full max-w-[1500px]">
-          <div className="grid gap-10 md:grid-cols-12 md:items-end">
+          <div className="grid gap-6 sm:gap-10 md:grid-cols-12 md:items-end">
             <div className="md:col-span-7">
-              <p className="text-[11px] uppercase tracking-[0.4em] opacity-80">
+              <p className="text-[10px] uppercase tracking-[0.3em] opacity-80 sm:text-[11px] sm:tracking-[0.4em]">
                 Featured Estate · Cód {codigo}
               </p>
               <h1
                 style={{ fontFamily: 'var(--t-font-heading)' }}
-                className="mt-5 text-5xl leading-[0.98] md:text-[88px]"
+                className="mt-3 text-3xl leading-[1.05] sm:mt-5 sm:text-5xl sm:leading-[0.98] md:text-[88px]"
               >
                 {titulo}.
               </h1>
-              <p className="mt-5 max-w-xl text-base opacity-80 md:text-lg">{subtitulo}</p>
+              <p className="mt-3 max-w-xl text-sm opacity-80 sm:mt-5 sm:text-base md:text-lg">{subtitulo}</p>
             </div>
             {featured && (
               <div className="md:col-span-5 md:text-right">
-                <div className="text-[11px] uppercase tracking-[0.3em] opacity-70">
+                <div className="text-[10px] uppercase tracking-[0.25em] opacity-70 sm:text-[11px] sm:tracking-[0.3em]">
                   {featured.operacao.toUpperCase() === 'ALUGUEL' ? 'Aluguel mensal' : 'Preço sob consulta'}
                 </div>
                 <div
                   style={{ fontFamily: 'var(--t-font-heading)', color: 'var(--t-secondary)' }}
-                  className="mt-2 text-4xl md:text-5xl"
+                  className="mt-1 text-2xl sm:mt-2 sm:text-4xl md:text-5xl"
                 >
                   {new Intl.NumberFormat('pt-BR', {
                     style: 'currency',
@@ -75,30 +75,126 @@ export function AuraHero({ tenant, imoveis }: SectionProps) {
             )}
           </div>
 
-          <div className="mt-14 flex flex-wrap items-stretch gap-px overflow-hidden rounded-sm bg-white/10 backdrop-blur">
-            <SearchField label="Localização" value="Cidade ou bairro" />
-            <SearchField label="Tipo" value="Selecione" />
-            <SearchField label="Dormitórios" value="Qualquer" />
-            <SearchField label="Faixa" value="Sob consulta" />
-            <button
-              type="button"
-              className="flex items-center gap-2 px-7 py-4 text-[11px] font-semibold uppercase tracking-[0.25em] text-black"
-              style={{ background: 'var(--t-secondary)' }}
-            >
-              <Search className="h-3.5 w-3.5" /> Buscar
-            </button>
-          </div>
+          <AuraSearchBar />
         </div>
       </div>
     </div>
   );
 }
 
-function SearchField({ label, value }: { label: string; value: string }) {
+const AURA_TIPOS = [
+  { value: '', label: 'Selecione' },
+  { value: 'CASA', label: 'Casa' },
+  { value: 'APARTAMENTO', label: 'Apartamento' },
+  { value: 'COBERTURA', label: 'Cobertura' },
+  { value: 'STUDIO', label: 'Studio' },
+  { value: 'TERRENO', label: 'Terreno' },
+  { value: 'SALA_COMERCIAL', label: 'Sala Comercial' },
+  { value: 'CHACARA', label: 'Chácara' },
+];
+
+const AURA_DORMS = [
+  { value: '', label: 'Qualquer' },
+  { value: '1', label: '1+' },
+  { value: '2', label: '2+' },
+  { value: '3', label: '3+' },
+  { value: '4', label: '4+' },
+];
+
+const AURA_FAIXAS = [
+  { value: '', label: 'Sob consulta' },
+  { value: '0-1000000', label: 'Até R$ 1Mi' },
+  { value: '1000000-3000000', label: 'R$ 1—3Mi' },
+  { value: '3000000-10000000', label: 'R$ 3—10Mi' },
+  { value: '10000000-', label: 'Acima de R$ 10Mi' },
+];
+
+function AuraSearchBar() {
+  const [busca, setBusca] = useState('');
+  const [tipo, setTipo] = useState('');
+  const [dorm, setDorm] = useState('');
+  const [faixa, setFaixa] = useState('');
+
+  function handleSubmit(e: React.FormEvent) {
+    e.preventDefault();
+    const params = new URLSearchParams();
+    if (busca) params.set('q', busca);
+    if (tipo) params.set('tipo', tipo);
+    if (dorm) params.set('dorm', dorm);
+    if (faixa) params.set('faixa', faixa);
+    window.location.search = params.toString();
+  }
+
+  return (
+    <form
+      onSubmit={handleSubmit}
+      className="mt-14 flex flex-wrap items-stretch gap-px overflow-hidden rounded-sm bg-white/10 backdrop-blur"
+    >
+      <SearchInput label="Localização" placeholder="Cidade ou bairro" value={busca} onChange={setBusca} />
+      <SearchSelect label="Tipo" value={tipo} onChange={setTipo} options={AURA_TIPOS} />
+      <SearchSelect label="Dormitórios" value={dorm} onChange={setDorm} options={AURA_DORMS} />
+      <SearchSelect label="Faixa" value={faixa} onChange={setFaixa} options={AURA_FAIXAS} />
+      <button
+        type="submit"
+        className="flex items-center gap-2 px-7 py-4 text-[11px] font-semibold uppercase tracking-[0.25em] text-black"
+        style={{ background: 'var(--t-secondary)' }}
+      >
+        <Search className="h-3.5 w-3.5" /> Buscar
+      </button>
+    </form>
+  );
+}
+
+function SearchInput({
+  label,
+  placeholder,
+  value,
+  onChange,
+}: {
+  label: string;
+  placeholder: string;
+  value: string;
+  onChange: (v: string) => void;
+}) {
   return (
     <div className="min-w-[180px] flex-1 bg-black/35 px-5 py-4 text-white">
       <div className="text-[10px] uppercase tracking-[0.3em] opacity-60">{label}</div>
-      <div className="mt-1 text-sm opacity-90">{value}</div>
+      <input
+        type="text"
+        value={value}
+        onChange={(e) => onChange(e.target.value)}
+        placeholder={placeholder}
+        className="mt-1 w-full bg-transparent text-sm outline-none placeholder:text-white/60"
+      />
+    </div>
+  );
+}
+
+function SearchSelect({
+  label,
+  value,
+  onChange,
+  options,
+}: {
+  label: string;
+  value: string;
+  onChange: (v: string) => void;
+  options: { value: string; label: string }[];
+}) {
+  return (
+    <div className="min-w-[180px] flex-1 bg-black/35 px-5 py-4 text-white">
+      <div className="text-[10px] uppercase tracking-[0.3em] opacity-60">{label}</div>
+      <select
+        value={value}
+        onChange={(e) => onChange(e.target.value)}
+        className="mt-1 w-full cursor-pointer bg-transparent text-sm text-white outline-none"
+      >
+        {options.map((opt) => (
+          <option key={opt.value} value={opt.value} style={{ color: '#000' }}>
+            {opt.label}
+          </option>
+        ))}
+      </select>
     </div>
   );
 }
@@ -106,13 +202,13 @@ function SearchField({ label, value }: { label: string; value: string }) {
 export function AuraDestaques({ tenant, imoveis }: SectionProps) {
   if (imoveis.length === 0) return null;
   return (
-    <div className="mx-auto mt-32 max-w-[1500px] px-8">
-      <div className="grid gap-10 md:grid-cols-12 md:items-end">
+    <div className="mx-auto mt-16 max-w-[1500px] px-4 sm:mt-32 sm:px-8">
+      <div className="grid gap-6 sm:gap-10 md:grid-cols-12 md:items-end">
         <div className="md:col-span-4">
-          <p className="text-[11px] uppercase tracking-[0.35em] opacity-60">A coleção</p>
+          <p className="text-[10px] uppercase tracking-[0.3em] opacity-60 sm:text-[11px] sm:tracking-[0.35em]">A coleção</p>
           <h2
             style={{ fontFamily: 'var(--t-font-heading)' }}
-            className="mt-4 text-5xl leading-[1.05] md:text-6xl"
+            className="mt-3 text-3xl leading-[1.1] sm:mt-4 sm:text-5xl sm:leading-[1.05] md:text-6xl"
           >
             Residências escolhidas a dedo.
           </h2>
@@ -152,23 +248,23 @@ export function AuraCategorias({ imoveis }: SectionProps) {
   ];
 
   return (
-    <div className="mx-auto mt-32 max-w-[1500px] px-8">
-      <p className="text-[11px] uppercase tracking-[0.35em] opacity-60">Endereços</p>
+    <div className="mx-auto mt-16 max-w-[1500px] px-4 sm:mt-32 sm:px-8">
+      <p className="text-[10px] uppercase tracking-[0.3em] opacity-60 sm:text-[11px] sm:tracking-[0.35em]">Endereços</p>
       <div
-        className="mt-16 grid gap-px"
+        className="mt-8 grid gap-px sm:mt-16"
         style={{ background: 'rgb(var(--t-fg-rgb) / 0.12)' }}
       >
         {top.map(([nome], idx) => (
           <a
             key={nome}
-            className="group flex items-center gap-8 px-2 py-10 transition-colors hover:bg-black/[0.03]"
+            className="group flex items-center gap-3 px-2 py-6 transition-colors hover:bg-black/[0.03] sm:gap-8 sm:py-10"
             style={{ background: 'var(--t-bg)' }}
           >
-            <div className="w-16 text-[11px] tabular-nums opacity-50">0{idx + 1}</div>
+            <div className="w-10 text-[10px] tabular-nums opacity-50 sm:w-16 sm:text-[11px]">0{idx + 1}</div>
             <div className="flex-1">
               <h3
                 style={{ fontFamily: 'var(--t-font-heading)' }}
-                className="text-4xl md:text-6xl"
+                className="text-2xl sm:text-4xl md:text-6xl"
               >
                 {nome}
               </h3>
@@ -191,13 +287,13 @@ export function AuraCategorias({ imoveis }: SectionProps) {
 export function AuraSobre({ tenant }: SectionProps) {
   const nome = tenant.marca?.nomeEmpresa ?? tenant.nome;
   return (
-    <div className="mx-auto mt-32 max-w-[1500px] px-8">
-      <div className="grid gap-16 md:grid-cols-12">
+    <div id="sobre" className="mx-auto mt-16 max-w-[1500px] scroll-mt-24 px-4 sm:mt-32 sm:px-8">
+      <div className="grid gap-8 sm:gap-16 md:grid-cols-12">
         <div className="md:col-span-5">
-          <p className="text-[11px] uppercase tracking-[0.35em] opacity-60">Estúdio</p>
+          <p className="text-[10px] uppercase tracking-[0.3em] opacity-60 sm:text-[11px] sm:tracking-[0.35em]">Estúdio</p>
           <h2
             style={{ fontFamily: 'var(--t-font-heading)' }}
-            className="mt-4 text-5xl leading-[1.05] md:text-7xl"
+            className="mt-3 text-3xl leading-[1.1] sm:mt-4 sm:text-5xl sm:leading-[1.05] md:text-7xl"
           >
             Quietos.
             <br />
@@ -230,14 +326,14 @@ const DEPS = [
 
 export function AuraDepoimentos() {
   return (
-    <div className="mx-auto mt-32 max-w-[1500px] px-8">
-      <p className="text-[11px] uppercase tracking-[0.35em] opacity-60">Clientes</p>
-      <div className="mt-12 grid gap-12 md:grid-cols-3">
+    <div className="mx-auto mt-16 max-w-[1500px] px-4 sm:mt-32 sm:px-8">
+      <p className="text-[10px] uppercase tracking-[0.3em] opacity-60 sm:text-[11px] sm:tracking-[0.35em]">Clientes</p>
+      <div className="mt-8 grid gap-8 sm:mt-12 sm:gap-12 md:grid-cols-3">
         {DEPS.map((d) => (
           <figure key={d.nome}>
             <blockquote
               style={{ fontFamily: 'var(--t-font-heading)' }}
-              className="text-2xl leading-snug md:text-3xl"
+              className="text-lg leading-snug sm:text-2xl md:text-3xl"
             >
               "{d.txt}"
             </blockquote>
@@ -260,13 +356,13 @@ const FAQS = [
 export function AuraFAQ() {
   const [open, setOpen] = useState(0);
   return (
-    <div className="mx-auto mt-32 max-w-[1500px] px-8">
-      <div className="grid gap-16 md:grid-cols-12">
+    <div className="mx-auto mt-16 max-w-[1500px] px-4 sm:mt-32 sm:px-8">
+      <div className="grid gap-8 sm:gap-16 md:grid-cols-12">
         <div className="md:col-span-4">
-          <p className="text-[11px] uppercase tracking-[0.35em] opacity-60">Perguntas</p>
+          <p className="text-[10px] uppercase tracking-[0.3em] opacity-60 sm:text-[11px] sm:tracking-[0.35em]">Perguntas</p>
           <h2
             style={{ fontFamily: 'var(--t-font-heading)' }}
-            className="mt-4 text-5xl leading-[1.05]"
+            className="mt-3 text-3xl leading-[1.1] sm:mt-4 sm:text-5xl sm:leading-[1.05]"
           >
             O que perguntam.
           </h2>
@@ -279,13 +375,13 @@ export function AuraFAQ() {
                 key={f.q}
                 type="button"
                 onClick={() => setOpen(isOpen ? -1 : i)}
-                className="block w-full border-t py-7 text-left"
+                className="block w-full border-t py-5 text-left sm:py-7"
                 style={{ borderColor: 'rgb(var(--t-fg-rgb) / 0.15)' }}
               >
-                <div className="flex items-center justify-between gap-6">
+                <div className="flex items-center justify-between gap-3 sm:gap-6">
                   <span
                     style={{ fontFamily: 'var(--t-font-heading)' }}
-                    className="text-2xl"
+                    className="text-lg sm:text-2xl"
                   >
                     {f.q}
                   </span>
@@ -303,17 +399,17 @@ export function AuraFAQ() {
 
 export function AuraCTA({ tenant }: SectionProps) {
   return (
-    <div className="mx-auto mt-32 max-w-[1500px] px-8">
+    <div className="mx-auto mt-16 max-w-[1500px] px-4 sm:mt-32 sm:px-8">
       <div
-        className="relative overflow-hidden px-8 py-24 md:px-20 md:py-32"
+        className="relative overflow-hidden px-5 py-12 sm:px-8 sm:py-24 md:px-20 md:py-32"
         style={{ background: 'var(--t-primary)', color: 'var(--t-bg)' }}
       >
-        <p className="text-[11px] uppercase tracking-[0.35em] opacity-60">
+        <p className="text-[10px] uppercase tracking-[0.3em] opacity-60 sm:text-[11px] sm:tracking-[0.35em]">
           Anuncie com a {tenant.marca?.nomeEmpresa ?? tenant.nome}
         </p>
         <h2
           style={{ fontFamily: 'var(--t-font-heading)' }}
-          className="mt-5 max-w-3xl text-5xl leading-[1] md:text-7xl"
+          className="mt-3 max-w-3xl text-3xl leading-[1.05] sm:mt-5 sm:text-5xl sm:leading-[1] md:text-7xl"
         >
           Sua propriedade merece{' '}
           <span style={{ color: 'var(--t-secondary)' }}>uma narrativa.</span>
@@ -331,13 +427,13 @@ export function AuraCTA({ tenant }: SectionProps) {
 
 export function AuraContato() {
   return (
-    <div className="mx-auto mt-32 max-w-[1500px] px-8">
-      <div className="grid gap-12 md:grid-cols-12">
+    <div className="mx-auto mt-16 max-w-[1500px] px-4 sm:mt-32 sm:px-8">
+      <div className="grid gap-6 sm:gap-12 md:grid-cols-12">
         <div className="md:col-span-5">
-          <p className="text-[11px] uppercase tracking-[0.35em] opacity-60">Newsletter</p>
+          <p className="text-[10px] uppercase tracking-[0.3em] opacity-60 sm:text-[11px] sm:tracking-[0.35em]">Newsletter</p>
           <h2
             style={{ fontFamily: 'var(--t-font-heading)' }}
-            className="mt-4 text-4xl leading-tight md:text-5xl"
+            className="mt-3 text-2xl leading-tight sm:mt-4 sm:text-4xl md:text-5xl"
           >
             Estreias e bastidores, uma vez por mês.
           </h2>
