@@ -18,16 +18,19 @@ const FALLBACK_HERO_IMG =
 
 export function AuraHero({ tenant, imoveis, config }: SectionProps) {
   const featured = pickFeaturedImovel(imoveis);
-  // Prioridade: imagem custom do editor → foto do imovel destaque → fallback Unsplash
+  // Prioridade: imagem custom do editor → foto do imovel destaque → fallback Unsplash.
+  // A foto e so visual de impacto — nao expoe detalhes do imovel pra nao confundir
+  // a home com pagina de produto.
   const heroImg =
     config?.hero?.imageUrl?.trim() ||
     (featured ? heroImage(featured) : FALLBACK_HERO_IMG);
 
-  const titulo = featured?.titulo ?? tenant.marca?.slogan ?? 'Curated Estates';
-  const subtitulo = featured
-    ? `${featured.bairro ?? '—'}, ${featured.cidade ?? ''} ${featured.areaM2 ? `— ${featured.areaM2}m²` : ''}`
-    : tenant.marca?.descricao ?? '';
-  const codigo = featured?.codigo ?? '—';
+  // Titulo e descricao saem da marca, NAO do imovel. Se nao houver, fallback editorial.
+  const eyebrow = tenant.marca?.nomeEmpresa ?? 'Curadoria';
+  const titulo = tenant.marca?.slogan ?? 'Imoveis com curadoria.\nAtendimento sem pressa.';
+  const subtitulo =
+    tenant.marca?.descricao ??
+    'Selecionamos cada propriedade com criterio. Voce escolhe entre o que ja foi aprovado.';
 
   return (
     <div className="relative h-screen min-h-[760px] w-full overflow-hidden">
@@ -42,42 +45,19 @@ export function AuraHero({ tenant, imoveis, config }: SectionProps) {
 
       <div className="relative z-10 flex h-full flex-col justify-end px-4 pb-10 text-white sm:px-8 sm:pb-16 md:px-14 md:pb-20">
         <div className="mx-auto w-full max-w-[1500px]">
-          <div className="grid gap-6 sm:gap-10 md:grid-cols-12 md:items-end">
-            <div className="md:col-span-7">
-              <p className="text-[10px] uppercase tracking-[0.3em] opacity-80 sm:text-[11px] sm:tracking-[0.4em]">
-                Featured Estate · Cód {codigo}
-              </p>
-              <h1
-                style={{ fontFamily: 'var(--t-font-heading)' }}
-                className="mt-3 text-4xl leading-[1.05] sm:mt-5 sm:text-5xl sm:leading-[1] md:text-6xl lg:text-7xl"
-              >
-                {titulo}.
-              </h1>
-              <p className="mt-3 max-w-xl text-sm opacity-80 sm:mt-5 sm:text-base md:text-lg">{subtitulo}</p>
-            </div>
-            {featured && (
-              <div className="md:col-span-5 md:text-right">
-                <div className="text-[10px] uppercase tracking-[0.25em] opacity-70 sm:text-[11px] sm:tracking-[0.3em]">
-                  {featured.operacao.toUpperCase() === 'ALUGUEL' ? 'Aluguel mensal' : 'Preço sob consulta'}
-                </div>
-                <div
-                  style={{ fontFamily: 'var(--t-font-heading)', color: 'var(--t-secondary)' }}
-                  className="mt-1 text-2xl sm:mt-2 sm:text-4xl md:text-5xl"
-                >
-                  {new Intl.NumberFormat('pt-BR', {
-                    style: 'currency',
-                    currency: 'BRL',
-                    maximumFractionDigits: 0,
-                  }).format(featured.preco)}
-                </div>
-                <a
-                  href={`/s/${tenant.slug}/imovel/${featured.codigo}`}
-                  className="mt-6 inline-flex items-center gap-3 border-b border-white/40 pb-1 text-sm uppercase tracking-[0.25em] hover:border-white"
-                >
-                  Ver propriedade <ArrowRight className="h-4 w-4" />
-                </a>
-              </div>
-            )}
+          <div className="max-w-3xl">
+            <p className="text-[10px] uppercase tracking-[0.3em] opacity-80 sm:text-[11px] sm:tracking-[0.4em]">
+              {eyebrow}
+            </p>
+            <h1
+              style={{ fontFamily: 'var(--t-font-heading)' }}
+              className="mt-3 whitespace-pre-line text-4xl leading-[1.05] sm:mt-5 sm:text-5xl sm:leading-[1] md:text-6xl lg:text-7xl"
+            >
+              {titulo}
+            </h1>
+            <p className="mt-3 max-w-xl text-sm opacity-80 sm:mt-5 sm:text-base md:text-lg">
+              {subtitulo}
+            </p>
           </div>
 
           <AuraSearchBar />
