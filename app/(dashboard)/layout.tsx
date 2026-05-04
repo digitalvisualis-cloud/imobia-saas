@@ -95,7 +95,7 @@ export default function DashboardLayout({
       label: 'Marketing',
       items: [
         { name: 'Meu Site', href: '/sites', icon: Globe },
-        { name: 'Conteúdo IA', href: '/conteudo', icon: Sparkles },
+        { name: 'Criador de Posts', href: '/conteudo', icon: Sparkles },
         {
           name: 'Anunciar em portais',
           href: '/configuracoes/portais',

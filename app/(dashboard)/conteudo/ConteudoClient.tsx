@@ -80,7 +80,7 @@ export default function ConteudoClient({ imoveis }: { imoveis: ImovelLite[] }) {
       <PageHeader
         kicker="Marketing"
         icon={Sparkles}
-        title="Conteúdo"
+        title="Criador de Posts"
         description="Gere posts visuais a partir dos seus imóveis. Cores e logo da sua marca aplicados automaticamente."
         actions={
           <Button asChild variant="outline">

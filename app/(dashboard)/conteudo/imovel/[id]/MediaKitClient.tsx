@@ -326,7 +326,7 @@ function ListaView({
       )}
       <PageHeader
         kicker={`Media Kit · ${imovel.codigo}`}
-        back={{ href: '/conteudo', label: 'Voltar pra Conteúdo' }}
+        back={{ href: '/conteudo', label: 'Voltar pro Criador de Posts' }}
         title={imovel.titulo}
         description={[imovel.bairro, imovel.cidade].filter(Boolean).join(', ')}
         compact
