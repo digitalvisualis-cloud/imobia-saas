@@ -5,7 +5,7 @@ import { PostPreview } from './PostPreview';
 import type { ImovelLite, TemplateVariant, Customizacao } from './types';
 
 const W = 360;
-const H = 450;
+const H = 360;
 const FALLBACK = 'https://images.unsplash.com/photo-1568605114967-8130f3a36994?auto=format&fit=crop&w=900&q=80';
 
 export function CarrosselPreview({

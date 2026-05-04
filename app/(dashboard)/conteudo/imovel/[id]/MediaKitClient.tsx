@@ -37,6 +37,20 @@ const PALETA = [
 
 const FONTES = ['Inter', 'Playfair Display', 'Poppins', 'Manrope', 'DM Serif Display', 'Space Grotesk'];
 
+// URL Google Fonts pra carregar todas as fontes do picker de uma vez.
+// O <link> é injetado no head no mount do componente.
+const FONTES_GOOGLE_URL =
+  'https://fonts.googleapis.com/css2?' +
+  [
+    'family=Inter:wght@400;500;600;700;800',
+    'family=Playfair+Display:wght@400;500;600;700;800',
+    'family=Poppins:wght@400;500;600;700;800',
+    'family=Manrope:wght@400;500;600;700;800',
+    'family=DM+Serif+Display',
+    'family=Space+Grotesk:wght@400;500;600;700',
+  ].join('&') +
+  '&display=swap';
+
 interface MarcaInicial {
   logoUrl: string | null;
   corPrimaria: string;
@@ -59,6 +73,17 @@ export default function MediaKitClient({
   const [tab, setTab] = useState<CustomTab>(null);
   const [baixandoId, setBaixandoId] = useState<string | null>(null);
   const previewRefs = useRef<Record<string, HTMLDivElement | null>>({});
+
+  // Carrega Google Fonts das opcoes do picker no head
+  useEffect(() => {
+    const id = 'media-kit-fonts';
+    if (document.getElementById(id)) return;
+    const link = document.createElement('link');
+    link.id = id;
+    link.rel = 'stylesheet';
+    link.href = FONTES_GOOGLE_URL;
+    document.head.appendChild(link);
+  }, []);
 
   const [custom, setCustom] = useState<Customizacao>({
     corPrincipal: marca.corPrimaria,
@@ -102,18 +127,47 @@ export default function MediaKitClient({
     return () => clearTimeout(t);
   }, [custom.corPrincipal, custom.fonte]);
 
-  async function baixarPost(postId: string) {
-    const node = previewRefs.current[postId];
+  async function baixarPost(post: PostLite) {
+    const node = previewRefs.current[post.id];
     if (!node) return;
+    const baseName = `${imovel.codigo}-${post.template}`;
+
     try {
-      setBaixandoId(postId);
-      const canvas = await html2canvas(node, { scale: 3, backgroundColor: null, useCORS: true });
-      const dataUrl = canvas.toDataURL('image/png');
-      const link = document.createElement('a');
-      link.download = `${imovel.codigo}-${postId}.png`;
-      link.href = dataUrl;
-      link.click();
-      toast.success('PNG baixado');
+      setBaixandoId(post.id);
+
+      if (post.carrossel) {
+        // CarrosselPreview renderiza N slides com snap-start. Captura cada
+        // slide separadamente e baixa um PNG por slide.
+        const slides = node.querySelectorAll<HTMLElement>('.snap-start');
+        if (slides.length === 0) throw new Error('Slides nao encontrados');
+        for (let i = 0; i < slides.length; i++) {
+          const canvas = await html2canvas(slides[i], {
+            scale: 3,
+            backgroundColor: null,
+            useCORS: true,
+          });
+          const dataUrl = canvas.toDataURL('image/png');
+          const link = document.createElement('a');
+          link.download = `${baseName}-slide-${String(i + 1).padStart(2, '0')}.png`;
+          link.href = dataUrl;
+          link.click();
+          // Pequeno delay entre downloads pro browser nao engasgar
+          await new Promise((r) => setTimeout(r, 150));
+        }
+        toast.success(`${slides.length} slides baixados`);
+      } else {
+        const canvas = await html2canvas(node, {
+          scale: 3,
+          backgroundColor: null,
+          useCORS: true,
+        });
+        const dataUrl = canvas.toDataURL('image/png');
+        const link = document.createElement('a');
+        link.download = `${baseName}.png`;
+        link.href = dataUrl;
+        link.click();
+        toast.success('PNG baixado');
+      }
     } catch (err) {
       console.error(err);
       toast.error('Não consegui gerar o PNG');
@@ -317,7 +371,7 @@ export default function MediaKitClient({
                       )}
                     </div>
                     <button
-                      onClick={() => baixarPost(p.id)}
+                      onClick={() => baixarPost(p)}
                       disabled={baixandoId === p.id}
                       className="absolute right-3 top-3 inline-flex h-8 w-8 items-center justify-center rounded-md bg-background/90 shadow-sm hover:bg-background disabled:opacity-60"
                       aria-label="Baixar"

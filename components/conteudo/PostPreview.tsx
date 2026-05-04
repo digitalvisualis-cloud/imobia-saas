@@ -25,11 +25,14 @@ export function PostPreview({
   variant: TemplateVariant;
   scale?: number;
   custom?: Partial<Customizacao>;
-  ratio?: '1/1' | '9/16';
+  ratio?: '1/1' | '4/5' | '9/16';
 }) {
-  // Dimensões base — quadrado 1080 ou story 9:16
+  // Dimensoes base ja em proporcoes corretas:
+  // 1:1   = quadrado IG/FB (1080x1080) → 360x360
+  // 4:5   = retrato IG (1080x1350)     → 360x450
+  // 9:16  = story (1080x1920)          → 360x640
   const w = 360;
-  const h = ratio === '9/16' ? 640 : 450;
+  const h = ratio === '9/16' ? 640 : ratio === '4/5' ? 450 : 360;
   const c: CustomResolvido = {
     principal: custom?.corPrincipal ?? '#3b6cf5',
     texto: custom?.corTexto ?? '#0F172A',
@@ -43,7 +46,7 @@ export function PostPreview({
       style={{
         width: w * scale,
         height: h * scale,
-        fontFamily: c.fonte,
+        fontFamily: `"${c.fonte}", system-ui, sans-serif`,
         color: c.texto,
       }}
     >
@@ -53,7 +56,7 @@ export function PostPreview({
           transformOrigin: 'top left',
           width: w,
           height: h,
-          fontFamily: c.fonte,
+          fontFamily: `"${c.fonte}", system-ui, sans-serif`,
           color: c.texto,
         }}
       >
