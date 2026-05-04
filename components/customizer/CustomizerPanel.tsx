@@ -312,10 +312,6 @@ function ConteudoTab({ theme }: { theme: ThemeId }) {
         </Field>
       </Group>
 
-      <Group title="Hero" subtitle="Imagem de fundo que aparece atrás do título">
-        <HeroImagePicker theme={theme} />
-      </Group>
-
       <Group title="Seções da página" subtitle="Arraste para reordenar, olho para esconder">
         <DndContext
           sensors={sensors}
@@ -392,6 +388,10 @@ function EstiloTab({ theme }: { theme: ThemeId }) {
           onChange={(v) => setFont(theme, 'body', v)}
           preview="Apartamento de 3 dormitórios, 110m² com vista privilegiada."
         />
+      </Group>
+
+      <Group title="Imagem do hero" subtitle="Foto de fundo que aparece atrás do título da home">
+        <HeroImagePicker theme={theme} />
       </Group>
     </div>
   );
