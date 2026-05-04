@@ -39,10 +39,32 @@ export default function SiteEditorClient({ site, tenant, imoveis }: Props) {
   const [copiedUrl, setCopiedUrl] = useState(false);
   const [origin, setOrigin] = useState<string>('');
   const iframeRef = useRef<HTMLIFrameElement>(null);
+  const previewWrapRef = useRef<HTMLDivElement>(null);
+  const [previewScale, setPreviewScale] = useState(1);
 
   useEffect(() => {
     setOrigin(window.location.origin);
   }, []);
+
+  // Mantém o preview renderizando em 1440px (desktop "real") e escala pra
+  // caber na area disponivel. Sem isso, o iframe ganha apenas a largura
+  // residual depois do customizer e renderiza como tablet (~770px).
+  useEffect(() => {
+    if (viewport !== 'desktop') {
+      setPreviewScale(1);
+      return;
+    }
+    const wrap = previewWrapRef.current;
+    if (!wrap) return;
+    const update = () => {
+      const w = wrap.clientWidth;
+      if (w > 0) setPreviewScale(Math.min(1, w / 1440));
+    };
+    update();
+    const ro = new ResizeObserver(update);
+    ro.observe(wrap);
+    return () => ro.disconnect();
+  }, [viewport]);
 
   // Hidrata o store com a config salva ao montar e escreve o estado inicial
   // no localStorage. O subscribe abaixo só observa MUDANÇAS, não dispara no
@@ -228,32 +250,44 @@ export default function SiteEditorClient({ site, tenant, imoveis }: Props) {
 
         {/* Preview area */}
         <div className="p-4">
-          <div
-            className={cn(
-              'mx-auto overflow-hidden rounded-lg bg-white shadow-lg transition-all',
-              viewport === 'desktop' ? 'max-w-full' : 'w-[414px]',
-            )}
-            style={
-              viewport === 'mobile'
-                ? {
-                    border: '8px solid #1e293b',
-                    borderRadius: 36,
-                  }
-                : undefined
-            }
-          >
-            <iframe
-              ref={iframeRef}
-              src="/preview/site"
-              title="Preview"
-              className="w-full"
+          {viewport === 'mobile' ? (
+            <div
+              className="mx-auto overflow-hidden rounded-lg bg-white shadow-lg transition-all w-[414px]"
+              style={{ border: '8px solid #1e293b', borderRadius: 36 }}
+            >
+              <iframe
+                ref={iframeRef}
+                src="/preview/site"
+                title="Preview"
+                className="w-full"
+                style={{ height: 720, border: 0, background: 'white' }}
+              />
+            </div>
+          ) : (
+            <div
+              ref={previewWrapRef}
+              className="mx-auto overflow-hidden rounded-lg bg-white shadow-lg transition-all"
               style={{
-                height: viewport === 'mobile' ? 720 : 'calc(100vh - 120px)',
-                border: 0,
-                background: 'white',
+                width: '100%',
+                height: `calc((100vh - 120px) * ${previewScale})`,
+                minHeight: 600,
               }}
-            />
-          </div>
+            >
+              <iframe
+                ref={iframeRef}
+                src="/preview/site"
+                title="Preview"
+                style={{
+                  width: 1440,
+                  height: 'calc(100vh - 120px)',
+                  border: 0,
+                  background: 'white',
+                  transformOrigin: 'top left',
+                  transform: `scale(${previewScale})`,
+                }}
+              />
+            </div>
+          )}
         </div>
       </div>
     </div>

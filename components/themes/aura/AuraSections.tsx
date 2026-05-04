@@ -44,7 +44,7 @@ export function AuraHero({ tenant, imoveis }: SectionProps) {
               </p>
               <h1
                 style={{ fontFamily: 'var(--t-font-heading)' }}
-                className="mt-3 text-3xl leading-[1.05] sm:mt-5 sm:text-5xl sm:leading-[0.98] md:text-[88px]"
+                className="mt-3 text-4xl leading-[1.05] sm:mt-5 sm:text-5xl sm:leading-[1] md:text-6xl lg:text-7xl"
               >
                 {titulo}.
               </h1>
@@ -208,7 +208,7 @@ export function AuraDestaques({ tenant, imoveis }: SectionProps) {
           <p className="text-[10px] uppercase tracking-[0.3em] opacity-60 sm:text-[11px] sm:tracking-[0.35em]">A coleção</p>
           <h2
             style={{ fontFamily: 'var(--t-font-heading)' }}
-            className="mt-3 text-3xl leading-[1.1] sm:mt-4 sm:text-5xl sm:leading-[1.05] md:text-6xl"
+            className="mt-3 text-3xl leading-[1.1] sm:mt-4 sm:text-4xl sm:leading-[1.05] md:text-5xl"
           >
             Residências escolhidas a dedo.
           </h2>
@@ -264,7 +264,7 @@ export function AuraCategorias({ imoveis }: SectionProps) {
             <div className="flex-1">
               <h3
                 style={{ fontFamily: 'var(--t-font-heading)' }}
-                className="text-2xl sm:text-4xl md:text-6xl"
+                className="text-2xl sm:text-3xl md:text-5xl"
               >
                 {nome}
               </h3>
@@ -293,7 +293,7 @@ export function AuraSobre({ tenant }: SectionProps) {
           <p className="text-[10px] uppercase tracking-[0.3em] opacity-60 sm:text-[11px] sm:tracking-[0.35em]">Estúdio</p>
           <h2
             style={{ fontFamily: 'var(--t-font-heading)' }}
-            className="mt-3 text-3xl leading-[1.1] sm:mt-4 sm:text-5xl sm:leading-[1.05] md:text-7xl"
+            className="mt-3 text-3xl leading-[1.1] sm:mt-4 sm:text-4xl sm:leading-[1.05] md:text-6xl"
           >
             Quietos.
             <br />
@@ -409,7 +409,7 @@ export function AuraCTA({ tenant }: SectionProps) {
         </p>
         <h2
           style={{ fontFamily: 'var(--t-font-heading)' }}
-          className="mt-3 max-w-3xl text-3xl leading-[1.05] sm:mt-5 sm:text-5xl sm:leading-[1] md:text-7xl"
+          className="mt-3 max-w-3xl text-3xl leading-[1.05] sm:mt-5 sm:text-4xl sm:leading-[1] md:text-6xl"
         >
           Sua propriedade merece{' '}
           <span style={{ color: 'var(--t-secondary)' }}>uma narrativa.</span>
