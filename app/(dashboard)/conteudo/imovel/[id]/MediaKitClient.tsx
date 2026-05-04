@@ -1,7 +1,6 @@
 'use client';
 
-import { useRef, useState } from 'react';
-import { useRouter } from 'next/navigation';
+import { useEffect, useRef, useState } from 'react';
 import Link from 'next/link';
 import {
   ArrowLeft,
@@ -56,23 +55,52 @@ export default function MediaKitClient({
   postsExistentes: PostLite[];
   allImoveis: ImovelLite[];
 }) {
-  const router = useRouter();
   const [openGerar, setOpenGerar] = useState(false);
   const [tab, setTab] = useState<CustomTab>(null);
   const [baixandoId, setBaixandoId] = useState<string | null>(null);
   const previewRefs = useRef<Record<string, HTMLDivElement | null>>({});
 
-  // Customização local (pra demo) — mantém entre renders, não persiste ainda
   const [custom, setCustom] = useState<Customizacao>({
     corPrincipal: marca.corPrimaria,
     corTexto: marca.corTexto,
     fonte: marca.fonte,
     logoUrl: marca.logoUrl,
   });
+  const [saveState, setSaveState] = useState<'idle' | 'saving' | 'saved' | 'error'>('idle');
 
   const setCorPrincipal = (v: string) => setCustom((c) => ({ ...c, corPrincipal: v }));
   const setCorTexto = (v: string) => setCustom((c) => ({ ...c, corTexto: v }));
   const setFonte = (v: string) => setCustom((c) => ({ ...c, fonte: v }));
+
+  // Persiste cor primaria + fonte + logo no tenant.marca com debounce.
+  // corTexto fica local — nao tem campo proprio em ConfigMarca ainda.
+  const isFirstRender = useRef(true);
+  useEffect(() => {
+    if (isFirstRender.current) {
+      isFirstRender.current = false;
+      return;
+    }
+    setSaveState('saving');
+    const t = setTimeout(async () => {
+      try {
+        const res = await fetch('/api/configuracoes/marca', {
+          method: 'PUT',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            corPrimaria: custom.corPrincipal,
+            fonteTitulo: custom.fonte,
+            // logoUrl: omitido aqui — upload usa endpoint proprio
+          }),
+        });
+        if (!res.ok) throw new Error('save failed');
+        setSaveState('saved');
+        setTimeout(() => setSaveState('idle'), 1500);
+      } catch {
+        setSaveState('error');
+      }
+    }, 700);
+    return () => clearTimeout(t);
+  }, [custom.corPrincipal, custom.fonte]);
 
   async function baixarPost(postId: string) {
     const node = previewRefs.current[postId];
@@ -132,25 +160,41 @@ export default function MediaKitClient({
       </div>
 
       {/* Toolbar */}
-      <div className="flex w-fit flex-wrap items-center gap-1 rounded-lg border border-border bg-card p-1">
-        {TABS.map((t) => {
-          const Icon = t.icon;
-          const active = tab === t.id;
-          return (
-            <button
-              key={t.id}
-              onClick={() => setTab(active ? null : t.id)}
-              className={cn(
-                'inline-flex items-center gap-1.5 rounded-md px-3 py-2 text-sm font-medium transition-colors',
-                active
-                  ? 'bg-primary/10 text-primary'
-                  : 'text-muted-foreground hover:bg-muted hover:text-foreground',
-              )}
-            >
-              <Icon className="h-4 w-4" /> {t.label}
-            </button>
-          );
-        })}
+      <div className="flex flex-wrap items-center gap-3">
+        <div className="flex w-fit flex-wrap items-center gap-1 rounded-lg border border-border bg-card p-1">
+          {TABS.map((t) => {
+            const Icon = t.icon;
+            const active = tab === t.id;
+            return (
+              <button
+                key={t.id}
+                onClick={() => setTab(active ? null : t.id)}
+                className={cn(
+                  'inline-flex items-center gap-1.5 rounded-md px-3 py-2 text-sm font-medium transition-colors',
+                  active
+                    ? 'bg-primary/10 text-primary'
+                    : 'text-muted-foreground hover:bg-muted hover:text-foreground',
+                )}
+              >
+                <Icon className="h-4 w-4" /> {t.label}
+              </button>
+            );
+          })}
+        </div>
+        {saveState !== 'idle' && (
+          <span
+            className={cn(
+              'inline-flex items-center gap-1.5 rounded-md px-2.5 py-1.5 text-xs font-medium',
+              saveState === 'saving' && 'bg-muted text-muted-foreground',
+              saveState === 'saved' && 'bg-emerald-50 text-emerald-700',
+              saveState === 'error' && 'bg-red-50 text-red-700',
+            )}
+          >
+            {saveState === 'saving' && (<><Loader2 className="h-3 w-3 animate-spin" /> Salvando…</>)}
+            {saveState === 'saved' && (<><Check className="h-3 w-3" /> Salvo no brand kit</>)}
+            {saveState === 'error' && 'Erro ao salvar'}
+          </span>
+        )}
       </div>
 
       {/* Side panel + posts grid */}
