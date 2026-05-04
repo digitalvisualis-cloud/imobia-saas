@@ -59,7 +59,8 @@ export default function SiteEditorClient({ site, tenant, imoveis }: Props) {
     const outer = previewOuterRef.current;
     if (!outer) return;
     const update = () => {
-      const w = outer.clientWidth;
+      // outer.clientWidth inclui o p-4 (32px); subtrai pra usar so o espaco util
+      const w = outer.clientWidth - 32;
       if (w > 0) setPreviewScale(Math.min(1, w / 1440));
     };
     update();
@@ -172,7 +173,7 @@ export default function SiteEditorClient({ site, tenant, imoveis }: Props) {
     <div className="flex min-h-screen w-full bg-slate-100">
       <CustomizerPanel onSave={handleSave} saving={saving} saved={recentlySaved} />
 
-      <div className="min-w-0 flex-1 lg:pl-[380px]">
+      <div className="min-w-0 flex-1 lg:pl-[124px]">
         {/* Topbar do editor */}
         <div className="sticky top-0 z-30 flex items-center justify-between border-b bg-white px-6 py-3 shadow-sm">
           <div className="flex items-center gap-3">
