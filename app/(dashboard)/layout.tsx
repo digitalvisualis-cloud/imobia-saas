@@ -267,33 +267,36 @@ export default function DashboardLayout({
 
       {/* Main */}
       <div className="flex-1 flex flex-col min-w-0">
-        <header className="sticky top-0 z-30 h-14 bg-card/95 backdrop-blur border-b border-border flex items-center gap-3 px-4 md:px-6">
-          <button
-            className="md:hidden text-foreground/70 hover:text-foreground"
-            onClick={() => setSidebarOpen(true)}
-            aria-label="Abrir menu"
-          >
-            <Menu className="h-5 w-5" />
-          </button>
+        {/* Editor de site tem topbar proprio (com PUBLICADO/URL/Despublicar) — esconde o do dashboard pra nao conflitar */}
+        {!pathname.startsWith('/sites') && (
+          <header className="sticky top-0 z-30 h-14 bg-card/95 backdrop-blur border-b border-border flex items-center gap-3 px-4 md:px-6">
+            <button
+              className="md:hidden text-foreground/70 hover:text-foreground"
+              onClick={() => setSidebarOpen(true)}
+              aria-label="Abrir menu"
+            >
+              <Menu className="h-5 w-5" />
+            </button>
 
-          <div className="relative flex-1 max-w-lg">
-            <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-            <input
-              type="text"
-              placeholder="Buscar imóveis, contatos ou negócios..."
-              className="h-9 w-full pl-9 pr-3 rounded-md border border-input bg-background text-sm placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-ring"
-            />
-          </div>
+            <div className="relative flex-1 max-w-lg">
+              <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+              <input
+                type="text"
+                placeholder="Buscar imóveis, contatos ou negócios..."
+                className="h-9 w-full pl-9 pr-3 rounded-md border border-input bg-background text-sm placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-ring"
+              />
+            </div>
 
-          <button
-            className="relative text-foreground/70 hover:text-foreground p-2 rounded-md hover:bg-muted transition-colors"
-            aria-label="Notificações"
-          >
-            <Bell className="h-5 w-5" />
-          </button>
-        </header>
+            <button
+              className="relative text-foreground/70 hover:text-foreground p-2 rounded-md hover:bg-muted transition-colors"
+              aria-label="Notificações"
+            >
+              <Bell className="h-5 w-5" />
+            </button>
+          </header>
+        )}
 
-        <main className="flex-1 p-4 md:p-8 overflow-y-auto">{children}</main>
+        <main className={cn('flex-1 overflow-y-auto', pathname.startsWith('/sites') ? '' : 'p-4 md:p-8')}>{children}</main>
         <Toaster />
       </div>
     </div>
