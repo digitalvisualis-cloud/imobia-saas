@@ -44,10 +44,10 @@ export function BrisaHeader({ config, tenant }: ChromeProps) {
         borderBottom: '1px solid rgb(var(--t-fg-rgb) / 0.08)',
       }}
     >
-      <div className="mx-auto flex max-w-7xl items-center justify-between px-6 py-4">
-        <Link href={`/s/${tenant.slug}`} className="flex items-center gap-2.5">
+      <div className="mx-auto flex max-w-7xl items-center justify-between px-5 py-4 sm:px-6 sm:py-5">
+        <Link href={`/s/${tenant.slug}`} className="flex items-center gap-3">
           <div
-            className="flex h-9 w-9 items-center justify-center rounded-full font-bold"
+            className="flex h-10 w-10 items-center justify-center rounded-full font-bold"
             style={{
               background: 'var(--t-primary)',
               color: 'var(--t-bg)',
@@ -59,7 +59,7 @@ export function BrisaHeader({ config, tenant }: ChromeProps) {
           <div className="leading-tight">
             <div
               style={{ fontFamily: 'var(--t-font-heading)' }}
-              className="text-base font-semibold"
+              className="text-lg font-semibold"
             >
               {brandName}
             </div>

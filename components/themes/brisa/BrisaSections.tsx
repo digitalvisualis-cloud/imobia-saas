@@ -25,31 +25,32 @@ export function BrisaHero({ tenant, imoveis }: SectionProps) {
 
   return (
     <div className="relative overflow-hidden">
-      <div className="relative mx-auto max-w-7xl px-4 pt-4 sm:px-6 sm:pt-8">
+      <div className="relative mx-auto max-w-7xl px-4 pt-4 sm:px-6 sm:pt-6">
         <div className="relative overflow-hidden rounded-2xl sm:rounded-3xl">
-          <img src={heroImg} alt="" className="h-[440px] w-full object-cover sm:h-[640px]" />
+          <img src={heroImg} alt="" className="h-[520px] w-full object-cover sm:h-[600px] lg:h-[680px]" />
           <div
             className="absolute inset-0"
             style={{
               background:
-                'linear-gradient(90deg, rgba(0,0,0,0.55) 0%, rgba(0,0,0,0.15) 60%, transparent 100%)',
+                'linear-gradient(180deg, rgba(0,0,0,0.55) 0%, rgba(0,0,0,0.25) 50%, rgba(0,0,0,0.55) 100%)',
             }}
           />
-          <div className="absolute inset-0 flex items-center px-4 sm:px-6 md:px-14">
-            <div className="grid w-full grid-cols-1 items-center gap-8 md:grid-cols-2">
+          {/* Mobile/tablet: H1 centralizado em cima, search card abaixo. Desktop (lg+): grid 2-col. */}
+          <div className="absolute inset-0 flex flex-col justify-end px-5 pb-6 sm:px-8 sm:pb-8 lg:flex-row lg:items-center lg:px-14 lg:pb-0">
+            <div className="grid w-full grid-cols-1 items-center gap-8 lg:grid-cols-2">
               <div className="text-white">
                 <span className="inline-block rounded-full bg-white/15 px-3 py-1 text-[11px] font-medium uppercase tracking-wider backdrop-blur">
                   Imóveis selecionados
                 </span>
                 <h1
                   style={{ fontFamily: 'var(--t-font-heading)' }}
-                  className="mt-4 whitespace-pre-line text-2xl font-semibold leading-[1.1] sm:text-3xl md:text-6xl"
+                  className="mt-4 whitespace-pre-line text-4xl font-semibold leading-[1.05] sm:text-5xl lg:text-6xl"
                 >
                   {slogan}
                 </h1>
-                <p className="mt-3 max-w-md text-sm opacity-85 sm:text-base">{descricao}</p>
+                <p className="mt-4 max-w-md text-base opacity-90 sm:text-lg">{descricao}</p>
               </div>
-              <div className="flex justify-end">
+              <div className="flex justify-center lg:justify-end">
                 <BrisaSearchCard />
               </div>
             </div>
@@ -96,7 +97,7 @@ function BarraConfianca({ total }: { total: number }) {
 export function BrisaDestaques({ tenant, imoveis }: SectionProps) {
   if (imoveis.length === 0) return null;
   return (
-    <div className="mx-auto mt-24 max-w-7xl px-6">
+    <div className="mx-auto mt-16 max-w-7xl px-6 md:mt-24">
       <SectionHeader
         sub="Vitrine"
         titulo="Imóveis em destaque"
@@ -129,7 +130,7 @@ export function BrisaCategorias({ imoveis }: SectionProps) {
   ];
 
   return (
-    <div className="mx-auto mt-24 max-w-7xl px-6">
+    <div className="mx-auto mt-16 max-w-7xl px-6 md:mt-24">
       <SectionHeader sub="Bairros" titulo="Explore por região" />
       <div className="mt-10 grid gap-5 md:grid-cols-4">
         {top.map(([nome, count], idx) => (
@@ -172,7 +173,7 @@ export function BrisaSobre({ tenant }: SectionProps) {
     `Há anos a ${nome} conecta famílias a lares pensados em cada detalhe. Trabalhamos com poucos imóveis por corretor, garantindo conhecimento profundo de cada negociação.`;
 
   return (
-    <div id="sobre" className="mx-auto mt-24 max-w-7xl scroll-mt-24 px-6">
+    <div id="sobre" className="mx-auto mt-16 max-w-7xl scroll-mt-24 px-6 md:mt-24">
       <div className="grid gap-12 md:grid-cols-2 md:items-center">
         <div className="grid grid-cols-2 gap-4">
           <img
@@ -192,7 +193,7 @@ export function BrisaSobre({ tenant }: SectionProps) {
           </span>
           <h2
             style={{ fontFamily: 'var(--t-font-heading)' }}
-            className="mt-3 text-2xl font-semibold leading-tight sm:text-3xl md:text-5xl"
+            className="mt-3 text-3xl font-semibold leading-[1.1] sm:text-4xl md:text-5xl"
           >
             Imóveis com curadoria, atendimento sem pressa.
           </h2>
@@ -211,7 +212,7 @@ const DEPS = [
 
 export function BrisaDepoimentos() {
   return (
-    <div className="mx-auto mt-24 max-w-7xl px-6">
+    <div className="mx-auto mt-16 max-w-7xl px-6 md:mt-24">
       <SectionHeader sub="Depoimentos" titulo="Quem comprou com a gente" />
       <div className="mt-10 grid gap-6 md:grid-cols-3">
         {DEPS.map((d) => (
@@ -248,7 +249,7 @@ const FAQS = [
 export function BrisaFAQ() {
   const [open, setOpen] = useState(0);
   return (
-    <div className="mx-auto mt-24 max-w-4xl px-6">
+    <div className="mx-auto mt-16 max-w-4xl px-6 md:mt-24">
       <SectionHeader sub="Dúvidas" titulo="Perguntas frequentes" center />
       <div
         className="mt-10 divide-y rounded-2xl border"
@@ -287,7 +288,7 @@ export function BrisaFAQ() {
 
 export function BrisaCTA() {
   return (
-    <div className="mx-auto mt-24 max-w-7xl px-6">
+    <div className="mx-auto mt-16 max-w-7xl px-6 md:mt-24">
       <div
         className="relative overflow-hidden rounded-3xl px-8 py-14 md:px-16 md:py-20"
         style={{ background: 'var(--t-primary)', color: 'var(--t-bg)' }}
@@ -299,7 +300,7 @@ export function BrisaCTA() {
             </span>
             <h2
               style={{ fontFamily: 'var(--t-font-heading)' }}
-              className="mt-3 text-2xl font-semibold leading-tight sm:text-3xl md:text-5xl"
+              className="mt-3 text-3xl font-semibold leading-[1.1] sm:text-4xl md:text-5xl"
             >
               Venda seu imóvel com avaliação gratuita.
             </h2>
@@ -324,7 +325,7 @@ export function BrisaCTA() {
 
 export function BrisaContato() {
   return (
-    <div className="mx-auto mt-24 max-w-3xl px-6 text-center">
+    <div className="mx-auto mt-16 max-w-3xl px-6 text-center md:mt-24">
       <SectionHeader
         sub="Newsletter"
         titulo="Receba imóveis novos antes de ir ao site"
@@ -376,7 +377,7 @@ function SectionHeader({
         </span>
         <h2
           style={{ fontFamily: 'var(--t-font-heading)' }}
-          className="mt-2 text-2xl font-semibold leading-tight sm:text-3xl md:text-4xl"
+          className="mt-2 text-3xl font-semibold leading-[1.1] sm:text-4xl md:text-5xl"
         >
           {titulo}
         </h2>
