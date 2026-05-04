@@ -44,6 +44,9 @@ interface State {
   addLink: (theme: ThemeId) => void;
   removeLink: (theme: ThemeId, index: number) => void;
 
+  // hero
+  setHeroImage: (theme: ThemeId, url: string) => void;
+
   // config
   setSocial: (theme: ThemeId, key: keyof SocialConfig, value: string) => void;
   setSeo: (theme: ThemeId, key: keyof SeoConfig, value: string) => void;
@@ -163,6 +166,15 @@ export const useSiteStore = create<State>()((set) => ({
         },
       };
     }),
+
+  setHeroImage: (theme, url) =>
+    set((s) => ({
+      dirty: true,
+      byTheme: {
+        ...s.byTheme,
+        [theme]: { ...s.byTheme[theme], hero: { ...s.byTheme[theme].hero, imageUrl: url } },
+      },
+    })),
 
   setSocial: (theme, key, value) =>
     set((s) => ({

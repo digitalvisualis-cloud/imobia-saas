@@ -40,7 +40,7 @@ interface Props {
  * estado local. O ThemeScope injeta CSS vars; SectionsRenderer filtra/ordena.
  */
 export function ThemeRenderer({ theme, config, tenant, imoveis }: Props) {
-  const sectionProps = { tenant, imoveis };
+  const sectionProps = { tenant, imoveis, config };
 
   if (theme === 'aura') {
     return (

@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useRef, useState } from 'react';
 import {
   Layers,
   Palette,
@@ -18,6 +18,8 @@ import {
   Loader2,
   Check,
   Sparkles,
+  ImagePlus,
+  X,
 } from 'lucide-react';
 import {
   DndContext,
@@ -310,6 +312,10 @@ function ConteudoTab({ theme }: { theme: ThemeId }) {
         </Field>
       </Group>
 
+      <Group title="Hero" subtitle="Imagem de fundo que aparece atrás do título">
+        <HeroImagePicker theme={theme} />
+      </Group>
+
       <Group title="Seções da página" subtitle="Arraste para reordenar, olho para esconder">
         <DndContext
           sensors={sensors}
@@ -431,6 +437,105 @@ function ConfigTab({ theme }: { theme: ThemeId }) {
           />
         </Field>
       </Group>
+    </div>
+  );
+}
+
+/* ---------------- Hero image picker ---------------- */
+function HeroImagePicker({ theme }: { theme: ThemeId }) {
+  const cfg = useThemeConfig(theme);
+  const setHeroImage = useSiteStore((s) => s.setHeroImage);
+  const fileRef = useRef<HTMLInputElement>(null);
+  const [uploading, setUploading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+  const url = cfg.hero?.imageUrl ?? '';
+
+  async function handleFile(file: File) {
+    setError(null);
+    setUploading(true);
+    try {
+      const fd = new FormData();
+      fd.append('file', file);
+      const res = await fetch('/api/sites/hero-image', { method: 'POST', body: fd });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data?.error ?? 'Falha no upload');
+      setHeroImage(theme, data.url);
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Erro desconhecido');
+    } finally {
+      setUploading(false);
+    }
+  }
+
+  return (
+    <div className="space-y-2">
+      {url ? (
+        <div className="relative overflow-hidden rounded-md border border-slate-200">
+          <img src={url} alt="Hero" className="aspect-[16/9] w-full object-cover" />
+          <button
+            type="button"
+            onClick={() => setHeroImage(theme, '')}
+            className="absolute right-1.5 top-1.5 rounded-md bg-black/60 p-1 text-white hover:bg-black/80"
+            aria-label="Remover imagem"
+          >
+            <X className="h-3.5 w-3.5" />
+          </button>
+        </div>
+      ) : (
+        <button
+          type="button"
+          onClick={() => fileRef.current?.click()}
+          disabled={uploading}
+          className="flex aspect-[16/9] w-full flex-col items-center justify-center gap-1.5 rounded-md border-2 border-dashed border-slate-300 bg-slate-50 text-slate-500 hover:border-violet-400 hover:bg-violet-50 hover:text-violet-700 disabled:opacity-60"
+        >
+          {uploading ? (
+            <Loader2 className="h-5 w-5 animate-spin" />
+          ) : (
+            <ImagePlus className="h-5 w-5" />
+          )}
+          <span className="text-[11px] font-medium">
+            {uploading ? 'Enviando…' : 'Clique pra enviar uma foto'}
+          </span>
+          <span className="text-[10px] text-slate-400">JPG, PNG ou WebP · até 8MB</span>
+        </button>
+      )}
+
+      {url && (
+        <button
+          type="button"
+          onClick={() => fileRef.current?.click()}
+          disabled={uploading}
+          className="flex w-full items-center justify-center gap-1.5 rounded-md border border-slate-200 px-2 py-1.5 text-xs font-medium text-slate-700 hover:bg-slate-50 disabled:opacity-60"
+        >
+          {uploading ? (
+            <>
+              <Loader2 className="h-3.5 w-3.5 animate-spin" /> Enviando…
+            </>
+          ) : (
+            <>
+              <ImagePlus className="h-3.5 w-3.5" /> Trocar imagem
+            </>
+          )}
+        </button>
+      )}
+
+      {error && <p className="text-[11px] text-red-600">{error}</p>}
+
+      <p className="text-[10px] text-slate-400">
+        Sem imagem: usa a foto do primeiro imóvel em destaque automaticamente.
+      </p>
+
+      <input
+        ref={fileRef}
+        type="file"
+        accept="image/jpeg,image/png,image/webp"
+        className="hidden"
+        onChange={(e) => {
+          const f = e.target.files?.[0];
+          if (f) handleFile(f);
+          e.target.value = '';
+        }}
+      />
     </div>
   );
 }

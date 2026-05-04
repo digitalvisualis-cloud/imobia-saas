@@ -3,20 +3,25 @@
 import { useState } from 'react';
 import { Plus, Minus, ArrowRight, Search } from 'lucide-react';
 import type { ImovelPublic, TenantPublic } from '@/app/_templates/types';
+import type { Customization } from '@/types/site-customization';
 import { AuraCard } from './AuraCard';
 import { heroImage, pickFeaturedImovel } from '../_shared';
 
 interface SectionProps {
   tenant: TenantPublic;
   imoveis: ImovelPublic[];
+  config?: Customization;
 }
 
 const FALLBACK_HERO_IMG =
   'https://images.unsplash.com/photo-1613490493576-7fde63acd811?auto=format&fit=crop&w=2000&q=80';
 
-export function AuraHero({ tenant, imoveis }: SectionProps) {
+export function AuraHero({ tenant, imoveis, config }: SectionProps) {
   const featured = pickFeaturedImovel(imoveis);
-  const heroImg = featured ? heroImage(featured) : FALLBACK_HERO_IMG;
+  // Prioridade: imagem custom do editor → foto do imovel destaque → fallback Unsplash
+  const heroImg =
+    config?.hero?.imageUrl?.trim() ||
+    (featured ? heroImage(featured) : FALLBACK_HERO_IMG);
 
   const titulo = featured?.titulo ?? tenant.marca?.slogan ?? 'Curated Estates';
   const subtitulo = featured

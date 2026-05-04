@@ -40,6 +40,12 @@ export interface HeaderConfig {
   ctaHref: string;
 }
 
+export interface HeroConfig {
+  /** URL da imagem de fundo do hero. Vazio = usa a foto do primeiro imóvel
+   * em destaque (fallback que vinha sendo padrão). */
+  imageUrl: string;
+}
+
 export interface SocialConfig {
   facebook: string;
   instagram: string;
@@ -62,6 +68,7 @@ export interface Customization {
   fonts: FontPair;
   sections: SectionConfig[];
   header: HeaderConfig;
+  hero: HeroConfig;
   social: SocialConfig;
   seo: SeoConfig;
 }
@@ -107,6 +114,10 @@ const COMMON_SOCIAL: SocialConfig = {
   linkedin: '',
 };
 
+const COMMON_HERO: HeroConfig = {
+  imageUrl: '',
+};
+
 export const DEFAULTS: Record<ThemeId, Customization> = {
   brisa: {
     colors: {
@@ -118,6 +129,7 @@ export const DEFAULTS: Record<ThemeId, Customization> = {
     fonts: { heading: 'Fraunces', body: 'Inter' },
     sections: DEFAULT_SECTIONS,
     header: { ...COMMON_HEADER },
+    hero: { ...COMMON_HERO },
     social: { ...COMMON_SOCIAL },
     seo: {
       title: 'Encontre seu próximo lar',
@@ -134,6 +146,7 @@ export const DEFAULTS: Record<ThemeId, Customization> = {
     fonts: { heading: 'DM Serif Display', body: 'Manrope' },
     sections: DEFAULT_SECTIONS,
     header: { ...COMMON_HEADER, ctaLabel: 'Agendar visita' },
+    hero: { ...COMMON_HERO },
     social: { ...COMMON_SOCIAL },
     seo: {
       title: 'Coleção de propriedades únicas',
@@ -189,6 +202,7 @@ export function mergeCustomization(
     fonts: { ...def.fonts, ...(s.fonts ?? {}) },
     sections: merged.length > 0 ? merged : def.sections,
     header: { ...def.header, ...(s.header ?? {}) },
+    hero: { ...def.hero, ...(s.hero ?? {}) },
     social: { ...def.social, ...(s.social ?? {}) },
     seo: { ...def.seo, ...(s.seo ?? {}) },
   };

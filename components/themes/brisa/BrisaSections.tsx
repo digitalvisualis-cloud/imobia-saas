@@ -3,6 +3,7 @@
 import { useState } from 'react';
 import { Award, Users, Home as HomeIcon, ChevronRight, Star, Plus, Minus } from 'lucide-react';
 import type { ImovelPublic, TenantPublic } from '@/app/_templates/types';
+import type { Customization } from '@/types/site-customization';
 import { BrisaCard } from './BrisaCard';
 import { BrisaSearchCard } from './BrisaSearchCard';
 import { heroImage } from '../_shared';
@@ -10,13 +11,17 @@ import { heroImage } from '../_shared';
 interface SectionProps {
   tenant: TenantPublic;
   imoveis: ImovelPublic[];
+  config?: Customization;
 }
 
 const HERO_FALLBACK =
   'https://images.unsplash.com/photo-1600585154340-be6161a56a0c?auto=format&fit=crop&w=2000&q=80';
 
-export function BrisaHero({ tenant, imoveis }: SectionProps) {
-  const heroImg = imoveis.length > 0 ? heroImage(imoveis[0]) : HERO_FALLBACK;
+export function BrisaHero({ tenant, imoveis, config }: SectionProps) {
+  // Prioridade: imagem custom do editor → foto do primeiro imovel → fallback Unsplash
+  const heroImg =
+    config?.hero?.imageUrl?.trim() ||
+    (imoveis.length > 0 ? heroImage(imoveis[0]) : HERO_FALLBACK);
   const slogan =
     tenant.marca?.slogan ?? 'Onde sua próxima\nhistória começa.';
   const descricao =
