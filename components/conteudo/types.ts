@@ -47,6 +47,8 @@ export interface PostLite {
   tipo: string;
   /** Variante visual escolhida ao gerar (ia, clean, premium...). */
   template: TemplateVariant;
+  /** ID do formato (feed-square, story, feed-carrossel, story-carrossel, facebook-square). */
+  formato: string;
   imageUrl: string | null;
   legenda: string;
   carrossel: boolean;

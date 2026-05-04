@@ -15,14 +15,35 @@ export default async function MediaKitPage({
   const tenantId = (session.user as any).tenantId as string;
   const { id } = await params;
 
-  const [imovel, marca, posts] = await Promise.all([
-    prisma.imovel.findFirst({
-      where: { id, tenantId },
-    }),
+  const [imovel, marca, posts, allImoveis] = await Promise.all([
+    prisma.imovel.findFirst({ where: { id, tenantId } }),
     prisma.configMarca.findUnique({ where: { tenantId } }),
     prisma.postGerado.findMany({
       where: { tenantId, imovelId: id },
       orderBy: { createdAt: 'desc' },
+    }),
+    prisma.imovel.findMany({
+      where: { tenantId, publicado: true },
+      orderBy: { createdAt: 'desc' },
+      select: {
+        id: true,
+        codigo: true,
+        titulo: true,
+        capaUrl: true,
+        imagens: true,
+        cidade: true,
+        estado: true,
+        bairro: true,
+        tipo: true,
+        operacao: true,
+        preco: true,
+        areaM2: true,
+        quartos: true,
+        banheiros: true,
+        vagas: true,
+        publicado: true,
+        _count: { select: { posts: true } },
+      },
     }),
   ]);
 
@@ -34,34 +55,64 @@ export default async function MediaKitPage({
         id: imovel.id,
         codigo: imovel.codigo,
         titulo: imovel.titulo,
+        capaUrl: imovel.capaUrl,
+        imagens: imovel.imagens ?? [],
+        cidade: imovel.cidade,
+        estado: imovel.estado,
+        bairro: imovel.bairro,
         tipo: imovel.tipo as unknown as string,
         operacao: imovel.operacao as unknown as string,
         preco: Number(imovel.preco),
-        bairro: imovel.bairro,
-        cidade: imovel.cidade,
-        estado: imovel.estado,
-        capaUrl: imovel.capaUrl,
-        imagens: imovel.imagens ?? [],
-        areaM2: imovel.areaM2 != null ? Number(imovel.areaM2) : null,
-        quartos: imovel.quartos,
-        banheiros: imovel.banheiros,
-        vagas: imovel.vagas,
-        amenidades: imovel.amenidades ?? [],
+        areaM2: imovel.areaM2 != null ? Number(imovel.areaM2) : 0,
+        quartos: imovel.quartos ?? 0,
+        banheiros: imovel.banheiros ?? 0,
+        vagas: imovel.vagas ?? 0,
+        publicado: imovel.publicado,
+        postsCount: posts.length,
       }}
       marca={{
-        nomeEmpresa: marca?.nomeEmpresa ?? null,
         logoUrl: marca?.logoUrl ?? null,
-        corPrimaria: marca?.corPrimaria ?? '#c5a64f',
-        corSecundaria: marca?.corSecundaria ?? '#1a2e1a',
-        whatsapp: marca?.whatsapp ?? null,
-        instagram: marca?.instagram ?? null,
+        corPrimaria: marca?.corPrimaria ?? '#3b6cf5',
+        corTexto: '#0F172A',
+        fonte: 'Inter',
       }}
-      postsExistentes={posts.map((p) => ({
-        id: p.id,
-        tipo: p.tipo as unknown as string,
-        conteudo: p.conteudo,
-        imageUrl: p.imageUrl,
-        createdAt: p.createdAt.toISOString(),
+      postsExistentes={posts.map((p) => {
+        const match = /^\[template:([^|\]]+)\|formato:([^\]]+)\]\n?/.exec(p.conteudo ?? '');
+        const template = (match?.[1] ?? 'clean') as
+          | 'ia' | 'clean' | 'borda' | 'premium' | 'minimal'
+          | 'magazine' | 'split' | 'dark' | 'tag' | 'polaroid';
+        const formato = match?.[2] ?? 'feed-square';
+        const legenda = match ? (p.conteudo ?? '').slice(match[0].length) : (p.conteudo ?? '');
+        return {
+          id: p.id,
+          imovelId: id,
+          tipo: p.tipo as unknown as string,
+          template,
+          formato,
+          imageUrl: p.imageUrl,
+          legenda,
+          carrossel: formato.includes('carrossel'),
+          createdAt: p.createdAt.toISOString(),
+        };
+      })}
+      allImoveis={allImoveis.map((i) => ({
+        id: i.id,
+        codigo: i.codigo,
+        titulo: i.titulo,
+        capaUrl: i.capaUrl,
+        imagens: i.imagens ?? [],
+        cidade: i.cidade,
+        estado: i.estado,
+        bairro: i.bairro,
+        tipo: i.tipo as unknown as string,
+        operacao: i.operacao as unknown as string,
+        preco: Number(i.preco),
+        areaM2: i.areaM2 != null ? Number(i.areaM2) : 0,
+        quartos: i.quartos ?? 0,
+        banheiros: i.banheiros ?? 0,
+        vagas: i.vagas ?? 0,
+        publicado: i.publicado,
+        postsCount: i._count.posts,
       }))}
     />
   );
