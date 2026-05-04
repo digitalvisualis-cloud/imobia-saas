@@ -10,27 +10,36 @@ export default async function ConteudoPage() {
   if (!session?.user) redirect('/login');
   const tenantId = (session.user as any).tenantId as string;
 
-  // Cards = imóveis do tenant. Cada card abre o Media Kit do imóvel.
-  // Lá dentro o cliente gera os posts visualmente (3 templates).
-  const imoveis = await prisma.imovel.findMany({
-    where: { tenantId },
-    orderBy: [{ destaque: 'desc' }, { createdAt: 'desc' }],
-    select: {
-      id: true,
-      codigo: true,
-      titulo: true,
-      capaUrl: true,
-      cidade: true,
-      bairro: true,
-      tipo: true,
-      operacao: true,
-      preco: true,
-      publicado: true,
-      _count: {
-        select: { posts: true },
+  const [imoveis, posts] = await Promise.all([
+    prisma.imovel.findMany({
+      where: { tenantId },
+      orderBy: [{ destaque: 'desc' }, { createdAt: 'desc' }],
+      select: {
+        id: true,
+        codigo: true,
+        titulo: true,
+        capaUrl: true,
+        cidade: true,
+        bairro: true,
+        tipo: true,
+        operacao: true,
+        preco: true,
+        publicado: true,
+        _count: { select: { posts: true } },
       },
-    },
-  });
+    }),
+    prisma.postGerado.findMany({
+      where: { tenantId, imovelId: { not: null } },
+      orderBy: { createdAt: 'desc' },
+      select: {
+        id: true,
+        imovelId: true,
+        tipo: true,
+        imageUrl: true,
+        createdAt: true,
+      },
+    }),
+  ]);
 
   return (
     <ConteudoClient
@@ -46,6 +55,13 @@ export default async function ConteudoPage() {
         preco: Number(i.preco),
         publicado: i.publicado,
         postsCount: i._count.posts,
+      }))}
+      posts={posts.map((p) => ({
+        id: p.id,
+        imovelId: p.imovelId!,
+        tipo: p.tipo as unknown as string,
+        imageUrl: p.imageUrl,
+        createdAt: p.createdAt.toISOString(),
       }))}
     />
   );
