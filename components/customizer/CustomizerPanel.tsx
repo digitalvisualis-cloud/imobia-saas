@@ -1,7 +1,6 @@
 'use client';
 
 import { useRef, useState } from 'react';
-import Link from 'next/link';
 import {
   Layers,
   Palette,
@@ -21,7 +20,6 @@ import {
   Sparkles,
   ImagePlus,
   X,
-  LayoutDashboard,
 } from 'lucide-react';
 import {
   DndContext,
@@ -86,7 +84,7 @@ export function CustomizerPanel({ onSave, saving, saved }: Props) {
   }
 
   return (
-    <aside className="fixed left-0 top-0 z-40 flex h-screen w-[380px] border-r border-slate-200 bg-white text-slate-800 shadow-xl">
+    <aside className="fixed left-0 top-0 z-40 flex h-screen w-[380px] border-r border-slate-200 bg-white text-slate-800 shadow-xl lg:left-64">
       <div className="flex w-[60px] flex-col items-center border-r border-slate-200 bg-slate-50 py-3">
         {RAIL.map((r) => (
           <button
@@ -105,19 +103,6 @@ export function CustomizerPanel({ onSave, saving, saved }: Props) {
             <span>{r.label}</span>
           </button>
         ))}
-
-        {/* Voltar pro dashboard */}
-        <div className="mt-auto pt-2 border-t border-slate-200 w-10">
-          <Link
-            href="/dashboard"
-            className="flex h-12 w-12 flex-col items-center justify-center gap-0.5 rounded-md text-[10px] font-medium text-slate-500 hover:bg-white hover:text-slate-700 transition-colors -ml-1"
-            aria-label="Voltar pro dashboard"
-            title="Voltar pro dashboard"
-          >
-            <LayoutDashboard className="h-4 w-4" />
-            <span>Sair</span>
-          </Link>
-        </div>
       </div>
 
       <div className="flex flex-1 flex-col">

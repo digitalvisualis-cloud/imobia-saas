@@ -173,7 +173,7 @@ export default function SiteEditorClient({ site, tenant, imoveis }: Props) {
     <div className="flex min-h-screen w-full bg-slate-100">
       <CustomizerPanel onSave={handleSave} saving={saving} saved={recentlySaved} />
 
-      <div className="min-w-0 flex-1 lg:pl-[124px]">
+      <div className="min-w-0 flex-1 lg:pl-[380px]">
         {/* Topbar do editor */}
         <div className="sticky top-0 z-30 flex items-center justify-between border-b bg-white px-6 py-3 shadow-sm">
           <div className="flex items-center gap-3">
