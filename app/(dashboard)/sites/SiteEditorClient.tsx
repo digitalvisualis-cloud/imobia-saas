@@ -39,30 +39,32 @@ export default function SiteEditorClient({ site, tenant, imoveis }: Props) {
   const [copiedUrl, setCopiedUrl] = useState(false);
   const [origin, setOrigin] = useState<string>('');
   const iframeRef = useRef<HTMLIFrameElement>(null);
-  const previewWrapRef = useRef<HTMLDivElement>(null);
+  const previewOuterRef = useRef<HTMLDivElement>(null);
   const [previewScale, setPreviewScale] = useState(1);
 
   useEffect(() => {
     setOrigin(window.location.origin);
   }, []);
 
-  // Mantém o preview renderizando em 1440px (desktop "real") e escala pra
+  // Mantem o preview renderizando em 1440x900 (desktop "real") e escala pra
   // caber na area disponivel. Sem isso, o iframe ganha apenas a largura
-  // residual depois do customizer e renderiza como tablet (~770px).
+  // residual depois do customizer (~1100px) e renderiza como tablet.
+  // Medimos o outer container (não o wrap) pra evitar feedback loop com a
+  // largura do proprio iframe.
   useEffect(() => {
     if (viewport !== 'desktop') {
       setPreviewScale(1);
       return;
     }
-    const wrap = previewWrapRef.current;
-    if (!wrap) return;
+    const outer = previewOuterRef.current;
+    if (!outer) return;
     const update = () => {
-      const w = wrap.clientWidth;
+      const w = outer.clientWidth;
       if (w > 0) setPreviewScale(Math.min(1, w / 1440));
     };
     update();
     const ro = new ResizeObserver(update);
-    ro.observe(wrap);
+    ro.observe(outer);
     return () => ro.disconnect();
   }, [viewport]);
 
@@ -170,7 +172,7 @@ export default function SiteEditorClient({ site, tenant, imoveis }: Props) {
     <div className="flex min-h-screen w-full bg-slate-100">
       <CustomizerPanel onSave={handleSave} saving={saving} saved={recentlySaved} />
 
-      <div className="flex-1 lg:pl-[380px]">
+      <div className="min-w-0 flex-1 lg:pl-[380px]">
         {/* Topbar do editor */}
         <div className="sticky top-0 z-30 flex items-center justify-between border-b bg-white px-6 py-3 shadow-sm">
           <div className="flex items-center gap-3">
@@ -249,7 +251,7 @@ export default function SiteEditorClient({ site, tenant, imoveis }: Props) {
         </div>
 
         {/* Preview area */}
-        <div className="p-4">
+        <div ref={previewOuterRef} className="p-4">
           {viewport === 'mobile' ? (
             <div
               className="mx-auto overflow-hidden rounded-lg bg-white shadow-lg transition-all w-[414px]"
@@ -265,12 +267,10 @@ export default function SiteEditorClient({ site, tenant, imoveis }: Props) {
             </div>
           ) : (
             <div
-              ref={previewWrapRef}
               className="mx-auto overflow-hidden rounded-lg bg-white shadow-lg transition-all"
               style={{
-                width: '100%',
-                height: `calc((100vh - 120px) * ${previewScale})`,
-                minHeight: 600,
+                width: 1440 * previewScale,
+                height: 900 * previewScale,
               }}
             >
               <iframe
@@ -279,7 +279,7 @@ export default function SiteEditorClient({ site, tenant, imoveis }: Props) {
                 title="Preview"
                 style={{
                   width: 1440,
-                  height: 'calc(100vh - 120px)',
+                  height: 900,
                   border: 0,
                   background: 'white',
                   transformOrigin: 'top left',
