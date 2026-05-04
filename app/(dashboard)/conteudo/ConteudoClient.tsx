@@ -2,49 +2,28 @@
 
 import { useMemo, useState } from 'react';
 import Link from 'next/link';
-import { Sparkles, ArrowRight, ImageIcon, X, ImageOff, Plus } from 'lucide-react';
+import { Sparkles, ArrowRight, ImageIcon, ImageOff, Plus } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { PageHeader } from '@/components/ui/page-header';
-
-type ImovelLite = {
-  id: string;
-  codigo: string;
-  titulo: string;
-  capaUrl: string | null;
-  cidade: string;
-  bairro: string | null;
-  tipo: string;
-  operacao: string;
-  preco: number;
-  publicado: boolean;
-  postsCount: number;
-};
-
-type PostLite = {
-  id: string;
-  imovelId: string;
-  tipo: string;
-  imageUrl: string | null;
-  createdAt: string;
-};
-
-const TIPO_TAG: Record<string, string> = {
-  INSTAGRAM_FEED: 'Feed',
-  INSTAGRAM_STORIES: 'Story',
-  WHATSAPP: 'WhatsApp',
-  FICHA_PDF: 'PDF',
-};
+import { PostPreview } from '@/components/conteudo/PostPreview';
+import { GerarPostModal } from '@/components/conteudo/GerarPostModal';
+import type {
+  ImovelLite,
+  PostLite,
+  Customizacao,
+} from '@/components/conteudo/types';
 
 export default function ConteudoClient({
   imoveis,
   posts,
+  customizacao,
 }: {
   imoveis: ImovelLite[];
   posts: PostLite[];
+  customizacao: Customizacao;
 }) {
   const [pickerOpen, setPickerOpen] = useState(false);
 
-  // Agrupa posts por imovel; só mostra imóveis que têm post.
   const grupos = useMemo(() => {
     const byImovel = new Map<string, PostLite[]>();
     for (const p of posts) {
@@ -83,8 +62,8 @@ export default function ConteudoClient({
           </div>
           <h3 className="font-display text-lg font-bold">Nenhum post ainda</h3>
           <p className="max-w-md text-sm text-muted-foreground">
-            Clica em "Gerar novo post" pra criar a primeira peça com IA a partir de
-            um imóvel da tua carteira.
+            Clica em "Gerar novo post" pra criar a primeira peça com IA a partir de um
+            imóvel da tua carteira.
           </p>
           <Button
             onClick={() => setPickerOpen(true)}
@@ -105,16 +84,16 @@ export default function ConteudoClient({
 
       <div className="space-y-10">
         {grupos.map(({ imovel, posts }) => (
-          <ImovelGroup key={imovel.id} imovel={imovel} posts={posts} />
+          <ImovelGroup key={imovel.id} imovel={imovel} posts={posts} customizacao={customizacao} />
         ))}
       </div>
 
-      {pickerOpen && (
-        <ImovelPickerModal
-          imoveis={imoveis}
-          onClose={() => setPickerOpen(false)}
-        />
-      )}
+      <GerarPostModal
+        open={pickerOpen}
+        onClose={() => setPickerOpen(false)}
+        imoveis={imoveis}
+        customizacao={customizacao}
+      />
     </div>
   );
 }
@@ -122,9 +101,11 @@ export default function ConteudoClient({
 function ImovelGroup({
   imovel,
   posts,
+  customizacao,
 }: {
   imovel: ImovelLite;
   posts: PostLite[];
+  customizacao: Customizacao;
 }) {
   return (
     <section className="space-y-4">
@@ -170,127 +151,17 @@ function ImovelGroup({
           <Link
             key={p.id}
             href={`/conteudo/imovel/${imovel.id}`}
-            className="group relative block aspect-square overflow-hidden rounded-lg bg-muted/30 transition-transform hover:-translate-y-0.5"
+            className="group flex items-center justify-center overflow-hidden rounded-lg bg-muted/30 p-3 transition-transform hover:-translate-y-0.5"
           >
-            {p.imageUrl ? (
-              // eslint-disable-next-line @next/next/no-img-element
-              <img
-                src={p.imageUrl}
-                alt=""
-                className="h-full w-full object-cover transition-transform group-hover:scale-[1.02]"
-                loading="lazy"
-              />
-            ) : imovel.capaUrl ? (
-              // eslint-disable-next-line @next/next/no-img-element
-              <img
-                src={imovel.capaUrl}
-                alt=""
-                className="h-full w-full object-cover opacity-90 transition-transform group-hover:scale-[1.02]"
-                loading="lazy"
-              />
-            ) : (
-              <div className="grid h-full w-full place-items-center text-muted-foreground/40">
-                <ImageOff className="h-8 w-8" />
-              </div>
-            )}
-            <span className="absolute left-2 top-2 rounded-full bg-black/60 px-2 py-0.5 text-[9px] font-semibold uppercase tracking-wider text-white">
-              {TIPO_TAG[p.tipo] ?? p.tipo}
-            </span>
+            <PostPreview
+              imovel={imovel}
+              variant={p.template}
+              scale={0.5}
+              custom={customizacao}
+            />
           </Link>
         ))}
       </div>
     </section>
-  );
-}
-
-function ImovelPickerModal({
-  imoveis,
-  onClose,
-}: {
-  imoveis: ImovelLite[];
-  onClose: () => void;
-}) {
-  return (
-    <div
-      className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4"
-      onClick={onClose}
-    >
-      <div
-        className="relative w-full max-w-3xl overflow-hidden rounded-xl bg-card shadow-2xl"
-        onClick={(e) => e.stopPropagation()}
-      >
-        <div className="flex items-center justify-between border-b border-border px-6 py-4">
-          <div>
-            <h2 className="font-display text-lg font-bold">Escolha um imóvel</h2>
-            <p className="text-xs text-muted-foreground">
-              Vai abrir o Media Kit pra você gerar posts.
-            </p>
-          </div>
-          <button
-            onClick={onClose}
-            className="rounded-md p-1.5 text-muted-foreground hover:bg-muted hover:text-foreground"
-            aria-label="Fechar"
-          >
-            <X className="h-4 w-4" />
-          </button>
-        </div>
-
-        <div className="max-h-[60vh] overflow-y-auto p-4">
-          {imoveis.length === 0 ? (
-            <div className="flex flex-col items-center gap-3 py-10 text-center">
-              <p className="text-sm text-muted-foreground">
-                Você ainda não cadastrou nenhum imóvel.
-              </p>
-              <Button asChild>
-                <Link href="/imoveis/novo">
-                  <Plus className="h-4 w-4 mr-2" /> Cadastrar imóvel
-                </Link>
-              </Button>
-            </div>
-          ) : (
-            <div className="grid grid-cols-1 gap-2 sm:grid-cols-2">
-              {imoveis.map((i) => (
-                <Link
-                  key={i.id}
-                  href={`/conteudo/imovel/${i.id}`}
-                  className="group flex items-center gap-3 rounded-lg border border-border bg-background p-3 transition-colors hover:border-primary hover:bg-primary/5"
-                >
-                  {i.capaUrl ? (
-                    // eslint-disable-next-line @next/next/no-img-element
-                    <img
-                      src={i.capaUrl}
-                      alt=""
-                      className="h-12 w-12 flex-shrink-0 rounded-md object-cover"
-                    />
-                  ) : (
-                    <div className="grid h-12 w-12 flex-shrink-0 place-items-center rounded-md bg-muted text-muted-foreground/50">
-                      <ImageOff className="h-4 w-4" />
-                    </div>
-                  )}
-                  <div className="min-w-0 flex-1">
-                    <div className="font-mono text-[10px] uppercase text-muted-foreground">
-                      {i.codigo}
-                    </div>
-                    <div className="truncate text-sm font-semibold">{i.titulo}</div>
-                    <div className="truncate text-xs text-muted-foreground">
-                      {[i.bairro, i.cidade].filter(Boolean).join(' · ')}
-                      {i.postsCount > 0 && (
-                        <>
-                          {' · '}
-                          <span className="text-primary">
-                            {i.postsCount} {i.postsCount === 1 ? 'post' : 'posts'}
-                          </span>
-                        </>
-                      )}
-                    </div>
-                  </div>
-                  <ArrowRight className="h-4 w-4 flex-shrink-0 text-muted-foreground transition-transform group-hover:translate-x-0.5" />
-                </Link>
-              ))}
-            </div>
-          )}
-        </div>
-      </div>
-    </div>
   );
 }
