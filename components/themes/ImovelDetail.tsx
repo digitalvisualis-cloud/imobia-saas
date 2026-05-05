@@ -1,13 +1,21 @@
 'use client';
 
 import { useState } from 'react';
-import { Bed, Bath, Car, Maximize2, MapPin, Phone, MessageCircle } from 'lucide-react';
+import { Bed, Bath, Car, Maximize2, MapPin, MessageCircle, Share2, Check } from 'lucide-react';
 import type { Customization, ThemeId } from '@/types/site-customization';
 import type { ImovelPublic, TenantPublic } from '@/app/_templates/types';
 import { ThemeScope } from './ThemeScope';
 import { BrisaHeader, BrisaFooter } from './brisa/BrisaChrome';
 import { AuraHeader, AuraFooter } from './aura/AuraChrome';
 import { formatPriceBRL, imageUrl } from './_shared';
+
+function formatPhoneBR(raw: string): string {
+  const d = raw.replace(/\D/g, '');
+  if (d.length === 11) return `(${d.slice(0, 2)}) ${d.slice(2, 7)}-${d.slice(7)}`;
+  if (d.length === 10) return `(${d.slice(0, 2)}) ${d.slice(2, 6)}-${d.slice(6)}`;
+  if (d.length === 13) return `+${d.slice(0, 2)} (${d.slice(2, 4)}) ${d.slice(4, 9)}-${d.slice(9)}`;
+  return raw;
+}
 
 interface Props {
   theme: ThemeId;
@@ -167,43 +175,129 @@ function ImovelInfo({
         </div>
 
         <aside className="md:col-span-1">
-          <div
-            className="sticky top-24 rounded-2xl border p-6"
-            style={{ borderColor: 'rgb(var(--t-fg-rgb) / 0.1)' }}
-          >
-            <p className="text-xs uppercase tracking-wider opacity-60">
-              {imovel.operacao.toUpperCase() === 'ALUGUEL' ? 'Aluguel mensal' : 'Valor de venda'}
-            </p>
-            <p
-              style={{ fontFamily: 'var(--t-font-heading)', color: 'var(--t-primary)' }}
-              className="mt-1 text-3xl font-bold"
-            >
-              {formatPriceBRL(imovel.preco, imovel.operacao)}
-            </p>
-            <p className="mt-1 text-xs opacity-60">Cód. {imovel.codigo}</p>
-
-            <a
-              href={wppHref}
-              target="_blank"
-              rel="noopener"
-              className="mt-6 flex w-full items-center justify-center gap-2 rounded-xl py-3.5 text-sm font-semibold transition-opacity hover:opacity-90"
-              style={{ background: 'var(--t-primary)', color: 'var(--t-bg)' }}
-            >
-              <MessageCircle className="h-4 w-4" /> Tenho interesse
-            </a>
-
-            {tenant.marca?.telefone && (
-              <a
-                href={`tel:${tenant.marca.telefone.replace(/\D/g, '')}`}
-                className="mt-3 flex w-full items-center justify-center gap-2 rounded-xl border py-3 text-sm font-medium"
-                style={{ borderColor: 'rgb(var(--t-fg-rgb) / 0.15)' }}
-              >
-                <Phone className="h-4 w-4" /> {tenant.marca.telefone}
-              </a>
-            )}
-          </div>
+          <ContactCard imovel={imovel} tenant={tenant} wppHref={wppHref} />
         </aside>
       </div>
+    </div>
+  );
+}
+
+function ContactCard({
+  imovel,
+  tenant,
+  wppHref,
+}: {
+  imovel: ImovelPublic;
+  tenant: TenantPublic;
+  wppHref: string;
+}) {
+  const [copied, setCopied] = useState(false);
+  const wpp = tenant.marca?.whatsapp ?? '';
+  const wppFormatted = wpp ? formatPhoneBR(wpp) : '';
+  const nomeEmpresa = tenant.marca?.nomeEmpresa ?? tenant.nome ?? null;
+  const logoUrl = tenant.marca?.logoUrl ?? null;
+
+  function handleShare() {
+    const url = typeof window !== 'undefined' ? window.location.href : '';
+    if (navigator.share) {
+      navigator.share({ title: imovel.titulo, url }).catch(() => {});
+      return;
+    }
+    navigator.clipboard?.writeText(url).then(() => {
+      setCopied(true);
+      setTimeout(() => setCopied(false), 1800);
+    });
+  }
+
+  return (
+    <div className="sticky top-24 space-y-4">
+      {/* Card de preço + CTA WhatsApp */}
+      <div
+        className="rounded-2xl border p-6"
+        style={{ borderColor: 'rgb(var(--t-fg-rgb) / 0.1)' }}
+      >
+        <p className="text-xs uppercase tracking-wider opacity-60">
+          {imovel.operacao.toUpperCase() === 'ALUGUEL' ? 'Aluguel mensal' : 'Valor de venda'}
+        </p>
+        <p
+          style={{ fontFamily: 'var(--t-font-heading)', color: 'var(--t-primary)' }}
+          className="mt-1 text-3xl font-bold leading-none"
+        >
+          {formatPriceBRL(imovel.preco, imovel.operacao)}
+        </p>
+        <p className="mt-2 text-xs opacity-60">Cód. {imovel.codigo}</p>
+
+        {/* CTA principal: WhatsApp */}
+        <a
+          href={wppHref}
+          target="_blank"
+          rel="noopener"
+          className="mt-6 flex w-full items-center justify-center gap-2 rounded-xl py-4 text-base font-semibold text-white shadow-md transition-transform hover:scale-[1.02]"
+          style={{ background: '#16A34A' }}
+        >
+          <MessageCircle className="h-5 w-5" /> Tenho interesse
+        </a>
+
+        {/* Numero do WhatsApp clicavel */}
+        {wpp && (
+          <a
+            href={wppHref}
+            target="_blank"
+            rel="noopener"
+            className="mt-3 flex w-full items-center justify-center gap-2 text-sm font-medium opacity-80 hover:opacity-100"
+          >
+            <MessageCircle className="h-4 w-4" />
+            <span className="font-mono">{wppFormatted}</span>
+          </a>
+        )}
+
+        <button
+          type="button"
+          onClick={handleShare}
+          className="mt-4 flex w-full items-center justify-center gap-1.5 rounded-xl border py-2.5 text-xs font-medium transition-colors hover:bg-[rgb(var(--t-fg-rgb)/0.04)]"
+          style={{ borderColor: 'rgb(var(--t-fg-rgb) / 0.15)' }}
+        >
+          {copied ? (
+            <>
+              <Check className="h-3.5 w-3.5 text-green-600" /> Link copiado
+            </>
+          ) : (
+            <>
+              <Share2 className="h-3.5 w-3.5" /> Compartilhar
+            </>
+          )}
+        </button>
+      </div>
+
+      {/* Card da imobiliaria/corretor */}
+      {nomeEmpresa && (
+        <div
+          className="rounded-2xl border p-5"
+          style={{ borderColor: 'rgb(var(--t-fg-rgb) / 0.1)' }}
+        >
+          <div className="flex items-center gap-3">
+            {logoUrl ? (
+              // eslint-disable-next-line @next/next/no-img-element
+              <img
+                src={logoUrl}
+                alt={nomeEmpresa}
+                className="h-12 w-12 rounded-full object-cover"
+              />
+            ) : (
+              <div
+                className="grid h-12 w-12 place-items-center rounded-full text-lg font-bold"
+                style={{ background: 'var(--t-primary)', color: 'var(--t-bg)' }}
+              >
+                {nomeEmpresa.charAt(0).toUpperCase()}
+              </div>
+            )}
+            <div className="min-w-0">
+              <p className="text-[10px] uppercase tracking-wider opacity-60">Anunciante</p>
+              <p className="truncate text-sm font-semibold">{nomeEmpresa}</p>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
