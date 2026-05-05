@@ -8,13 +8,14 @@ import type { ImovelPublic, TenantPublic } from '@/app/_templates/types';
 /**
  * Página de preview standalone — usada como iframe pelo editor `/sites`.
  *
- * Lê dados do localStorage (gravados pelo editor):
- *   - site-preview-data:  { tenant, imoveis } — gravado uma vez no mount do editor
- *   - site-preview-state: { theme, config } — gravado a cada mudança no Zustand
+ * Recebe atualizações do editor por DOIS canais:
+ *   1. postMessage (canal principal — disparado direto do editor pro iframe)
+ *   2. localStorage (fallback / leitura inicial — caso o iframe monte antes
+ *      do editor enviar o postMessage)
  *
- * Reage a `storage` events para refletir mudanças do editor em tempo real.
- * Como localStorage é per-origin e iframe + parent compartilham origin, o evento
- * dispara automaticamente no iframe quando o editor escreve.
+ * Tipos de mensagem aceitos:
+ *   - { type: 'site-preview/data', payload: { tenant, imoveis } }
+ *   - { type: 'site-preview/state', payload: { theme, config } }
  */
 interface PreviewData {
   tenant: TenantPublic;
@@ -25,41 +26,52 @@ interface PreviewState {
   config: Customization;
 }
 
+type Msg =
+  | { type: 'site-preview/data'; payload: PreviewData }
+  | { type: 'site-preview/state'; payload: PreviewState };
+
 export default function SitePreviewPage() {
   const [data, setData] = useState<PreviewData | null>(null);
   const [state, setState] = useState<PreviewState | null>(null);
 
   useEffect(() => {
-    function loadAll() {
-      try {
-        const rawData = localStorage.getItem('site-preview-data');
-        const rawState = localStorage.getItem('site-preview-state');
-        if (rawData) setData(JSON.parse(rawData));
-        if (rawState) setState(JSON.parse(rawState));
-      } catch {
-        /* ignore parse errors */
+    // Leitura inicial do localStorage (fallback enquanto postMessage nao chega)
+    try {
+      const rawData = localStorage.getItem('site-preview-data');
+      const rawState = localStorage.getItem('site-preview-state');
+      if (rawData) setData(JSON.parse(rawData));
+      if (rawState) setState(JSON.parse(rawState));
+    } catch {
+      /* ignore parse errors */
+    }
+
+    function onMessage(e: MessageEvent) {
+      // Aceita so mesma origin
+      if (e.origin !== window.location.origin) return;
+      const msg = e.data as Msg;
+      if (!msg || typeof msg !== 'object') return;
+      if (msg.type === 'site-preview/data') {
+        setData(msg.payload);
+      } else if (msg.type === 'site-preview/state') {
+        setState(msg.payload);
       }
     }
-    loadAll();
 
     function onStorage(e: StorageEvent) {
       if (e.key === 'site-preview-data' && e.newValue) {
-        try {
-          setData(JSON.parse(e.newValue));
-        } catch {
-          /* ignore */
-        }
+        try { setData(JSON.parse(e.newValue)); } catch {}
       }
       if (e.key === 'site-preview-state' && e.newValue) {
-        try {
-          setState(JSON.parse(e.newValue));
-        } catch {
-          /* ignore */
-        }
+        try { setState(JSON.parse(e.newValue)); } catch {}
       }
     }
+
+    window.addEventListener('message', onMessage);
     window.addEventListener('storage', onStorage);
-    return () => window.removeEventListener('storage', onStorage);
+    return () => {
+      window.removeEventListener('message', onMessage);
+      window.removeEventListener('storage', onStorage);
+    };
   }, []);
 
   if (!data || !state) {

@@ -70,25 +70,19 @@ export default function SiteEditorClient({ site, tenant, imoveis }: Props) {
   }, [viewport]);
 
   // Hidrata o store com a config salva ao montar e escreve o estado inicial
-  // no localStorage. O subscribe abaixo só observa MUDANÇAS, não dispara no
-  // mount — por isso a escrita inicial é manual aqui.
+  // no localStorage (pra primeira renderizacao do iframe ler antes do
+  // postMessage chegar).
   useEffect(() => {
     hydrate('brisa', site.configBrisa);
     hydrate('aura', site.configAura);
     setActiveTheme(site.themeId);
     markSaved();
     try {
-      localStorage.setItem(
-        'site-preview-data',
-        JSON.stringify({ tenant, imoveis }),
-      );
+      localStorage.setItem('site-preview-data', JSON.stringify({ tenant, imoveis }));
       const s = useSiteStore.getState();
       localStorage.setItem(
         'site-preview-state',
-        JSON.stringify({
-          theme: s.activeTheme,
-          config: s.byTheme[s.activeTheme],
-        }),
+        JSON.stringify({ theme: s.activeTheme, config: s.byTheme[s.activeTheme] }),
       );
     } catch {
       /* localStorage cheio? ignora */
@@ -96,21 +90,48 @@ export default function SiteEditorClient({ site, tenant, imoveis }: Props) {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
-  // Sincroniza mudanças do Zustand → localStorage. localStorage dispara
-  // `storage` event no iframe (mesma origin, documento diferente), que reage.
+  // Sincroniza mudancas do Zustand para o iframe via postMessage (mais
+  // confiavel que storage event entre mesma origin) + grava no localStorage
+  // como cache pra refresh do iframe.
   useEffect(() => {
-    const unsub = useSiteStore.subscribe((s) => {
+    function pushToPreview(payload: { theme: ThemeId; config: Customization }) {
       try {
-        localStorage.setItem(
-          'site-preview-state',
-          JSON.stringify({ theme: s.activeTheme, config: s.byTheme[s.activeTheme] }),
+        localStorage.setItem('site-preview-state', JSON.stringify(payload));
+      } catch {}
+      const win = iframeRef.current?.contentWindow;
+      if (win) {
+        win.postMessage(
+          { type: 'site-preview/state', payload },
+          window.location.origin,
         );
-      } catch {
-        /* ignore */
       }
+    }
+    // Push inicial (logo apos hidratacao) — garante que o iframe receba mesmo
+    // se ele tiver montado primeiro
+    const s0 = useSiteStore.getState();
+    pushToPreview({ theme: s0.activeTheme, config: s0.byTheme[s0.activeTheme] });
+
+    const unsub = useSiteStore.subscribe((s) => {
+      pushToPreview({ theme: s.activeTheme, config: s.byTheme[s.activeTheme] });
     });
     return unsub;
   }, []);
+
+  // O iframe envia 'ready' quando monta — re-envia o state pra garantir
+  function handleIframeLoad() {
+    const s = useSiteStore.getState();
+    iframeRef.current?.contentWindow?.postMessage(
+      {
+        type: 'site-preview/state',
+        payload: { theme: s.activeTheme, config: s.byTheme[s.activeTheme] },
+      },
+      window.location.origin,
+    );
+    iframeRef.current?.contentWindow?.postMessage(
+      { type: 'site-preview/data', payload: { tenant, imoveis } },
+      window.location.origin,
+    );
+  }
 
   const siteUrl = site.dominio
     ? `https://${site.dominio}`
@@ -262,6 +283,7 @@ export default function SiteEditorClient({ site, tenant, imoveis }: Props) {
                 ref={iframeRef}
                 src="/preview/site"
                 title="Preview"
+                onLoad={handleIframeLoad}
                 className="w-full"
                 style={{ height: 720, border: 0, background: 'white' }}
               />
@@ -278,6 +300,7 @@ export default function SiteEditorClient({ site, tenant, imoveis }: Props) {
                 ref={iframeRef}
                 src="/preview/site"
                 title="Preview"
+                onLoad={handleIframeLoad}
                 style={{
                   width: 1440,
                   height: 900,
