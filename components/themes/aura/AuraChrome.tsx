@@ -30,14 +30,27 @@ function resolveBrandName(config: Customization, tenant: TenantPublic): string {
 interface ChromeProps {
   config: Customization;
   tenant: TenantPublic;
+  /** true = header transparente sobre hero escuro (home). false = header solido com texto escuro (paginas internas). */
+  transparent?: boolean;
 }
 
-export function AuraHeader({ config, tenant }: ChromeProps) {
+export function AuraHeader({ config, tenant, transparent = true }: ChromeProps) {
   const brandName = resolveBrandName(config, tenant);
+  // Cores variam conforme o contexto:
+  // - Sobre hero escuro (home) → texto branco, bordas claras translucidas
+  // - Sobre fundo claro (paginas internas) → texto escuro, bordas escuras translucidas
+  const wrapClass = transparent
+    ? 'absolute left-0 right-0 top-0 z-30'
+    : 'sticky top-0 z-30 border-b border-black/10 bg-white/95 backdrop-blur';
+  const linkColor = transparent ? 'text-white' : 'text-slate-900';
+  const navColor = transparent ? 'text-white' : 'text-slate-900';
+  const ctaBorder = transparent ? 'border-white/30 text-white hover:bg-white/10' : 'border-black/20 text-slate-900 hover:bg-black/5';
+  const menuBorder = transparent ? 'border-white/30 text-white' : 'border-black/20 text-slate-900';
+
   return (
-    <header className="absolute left-0 right-0 top-0 z-30">
-      <div className="mx-auto flex max-w-[1500px] items-center justify-between px-4 py-4 sm:px-8 sm:py-7">
-        <Link href={`/s/${tenant.slug}`} className="text-white">
+    <header className={wrapClass}>
+      <div className="mx-auto flex max-w-[1500px] items-center justify-between px-4 py-4 sm:px-8 sm:py-5">
+        <Link href={`/s/${tenant.slug}`} className={linkColor}>
           <div
             style={{ fontFamily: 'var(--t-font-heading)' }}
             className="text-base tracking-wide sm:text-xl"
@@ -48,7 +61,7 @@ export function AuraHeader({ config, tenant }: ChromeProps) {
             REAL ESTATE
           </div>
         </Link>
-        <nav className="hidden items-center gap-9 text-[12px] font-medium uppercase tracking-[0.2em] text-white md:flex">
+        <nav className={`hidden items-center gap-9 text-[12px] font-medium uppercase tracking-[0.2em] md:flex ${navColor}`}>
           {config.header.links.map((l, i) => (
             <Link
               key={i}
@@ -61,13 +74,13 @@ export function AuraHeader({ config, tenant }: ChromeProps) {
         </nav>
         <a
           href={config.header.ctaHref}
-          className="hidden items-center gap-2 border border-white/30 px-5 py-2.5 text-[11px] uppercase tracking-[0.2em] text-white transition-colors hover:bg-white/10 md:inline-flex"
+          className={`hidden items-center gap-2 border px-5 py-2.5 text-[11px] uppercase tracking-[0.2em] transition-colors md:inline-flex ${ctaBorder}`}
         >
           {config.header.ctaLabel}
         </a>
         <button
           type="button"
-          className="flex h-10 w-10 items-center justify-center rounded-full border border-white/30 text-white md:hidden"
+          className={`flex h-10 w-10 items-center justify-center rounded-full border md:hidden ${menuBorder}`}
         >
           <Menu className="h-4 w-4" />
         </button>

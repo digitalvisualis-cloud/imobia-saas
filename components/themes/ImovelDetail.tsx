@@ -25,13 +25,18 @@ interface Props {
 }
 
 export function ImovelDetail({ theme, config, tenant, imovel }: Props) {
-  const Header = theme === 'aura' ? AuraHeader : BrisaHeader;
   const Footer = theme === 'aura' ? AuraFooter : BrisaFooter;
 
   return (
     <ThemeScope config={config}>
-      <Header config={config} tenant={tenant} />
-      <main className={theme === 'aura' ? 'pt-32' : ''}>
+      {/* Em pagina interna o header eh solido (texto escuro sobre fundo claro)
+          pra nao sumir em cima da galeria de fotos. */}
+      {theme === 'aura' ? (
+        <AuraHeader config={config} tenant={tenant} transparent={false} />
+      ) : (
+        <BrisaHeader config={config} tenant={tenant} />
+      )}
+      <main>
         <ImovelGallery imagens={imovel.imagens} capa={imovel.capaUrl} titulo={imovel.titulo} />
         <ImovelInfo imovel={imovel} tenant={tenant} />
       </main>
