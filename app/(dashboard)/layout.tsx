@@ -113,6 +113,7 @@ export default function DashboardLayout({
     {
       label: 'Atendimento IA',
       items: [
+        { name: 'Conversas', href: '/atendimento', icon: MessageSquare },
         { name: 'Agente IA', href: '/configuracoes/agente-ia', icon: Bot },
         { name: 'WhatsApp', href: '/configuracoes/whatsapp', icon: MessageCircle },
       ],
