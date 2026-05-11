@@ -10,6 +10,7 @@ import {
   Plus,
   TrendingUp,
   MessageSquare,
+  MessageCircle,
   Calendar,
   Globe,
   Sparkles,
@@ -113,6 +114,7 @@ export default function DashboardLayout({
       label: 'Atendimento IA',
       items: [
         { name: 'Agente IA', href: '/configuracoes/agente-ia', icon: Bot },
+        { name: 'WhatsApp', href: '/configuracoes/whatsapp', icon: MessageCircle },
       ],
     },
     {

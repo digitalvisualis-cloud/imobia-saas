@@ -30,6 +30,8 @@ model Tenant {
   posts     PostGerado[]
   eventos   AgendaEvento[]
   contratos Contrato[]
+  conversas Conversa[]
+  configWhatsApp ConfigWhatsApp?
 
   @@map("tenants")
 }
@@ -171,6 +173,7 @@ model Imovel {
   posts        PostGerado[]
   eventos      AgendaEvento[]
   contratos    Contrato[]
+  conversas    Conversa[]
 
   @@unique([tenantId, codigo])
   @@index([tenantId, status])
@@ -250,6 +253,7 @@ model Lead {
   imovel          Imovel?     @relation(fields: [imovelId], references: [id])
   eventos         AgendaEvento[]
   contratos       Contrato[]
+  conversas       Conversa[]
 
   @@index([tenantId, etapa])
   @@index([tenantId, createdAt])
@@ -560,4 +564,121 @@ enum StatusContrato {
   PENDENTE
   ENCERRADO
   CANCELADO
+}
+
+// ─── ATENDIMENTO IA (WhatsApp + RAG) ───────────────────────────────────────
+
+/// Conexão do tenant ao provider WhatsApp (WAHA, Evolution ou Cloud API).
+/// Ver docs em 09_Squads/.../06_Arquitetura_IA/02_WhatsApp_Provider.md
+model ConfigWhatsApp {
+  id              String       @id @default(cuid())
+  tenantId        String       @unique
+  providerType    WppProvider
+  instanceName    String       // identifier no provider (ex: tenant slug)
+  baseUrl         String?      // URL do servidor (self-hosted WAHA/Evolution)
+  apiKeyEncrypted String?      // criptografado em rest
+  webhookSecret   String?      // valida origem do webhook
+  numeroConectado String?      // ex: 5511999998888
+  status          WppStatus    @default(DISCONNECTED)
+  conectadoEm     DateTime?
+  desconectadoEm  DateTime?
+  ultimoErro      String?
+  createdAt       DateTime     @default(now())
+  updatedAt       DateTime     @updatedAt
+
+  tenant          Tenant       @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+
+  @@map("config_whatsapp")
+}
+
+enum WppProvider {
+  WAHA
+  EVOLUTION
+  CLOUD_API
+}
+
+enum WppStatus {
+  DISCONNECTED
+  CONNECTING
+  CONNECTED
+  BANNED
+  ERROR
+}
+
+/// Conversa WhatsApp entre lead e tenant. Pode ter N mensagens.
+model Conversa {
+  id               String     @id @default(cuid())
+  tenantId         String
+  clienteWa        String     // numero WhatsApp normalizado: 5511999998888
+  clienteNome      String?
+  status           ConvStatus @default(IA)        // IA atendendo OU corretor assumiu OU encerrada
+  imovelId         String?    // se conversa eh sobre imovel especifico
+  leadId           String?    // vinculado ao Lead apos qualificacao
+  providerType    WppProvider
+  providerInstance String                          // identifier no provider
+  iniciadaEm       DateTime   @default(now())
+  ultimaMsgEm      DateTime   @default(now())
+  fechadaEm        DateTime?
+  fechadaPor       String?                         // userId que fechou
+  resumoLLM        String?    @db.Text             // resumo gerado pela IA pro CRM
+
+  tenant           Tenant     @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  imovel           Imovel?    @relation(fields: [imovelId], references: [id], onDelete: SetNull)
+  lead             Lead?      @relation(fields: [leadId], references: [id], onDelete: SetNull)
+  mensagens        Mensagem[]
+
+  @@index([tenantId, status])
+  @@index([tenantId, clienteWa])
+  @@index([tenantId, ultimaMsgEm])
+  @@map("conversas")
+}
+
+enum ConvStatus {
+  IA
+  HUMANO
+  FECHADA
+}
+
+/// Mensagem individual dentro de uma Conversa.
+model Mensagem {
+  id          String     @id @default(cuid())
+  conversaId  String
+  tenantId    String                                 // denormalizado pra queries rapidas
+  direcao     MsgDirecao                             // IN (cliente) | OUT (sistema)
+  autorTipo   MsgAutor                               // IA | HUMANO | CLIENTE | SISTEMA
+  autorId     String?                                // userId se HUMANO; null se IA/CLIENTE
+  tipo        MsgTipo                                // TEXTO | AUDIO | IMAGEM | VIDEO | DOC | LOCALIZACAO
+  conteudo    String     @db.Text                    // texto OU transcricao OU caption
+  anexoUrl    String?                                // url no Supabase Storage
+  anexoMime   String?
+  providerMsgId String?                              // ID original no WAHA/Evolution/Meta
+  metadata    Json?                                  // { replyTo, reactions, ... }
+  createdAt   DateTime   @default(now())
+
+  conversa    Conversa   @relation(fields: [conversaId], references: [id], onDelete: Cascade)
+
+  @@index([tenantId, conversaId, createdAt])
+  @@index([tenantId, createdAt])
+  @@map("mensagens")
+}
+
+enum MsgDirecao {
+  IN
+  OUT
+}
+
+enum MsgAutor {
+  IA
+  HUMANO
+  CLIENTE
+  SISTEMA
+}
+
+enum MsgTipo {
+  TEXTO
+  AUDIO
+  IMAGEM
+  VIDEO
+  DOC
+  LOCALIZACAO
 }
