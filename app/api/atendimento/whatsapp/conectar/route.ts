@@ -23,10 +23,11 @@ export async function POST() {
   const existing = await prisma.configWhatsApp.findUnique({ where: { tenantId } });
   const webhookSecret = existing?.webhookSecret ?? randomBytes(32).toString('hex');
 
-  const n8nBase = process.env.N8N_WEBHOOK_BASE_URL?.replace(/\/$/, '');
+  // Reaproveita N8N_BASE_URL que ja existe (mesma var usada por lib/n8n-client.ts)
+  const n8nBase = process.env.N8N_BASE_URL?.replace(/\/$/, '');
   if (!n8nBase) {
     return NextResponse.json(
-      { error: 'N8N_WEBHOOK_BASE_URL nao configurado' },
+      { error: 'N8N_BASE_URL nao configurado' },
       { status: 500 },
     );
   }
