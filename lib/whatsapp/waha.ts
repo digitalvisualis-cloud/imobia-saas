@@ -47,9 +47,20 @@ async function http<T>(
   }
 }
 
+/**
+ * Retorna o nome da sessao WAHA pra um tenant.
+ *
+ * WAHA Core (free) **so suporta uma sessao chamada `default`**. Pra rodar
+ * single-tenant ou pra dogfooding, defaultmos pra `default`.
+ *
+ * WAHA Plus suporta multiplas sessoes. Setando WAHA_MULTI_SESSION=true,
+ * cada tenant tem sua propria sessao `imobia-${tenantId}`.
+ */
 export function sessionName(tenantId: string): string {
-  // WAHA exige alfanumerico, hifen ou underscore
-  return `imobia-${tenantId}`;
+  if (process.env.WAHA_MULTI_SESSION === 'true') {
+    return `imobia-${tenantId}`;
+  }
+  return 'default';
 }
 
 export interface WahaSession {
@@ -74,46 +85,81 @@ export async function getSession(name: string): Promise<WahaSession | null> {
   }
 }
 
+interface WahaSessionFull extends WahaSession {
+  config?: {
+    webhooks?: Array<{
+      url: string;
+      events: string[];
+      hmac?: { key: string };
+      retries?: { delaySeconds: number; attempts: number };
+    }>;
+  };
+}
+
 /**
- * Cria/inicia uma sessao se nao existir. Idempotente.
- * Configura webhook automaticamente pra apontar pro n8n com tenantId na query.
+ * Cria/inicia uma sessao se nao existir. Idempotente e nao-destrutivo.
+ *
+ * - Se sessao nao existe: cria com webhook configurado
+ * - Se existe + STOPPED: dispara start
+ * - Se existe + WORKING: garante que o webhook do ImobIA esta na lista
+ *   (sem remover outros — coexiste com outros workflows como Caique Master)
  */
 export async function startSession(opts: {
   name: string;
   webhookUrl: string;
   webhookSecret?: string;
 }): Promise<WahaSession> {
-  const existing = await getSession(opts.name);
-  if (existing && existing.status !== 'STOPPED' && existing.status !== 'FAILED') {
+  const existing = await getSession(opts.name) as WahaSessionFull | null;
+  const wantedWebhook = {
+    url: opts.webhookUrl,
+    events: ['message', 'message.any', 'session.status'],
+    ...(opts.webhookSecret ? { hmac: { key: opts.webhookSecret } } : {}),
+    retries: { delaySeconds: 2, attempts: 3 },
+  };
+
+  if (existing && existing.status === 'WORKING') {
+    // Sessao ja conectada — garante que nosso webhook esta na lista
+    const current = existing.config?.webhooks ?? [];
+    const hasUs = current.some((w) => w.url === opts.webhookUrl);
+    if (!hasUs) {
+      await http(`/api/sessions/${encodeURIComponent(opts.name)}`, {
+        method: 'PUT',
+        body: JSON.stringify({
+          name: opts.name,
+          config: { webhooks: [...current, wantedWebhook] },
+        }),
+        timeoutMs: 30_000,
+      });
+    }
     return existing;
   }
-  // Cria sessao (POST /api/sessions/) ou inicia se ja existe
+
   const body = {
     name: opts.name,
-    config: {
-      webhooks: [
-        {
-          url: opts.webhookUrl,
-          events: [
-            'message',
-            'message.any',
-            'message.reaction',
-            'session.status',
-          ],
-          hmac: opts.webhookSecret ? { key: opts.webhookSecret } : undefined,
-          retries: { delaySeconds: 2, attempts: 3 },
-        },
-      ],
-    },
+    config: { webhooks: [wantedWebhook] },
   };
+
   if (existing) {
-    // Sessao parada: dispara start
+    // Sessao existe mas parada — atualiza config se webhook diferente, depois start
+    const current = existing.config?.webhooks ?? [];
+    const hasUs = current.some((w) => w.url === opts.webhookUrl);
+    if (!hasUs) {
+      await http(`/api/sessions/${encodeURIComponent(opts.name)}`, {
+        method: 'PUT',
+        body: JSON.stringify({
+          name: opts.name,
+          config: { webhooks: [...current, wantedWebhook] },
+        }),
+        timeoutMs: 30_000,
+      }).catch(() => {});
+    }
     return http<WahaSession>(
       `/api/sessions/${encodeURIComponent(opts.name)}/start`,
       { method: 'POST', timeoutMs: 60_000 },
     );
   }
-  // Cria nova
+
+  // Sessao nao existe — cria nova
   return http<WahaSession>('/api/sessions', {
     method: 'POST',
     body: JSON.stringify(body),
