@@ -6,6 +6,10 @@ import { isSuperAdminEmail } from '@/lib/super-admin';
 
 // Config base — Edge compatible (JWT only, no PrismaAdapter)
 export const { handlers, auth, signIn, signOut } = NextAuth({
+  // Atras de reverse proxy (Traefik no EasyPanel) o Auth.js v5 exige
+  // trustHost explicito — senao bloqueia com `UntrustedHost`. Mantemos
+  // hardcoded pra nao depender da env AUTH_TRUST_HOST chegar no build.
+  trustHost: true,
   session: { strategy: 'jwt' },
   pages: {
     signIn: '/login',
