@@ -3,22 +3,18 @@ import { PrismaPg } from '@prisma/adapter-pg';
 import pg from 'pg';
 
 // Prisma 7: adapter eh obrigatorio em runtime (URL nao vem mais do
-// schema). Cria pool pg explicito com SSL nao-verificado pra Supabase
-// (cert intermediario que truststore default do Node nao reconhece —
-// sem isso o handshake TLS falha silenciosamente em prod).
+// schema). Cria pool pg explicito com SSL nao-verificado pra Supabase.
+//
+// LAZY INIT (Proxy): cliente so eh criado na primeira query — evita
+// crash em `next build > Collecting page data` (onde envs nao chegam)
+// pra routes que importam `prisma` no top-level.
 
-const globalForPrisma = globalThis as unknown as { prisma: PrismaClient };
+const globalForPrisma = globalThis as unknown as { _prismaClient: PrismaClient | null };
 
-function createPrismaClient() {
+function createPrismaClient(): PrismaClient {
   const connectionString = process.env.DATABASE_URL ?? '';
-  if (!connectionString) {
-    throw new Error('DATABASE_URL ausente — adapter Prisma nao consegue inicializar');
-  }
   const isSupabase = connectionString.includes('supabase.co');
 
-  // Pool explicito da pg lib — assim controlamos SSL e options de
-  // forma transparente. PrismaPg aceita pool ja construido como
-  // primeiro argumento.
   const pool = new pg.Pool({
     connectionString,
     ssl: isSupabase ? { rejectUnauthorized: false } : undefined,
@@ -27,9 +23,24 @@ function createPrismaClient() {
   });
 
   const adapter = new PrismaPg(pool);
-  return new PrismaClient({ adapter } as any);
+  return new PrismaClient({
+    adapter,
+    log: process.env.NODE_ENV === 'development' ? ['error', 'warn'] : ['error'],
+  } as any);
 }
 
-export const prisma = globalForPrisma.prisma ?? createPrismaClient();
+function getPrisma(): PrismaClient {
+  if (!globalForPrisma._prismaClient) {
+    globalForPrisma._prismaClient = createPrismaClient();
+  }
+  return globalForPrisma._prismaClient;
+}
 
-if (process.env.NODE_ENV !== 'production') globalForPrisma.prisma = prisma;
+// Proxy lazy — defere a criacao do PrismaClient ate o primeiro acesso
+// (ex: prisma.user.findUnique). Isso evita o constructor rodar em
+// `next build` quando DATABASE_URL nao existe ainda.
+export const prisma = new Proxy({} as PrismaClient, {
+  get(_target, prop, receiver) {
+    return Reflect.get(getPrisma() as object, prop, receiver);
+  },
+});
