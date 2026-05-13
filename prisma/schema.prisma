@@ -1,17 +1,11 @@
 generator client {
-  provider      = "prisma-client-js"
-  // Garante engine binario pro Alpine (Docker prod) + nativo (Mac dev).
-  // Sem isso, container roda binario gerado no host e crasha com:
-  // "Prisma Client could not locate the Query Engine for runtime"
-  binaryTargets = ["native", "linux-musl-openssl-3.0.x"]
+  provider = "prisma-client-js"
 }
 
 datasource db {
-  provider  = "postgresql"
-  // URL precisa estar declarada pro Prisma 7 saber de onde ler em runtime.
-  // Sem isso, com ou sem driver adapter, o cliente nao acha a conexao.
-  url       = env("DATABASE_URL")
-  directUrl = env("DIRECT_URL")
+  provider = "postgresql"
+  // Prisma 7 nao aceita url no schema — vem do prisma.config.ts (migrate)
+  // e do adapter no PrismaClient (runtime). Ver lib/prisma.ts.
 }
 
 // ─── TENANTS (imobiliárias/corretores) ─────────────────────────────────────
