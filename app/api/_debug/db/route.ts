@@ -26,7 +26,7 @@ export async function GET() {
       DIRECT_URL: maskUrl(directUrl),
       NODE_ENV: process.env.NODE_ENV,
     },
-    pg_version: pg.version ?? 'unknown',
+    pg_version: (pg as any).version ?? 'unknown',
   };
 
   // Teste 1: pool com SSL nao-verificado
