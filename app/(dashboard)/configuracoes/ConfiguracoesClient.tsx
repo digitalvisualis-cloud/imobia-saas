@@ -133,6 +133,7 @@ export default function ConfiguracoesClient(props: {
   const [marca, setMarca] = useState<Marca>(props.marca);
   const [saving, setSaving] = useState(false);
   const [savedFlash, setSavedFlash] = useState(false);
+  const [uploadingLogo, setUploadingLogo] = useState(false);
 
   function flashSaved() {
     setSavedFlash(true);
@@ -177,6 +178,24 @@ export default function ConfiguracoesClient(props: {
 
   function setM<K extends keyof Marca>(k: K, v: Marca[K]) {
     setMarca((p) => ({ ...p, [k]: v }));
+  }
+
+  async function uploadLogo(file: File) {
+    setUploadingLogo(true);
+    try {
+      const fd = new FormData();
+      fd.append('file', file);
+      const r = await fetch('/api/configuracoes/logo', { method: 'POST', body: fd });
+      const data = await r.json();
+      if (!r.ok) throw new Error(data.error || 'Falha no upload');
+      // endpoint ja persiste em ConfigMarca — aqui so atualiza a UI
+      setM('logoUrl', data.url);
+      toast.success('Logo enviado');
+    } catch (e: any) {
+      toast.error('Erro ao enviar logo', { description: e.message });
+    } finally {
+      setUploadingLogo(false);
+    }
   }
 
   return (
@@ -350,12 +369,45 @@ export default function ConfiguracoesClient(props: {
               hint="Logo, favicon e paleta — aplicado automaticamente no site e nas artes geradas."
             >
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <Field label="URL do logo" hint="Use uma URL hospedada por enquanto. Upload em breve.">
-                  <Input
-                    value={marca.logoUrl}
-                    onChange={(e) => setM('logoUrl', e.target.value)}
-                    placeholder="https://..."
-                  />
+                <Field label="Logo" hint="PNG, JPG, WEBP ou SVG. Máximo 2MB. Aplicado no site e nas artes geradas.">
+                  <div className="flex items-center gap-3">
+                    <label
+                      className={cn(
+                        'inline-flex cursor-pointer items-center gap-2 rounded-md border border-input bg-background px-3 py-2 text-sm font-medium hover:bg-muted',
+                        uploadingLogo && 'pointer-events-none opacity-60',
+                      )}
+                    >
+                      {uploadingLogo ? (
+                        <Loader2 className="h-4 w-4 animate-spin" />
+                      ) : (
+                        <ImageIcon className="h-4 w-4" />
+                      )}
+                      {uploadingLogo
+                        ? 'Enviando…'
+                        : marca.logoUrl
+                          ? 'Trocar logo'
+                          : 'Enviar logo'}
+                      <input
+                        type="file"
+                        accept="image/png,image/jpeg,image/webp,image/svg+xml"
+                        className="hidden"
+                        onChange={(e) => {
+                          const f = e.target.files?.[0];
+                          if (f) uploadLogo(f);
+                          e.target.value = '';
+                        }}
+                      />
+                    </label>
+                    {marca.logoUrl && (
+                      <button
+                        type="button"
+                        onClick={() => setM('logoUrl', '')}
+                        className="text-xs text-muted-foreground hover:text-red-600"
+                      >
+                        Remover
+                      </button>
+                    )}
+                  </div>
                   {marca.logoUrl && (
                     <div className="mt-2 p-3 rounded-md bg-muted/40 border border-border flex items-center gap-3">
                       {/* eslint-disable-next-line @next/next/no-img-element */}
