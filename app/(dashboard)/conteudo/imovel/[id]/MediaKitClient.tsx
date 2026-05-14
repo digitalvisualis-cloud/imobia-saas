@@ -13,6 +13,7 @@ import {
   Check,
   Copy,
   Loader2,
+  Trash2,
 } from 'lucide-react';
 import html2canvas from 'html2canvas';
 import { cn } from '@/lib/utils';
@@ -72,6 +73,10 @@ export default function MediaKitClient({
   const [openGerar, setOpenGerar] = useState(false);
   const [tab, setTab] = useState<CustomTab>(null);
   const [baixandoId, setBaixandoId] = useState<string | null>(null);
+  const [apagandoId, setApagandoId] = useState<string | null>(null);
+  // posts em estado local — permite remover da UI na hora apos DELETE
+  // sem recarregar a pagina inteira
+  const [posts, setPosts] = useState<PostLite[]>(postsExistentes);
   const previewRefs = useRef<Record<string, HTMLDivElement | null>>({});
 
   // Carrega Google Fonts das opcoes do picker no head
@@ -176,6 +181,22 @@ export default function MediaKitClient({
     }
   }
 
+  async function apagarPost(post: PostLite) {
+    if (!confirm('Apagar este post? Essa ação não pode ser desfeita.')) return;
+    try {
+      setApagandoId(post.id);
+      const res = await fetch(`/api/posts?id=${post.id}`, { method: 'DELETE' });
+      if (!res.ok) throw new Error('delete failed');
+      setPosts((prev) => prev.filter((p) => p.id !== post.id));
+      toast.success('Post apagado');
+    } catch (err) {
+      console.error(err);
+      toast.error('Não consegui apagar o post');
+    } finally {
+      setApagandoId(null);
+    }
+  }
+
   const TABS: { id: NonNullable<CustomTab>; label: string; icon: React.ElementType }[] = [
     { id: 'logo', label: 'Logo', icon: ImageIcon },
     { id: 'cor-principal', label: 'Cor do post', icon: Paintbrush },
@@ -208,7 +229,7 @@ export default function MediaKitClient({
             <span className="rounded-sm bg-white/20 px-1.5 py-0.5 text-[10px] font-bold">IA</span>
           </button>
           <span className="text-sm text-muted-foreground">
-            {postsExistentes.length} {postsExistentes.length === 1 ? 'post' : 'posts'}
+            {posts.length} {posts.length === 1 ? 'post' : 'posts'}
           </span>
         </div>
       </div>
@@ -328,7 +349,7 @@ export default function MediaKitClient({
 
         {/* Posts grid */}
         <section>
-          {postsExistentes.length === 0 ? (
+          {posts.length === 0 ? (
             <div className="flex flex-col items-center gap-3 rounded-xl border border-border bg-card p-12 text-center">
               <div className="rounded-full bg-primary/10 p-3 text-primary">
                 <Sparkles className="h-6 w-6" />
@@ -346,7 +367,7 @@ export default function MediaKitClient({
             </div>
           ) : (
             <div className="grid grid-cols-1 gap-4 md:grid-cols-2 xl:grid-cols-3">
-              {postsExistentes.map((p) => (
+              {posts.map((p) => (
                 <article
                   key={p.id}
                   className="overflow-hidden rounded-xl border border-border bg-card"
@@ -370,18 +391,32 @@ export default function MediaKitClient({
                         />
                       )}
                     </div>
-                    <button
-                      onClick={() => baixarPost(p)}
-                      disabled={baixandoId === p.id}
-                      className="absolute right-3 top-3 inline-flex h-8 w-8 items-center justify-center rounded-md bg-background/90 shadow-sm hover:bg-background disabled:opacity-60"
-                      aria-label="Baixar"
-                    >
-                      {baixandoId === p.id ? (
-                        <Loader2 className="h-4 w-4 animate-spin" />
-                      ) : (
-                        <Download className="h-4 w-4" />
-                      )}
-                    </button>
+                    <div className="absolute right-3 top-3 flex items-center gap-1.5">
+                      <button
+                        onClick={() => baixarPost(p)}
+                        disabled={baixandoId === p.id}
+                        className="inline-flex h-8 w-8 items-center justify-center rounded-md bg-background/90 shadow-sm hover:bg-background disabled:opacity-60"
+                        aria-label="Baixar"
+                      >
+                        {baixandoId === p.id ? (
+                          <Loader2 className="h-4 w-4 animate-spin" />
+                        ) : (
+                          <Download className="h-4 w-4" />
+                        )}
+                      </button>
+                      <button
+                        onClick={() => apagarPost(p)}
+                        disabled={apagandoId === p.id}
+                        className="inline-flex h-8 w-8 items-center justify-center rounded-md bg-background/90 text-red-600 shadow-sm hover:bg-red-50 disabled:opacity-60"
+                        aria-label="Apagar"
+                      >
+                        {apagandoId === p.id ? (
+                          <Loader2 className="h-4 w-4 animate-spin" />
+                        ) : (
+                          <Trash2 className="h-4 w-4" />
+                        )}
+                      </button>
+                    </div>
                   </div>
                   <div className="space-y-2 border-t border-border p-3">
                     <div className="flex items-center gap-2 text-[10px] font-semibold uppercase text-muted-foreground">
