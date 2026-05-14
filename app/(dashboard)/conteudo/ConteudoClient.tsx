@@ -2,27 +2,43 @@
 
 import { useMemo, useState } from 'react';
 import Link from 'next/link';
-import { Sparkles, ArrowRight, ImageIcon, ImageOff, Plus } from 'lucide-react';
+import { Sparkles, ArrowRight, ImageIcon, ImageOff, Plus, Trash2, Loader2 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { PageHeader } from '@/components/ui/page-header';
 import { PostPreview } from '@/components/conteudo/PostPreview';
 import { GerarPostModal } from '@/components/conteudo/GerarPostModal';
+import { toast } from '@/lib/toast';
 import type {
   ImovelLite,
   PostLite,
   Customizacao,
 } from '@/components/conteudo/types';
 
-export default function ConteudoClient({
-  imoveis,
-  posts,
-  customizacao,
-}: {
+export default function ConteudoClient(props: {
   imoveis: ImovelLite[];
   posts: PostLite[];
   customizacao: Customizacao;
 }) {
+  const { imoveis, customizacao } = props;
   const [pickerOpen, setPickerOpen] = useState(false);
+  // posts em estado local — remove da grid na hora apos DELETE
+  const [posts, setPosts] = useState<PostLite[]>(props.posts);
+  const [apagandoId, setApagandoId] = useState<string | null>(null);
+
+  async function apagarPost(id: string) {
+    if (!confirm('Apagar este post? Essa ação não pode ser desfeita.')) return;
+    try {
+      setApagandoId(id);
+      const res = await fetch(`/api/posts?id=${id}`, { method: 'DELETE' });
+      if (!res.ok) throw new Error('delete failed');
+      setPosts((prev) => prev.filter((p) => p.id !== id));
+      toast.success('Post apagado');
+    } catch {
+      toast.error('Não consegui apagar o post');
+    } finally {
+      setApagandoId(null);
+    }
+  }
 
   const grupos = useMemo(() => {
     const byImovel = new Map<string, PostLite[]>();
@@ -84,7 +100,14 @@ export default function ConteudoClient({
 
       <div className="space-y-10">
         {grupos.map(({ imovel, posts }) => (
-          <ImovelGroup key={imovel.id} imovel={imovel} posts={posts} customizacao={customizacao} />
+          <ImovelGroup
+            key={imovel.id}
+            imovel={imovel}
+            posts={posts}
+            customizacao={customizacao}
+            onApagar={apagarPost}
+            apagandoId={apagandoId}
+          />
         ))}
       </div>
 
@@ -102,10 +125,14 @@ function ImovelGroup({
   imovel,
   posts,
   customizacao,
+  onApagar,
+  apagandoId,
 }: {
   imovel: ImovelLite;
   posts: PostLite[];
   customizacao: Customizacao;
+  onApagar: (id: string) => void;
+  apagandoId: string | null;
 }) {
   return (
     <section className="space-y-4">
@@ -148,18 +175,35 @@ function ImovelGroup({
 
       <div className="grid grid-cols-2 gap-4 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5">
         {posts.map((p) => (
-          <Link
-            key={p.id}
-            href={`/conteudo/imovel/${imovel.id}`}
-            className="group flex items-center justify-center overflow-hidden rounded-lg bg-muted/30 p-3 transition-transform hover:-translate-y-0.5"
-          >
-            <PostPreview
-              imovel={imovel}
-              variant={p.template}
-              scale={0.5}
-              custom={customizacao}
-            />
-          </Link>
+          <div key={p.id} className="group relative">
+            <Link
+              href={`/conteudo/imovel/${imovel.id}`}
+              className="flex items-center justify-center overflow-hidden rounded-lg bg-muted/30 p-3 transition-transform hover:-translate-y-0.5"
+            >
+              <PostPreview
+                imovel={imovel}
+                variant={p.template}
+                scale={0.5}
+                custom={customizacao}
+              />
+            </Link>
+            <button
+              onClick={(e) => {
+                e.preventDefault();
+                e.stopPropagation();
+                onApagar(p.id);
+              }}
+              disabled={apagandoId === p.id}
+              className="absolute right-2 top-2 inline-flex h-7 w-7 items-center justify-center rounded-md bg-background/90 text-red-600 opacity-0 shadow-sm transition-opacity hover:bg-red-50 group-hover:opacity-100 disabled:opacity-60"
+              aria-label="Apagar post"
+            >
+              {apagandoId === p.id ? (
+                <Loader2 className="h-3.5 w-3.5 animate-spin" />
+              ) : (
+                <Trash2 className="h-3.5 w-3.5" />
+              )}
+            </button>
+          </div>
         ))}
       </div>
     </section>
