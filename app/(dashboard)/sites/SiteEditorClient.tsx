@@ -16,6 +16,7 @@ interface SiteData {
   themeId: ThemeId;
   configBrisa: Customization;
   configAura: Customization;
+  configOnyx: Customization;
 }
 
 interface Props {
@@ -75,6 +76,7 @@ export default function SiteEditorClient({ site, tenant, imoveis }: Props) {
   useEffect(() => {
     hydrate('brisa', site.configBrisa);
     hydrate('aura', site.configAura);
+    hydrate('onyx', site.configOnyx);
     setActiveTheme(site.themeId);
     markSaved();
     try {
@@ -148,6 +150,7 @@ export default function SiteEditorClient({ site, tenant, imoveis }: Props) {
           themeId: state.activeTheme,
           configBrisa: state.byTheme.brisa,
           configAura: state.byTheme.aura,
+          configOnyx: state.byTheme.onyx,
         }),
       });
       if (!res.ok) throw new Error(await res.text());

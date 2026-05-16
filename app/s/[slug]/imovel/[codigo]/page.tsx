@@ -58,7 +58,7 @@ export default async function PropertyDetail({
   const rawConfig = (siteAny?.config ?? {}) as Record<string, unknown>;
   const themeId: ThemeId = isThemeId(siteAny?.templateId) ? siteAny.templateId : 'brisa';
   const isMultiTheme =
-    rawConfig && typeof rawConfig === 'object' && ('brisa' in rawConfig || 'aura' in rawConfig);
+    rawConfig && typeof rawConfig === 'object' && ('brisa' in rawConfig || 'aura' in rawConfig || 'onyx' in rawConfig);
   const config = mergeCustomization(
     themeId,
     isMultiTheme ? rawConfig[themeId] : rawConfig,

@@ -48,12 +48,12 @@ export default async function SitesPage() {
   const themeId: ThemeId = isThemeId(siteAny.templateId) ? siteAny.templateId : 'brisa';
 
   // Formato no DB:
-  //   { brisa: {...}, aura: {...} }  ← novo (multi-tema)
-  //   { ...customization }           ← legacy: aplica ao tema ativo
+  //   { brisa: {...}, aura: {...}, onyx: {...} }  ← multi-tema
+  //   { ...customization }                          ← legacy: aplica ao tema ativo
   const isMultiTheme =
     rawConfig &&
     typeof rawConfig === 'object' &&
-    ('brisa' in rawConfig || 'aura' in rawConfig);
+    ('brisa' in rawConfig || 'aura' in rawConfig || 'onyx' in rawConfig);
 
   const configBrisa = mergeCustomization(
     'brisa',
@@ -62,6 +62,10 @@ export default async function SitesPage() {
   const configAura = mergeCustomization(
     'aura',
     isMultiTheme ? rawConfig.aura : themeId === 'aura' ? rawConfig : null,
+  );
+  const configOnyx = mergeCustomization(
+    'onyx',
+    isMultiTheme ? rawConfig.onyx : themeId === 'onyx' ? rawConfig : null,
   );
 
   const tenantPublic = buildTenantPublic(tenant);
@@ -76,6 +80,7 @@ export default async function SitesPage() {
         themeId,
         configBrisa,
         configAura,
+        configOnyx,
       }}
       tenant={tenantPublic}
       imoveis={imoveisPublic}

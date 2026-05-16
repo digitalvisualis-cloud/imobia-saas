@@ -33,8 +33,9 @@ export async function POST(req: NextRequest) {
     // Valida e normaliza os dois configs (merge com defaults — protege contra payload mal formado)
     const configBrisa = mergeCustomization('brisa', body.configBrisa);
     const configAura = mergeCustomization('aura', body.configAura);
+    const configOnyx = mergeCustomization('onyx', body.configOnyx);
 
-    const config = { brisa: configBrisa, aura: configAura };
+    const config = { brisa: configBrisa, aura: configAura, onyx: configOnyx };
 
     // Garante que existe um Site row
     const tenant = await prisma.tenant.findUnique({

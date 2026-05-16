@@ -57,7 +57,7 @@ interface State {
 }
 
 export const useSiteStore = create<State>()((set) => ({
-  byTheme: { brisa: DEFAULTS.brisa, aura: DEFAULTS.aura },
+  byTheme: { brisa: DEFAULTS.brisa, aura: DEFAULTS.aura, onyx: DEFAULTS.onyx },
   activeTheme: 'brisa',
   panelOpen: true,
   dirty: false,
