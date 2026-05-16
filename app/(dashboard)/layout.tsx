@@ -98,7 +98,7 @@ export default function DashboardLayout({
         { name: 'Meu Site', href: '/sites', icon: Globe },
         { name: 'Criador de Posts', href: '/conteudo', icon: Sparkles },
         {
-          name: 'Anunciar em portais',
+          name: 'Cadastrar portais',
           href: '/configuracoes/portais',
           icon: Globe,
         },

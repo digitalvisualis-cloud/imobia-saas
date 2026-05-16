@@ -147,8 +147,8 @@ export default function PortaisClient({
       <PageHeader
         kicker="Configurações"
         icon={Globe}
-        title="Anunciar nos portais"
-        description="Conecta teu portfólio em ZAP, Viva Real, OLX, Chaves na Mão e outros — um link XML faz o trabalho."
+        title="Cadastrar portais"
+        description="Conecta uma vez nos portais (ZAP, Viva Real, OLX, Chaves na Mão e outros) e todo imóvel novo sobe automático no feed XML — sem precisar republicar."
         back={{ href: '/configuracoes', label: 'Voltar pra Configurações' }}
         actions={
           <div className="flex items-center gap-2">
