@@ -16,7 +16,7 @@ export const dynamic = 'force-dynamic';
 export const revalidate = 0;
 
 function isThemeId(v: unknown): v is ThemeId {
-  return v === 'brisa' || v === 'aura';
+  return v === 'brisa' || v === 'aura' || v === 'onyx';
 }
 
 export default async function SiteHome({

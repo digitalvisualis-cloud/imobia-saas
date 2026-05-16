@@ -3,7 +3,7 @@ import { prisma } from '@/lib/prisma';
 import { mergeCustomization, type ThemeId } from '@/types/site-customization';
 
 function isThemeId(v: unknown): v is ThemeId {
-  return v === 'brisa' || v === 'aura';
+  return v === 'brisa' || v === 'aura' || v === 'onyx';
 }
 
 function titleCase(slug: string) {

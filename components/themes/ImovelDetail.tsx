@@ -7,6 +7,7 @@ import type { ImovelPublic, TenantPublic } from '@/app/_templates/types';
 import { ThemeScope } from './ThemeScope';
 import { BrisaHeader, BrisaFooter } from './brisa/BrisaChrome';
 import { AuraHeader, AuraFooter } from './aura/AuraChrome';
+import { OnyxHeader, OnyxFooter } from './onyx/OnyxChrome';
 import { CookieBanner } from './CookieBanner';
 import { formatPriceBRL, imageUrl } from './_shared';
 
@@ -26,7 +27,7 @@ interface Props {
 }
 
 export function ImovelDetail({ theme, config, tenant, imovel }: Props) {
-  const Footer = theme === 'aura' ? AuraFooter : BrisaFooter;
+  const Footer = theme === 'aura' ? AuraFooter : theme === 'onyx' ? OnyxFooter : BrisaFooter;
 
   return (
     <ThemeScope config={config}>
@@ -34,6 +35,8 @@ export function ImovelDetail({ theme, config, tenant, imovel }: Props) {
           pra nao sumir em cima da galeria de fotos. */}
       {theme === 'aura' ? (
         <AuraHeader config={config} tenant={tenant} transparent={false} />
+      ) : theme === 'onyx' ? (
+        <OnyxHeader config={config} tenant={tenant} />
       ) : (
         <BrisaHeader config={config} tenant={tenant} />
       )}

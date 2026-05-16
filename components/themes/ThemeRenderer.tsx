@@ -27,6 +27,17 @@ import {
   AuraCTA,
   AuraContato,
 } from './aura/AuraSections';
+import { OnyxHeader, OnyxFooter } from './onyx/OnyxChrome';
+import {
+  OnyxHero,
+  OnyxDestaques,
+  OnyxCategorias,
+  OnyxSobre,
+  OnyxDepoimentos,
+  OnyxFAQ,
+  OnyxCTA,
+  OnyxContato,
+} from './onyx/OnyxSections';
 
 interface Props {
   theme: ThemeId;
@@ -63,6 +74,31 @@ export function ThemeRenderer({ theme, config, tenant, imoveis }: Props) {
           />
         </main>
         <AuraFooter config={config} tenant={tenant} />
+        <CookieBanner slug={tenant.slug} />
+      </ThemeScope>
+    );
+  }
+
+  if (theme === 'onyx') {
+    return (
+      <ThemeScope config={config}>
+        <OnyxHeader config={config} tenant={tenant} />
+        <main>
+          <SectionsRenderer
+            config={config}
+            render={{
+              hero: () => <OnyxHero {...sectionProps} />,
+              destaques: () => <OnyxDestaques {...sectionProps} />,
+              categorias: () => <OnyxCategorias {...sectionProps} />,
+              sobre: () => <OnyxSobre {...sectionProps} />,
+              depoimentos: () => <OnyxDepoimentos />,
+              faq: () => <OnyxFAQ />,
+              cta: () => <OnyxCTA {...sectionProps} />,
+              contato: () => <OnyxContato />,
+            }}
+          />
+        </main>
+        <OnyxFooter config={config} tenant={tenant} />
         <CookieBanner slug={tenant.slug} />
       </ThemeScope>
     );

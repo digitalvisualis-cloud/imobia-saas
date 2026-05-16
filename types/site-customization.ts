@@ -5,7 +5,7 @@
  * Renderizado em `/s/[slug]` (público) e `/dashboard/sites` (editor com preview).
  */
 
-export type ThemeId = 'brisa' | 'aura';
+export type ThemeId = 'brisa' | 'aura' | 'onyx';
 
 export type SectionId =
   | 'hero'
@@ -153,6 +153,23 @@ export const DEFAULTS: Record<ThemeId, Customization> = {
       description: 'Curadoria editorial de imóveis de alto padrão.',
     },
   },
+  onyx: {
+    colors: {
+      primary: '#D4A45E', // dourado/laranja warm tipo Douglas Navarro
+      secondary: '#0A0A0A',
+      background: '#FFFFFF',
+      foreground: '#0A0A0A',
+    },
+    fonts: { heading: 'Playfair Display', body: 'Inter' },
+    sections: DEFAULT_SECTIONS,
+    header: { ...COMMON_HEADER, ctaLabel: 'Área do Cliente' },
+    hero: { ...COMMON_HERO },
+    social: { ...COMMON_SOCIAL },
+    seo: {
+      title: 'Imóveis de alto luxo',
+      description: 'Excelência em curadoria de imóveis premium.',
+    },
+  },
 };
 
 export const THEME_META: Record<
@@ -172,6 +189,13 @@ export const THEME_META: Record<
     descricao: 'Editorial, premium, off-market. Tipografia editorial + paleta noir.',
     vibe: 'Alto padrão · Off-market',
     preview: 'linear-gradient(135deg, #0F1115 0%, #C8A97E 100%)',
+  },
+  onyx: {
+    id: 'onyx',
+    nome: 'Onyx',
+    descricao: 'Denso, premium, alto luxo. Tipografia serif + paleta preto/dourado. Search compacto.',
+    vibe: 'Imóveis de alto luxo · Boutique',
+    preview: 'linear-gradient(135deg, #0A0A0A 0%, #D4A45E 100%)',
   },
 };
 

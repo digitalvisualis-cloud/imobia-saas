@@ -7,7 +7,7 @@ import { buildImoveisPublic, buildTenantPublic } from '@/lib/build-tenant-public
 export const dynamic = 'force-dynamic';
 
 function isThemeId(v: unknown): v is ThemeId {
-  return v === 'brisa' || v === 'aura';
+  return v === 'brisa' || v === 'aura' || v === 'onyx';
 }
 
 export async function generateMetadata({
