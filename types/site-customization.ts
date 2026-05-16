@@ -155,7 +155,7 @@ export const DEFAULTS: Record<ThemeId, Customization> = {
   },
   onyx: {
     colors: {
-      primary: '#D4A45E', // dourado/laranja warm tipo Douglas Navarro
+      primary: '#FCB828', // warm orange/gold — medido do ref Douglas Navarro
       secondary: '#0A0A0A',
       background: '#FFFFFF',
       foreground: '#0A0A0A',

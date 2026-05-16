@@ -1,7 +1,6 @@
 'use client';
 
 import { useState } from 'react';
-import { useRouter } from 'next/navigation';
 import { ArrowRight, Search, MapPin } from 'lucide-react';
 import type { ImovelPublic, TenantPublic } from '@/app/_templates/types';
 import type { Customization } from '@/types/site-customization';
@@ -30,31 +29,31 @@ export function OnyxHero({ tenant, imoveis, config }: SectionProps) {
   const descricao = tenant.marca?.descricao ?? '';
 
   return (
-    <div className="relative min-h-[560px] w-full overflow-hidden">
+    <div className="relative min-h-[640px] w-full overflow-hidden">
       {/* eslint-disable-next-line @next/next/no-img-element */}
       <img src={heroImg} alt="" className="absolute inset-0 h-full w-full object-cover" />
       <div
         className="absolute inset-0"
         style={{
           background:
-            'linear-gradient(180deg, rgba(0,0,0,0.55) 0%, rgba(0,0,0,0.35) 35%, rgba(0,0,0,0.7) 100%)',
+            'linear-gradient(180deg, rgba(0,0,0,0.55) 0%, rgba(0,0,0,0.4) 40%, rgba(0,0,0,0.75) 100%)',
         }}
       />
-      <div className="relative z-10 mx-auto flex min-h-[560px] max-w-[1200px] flex-col items-center justify-center px-4 py-12 text-center">
+      <div className="relative z-10 mx-auto flex min-h-[640px] max-w-[1200px] flex-col items-center justify-center px-4 py-16 text-center">
         <div
           style={{
             color: tenant.marca?.corTextoHero || '#FFFFFF',
-            textShadow: '0 2px 12px rgba(0,0,0,0.55)',
+            textShadow: '0 2px 14px rgba(0,0,0,0.6)',
           }}
         >
           <h1
             style={{ fontFamily: 'var(--t-font-heading)' }}
-            className="whitespace-pre-line text-2xl font-semibold leading-tight sm:text-3xl md:text-4xl"
+            className="whitespace-pre-line text-3xl font-extrabold leading-[1.1] sm:text-4xl md:text-5xl"
           >
             {slogan}
           </h1>
           {descricao && (
-            <p className="mx-auto mt-3 max-w-xl text-sm opacity-90 sm:text-base">
+            <p className="mx-auto mt-4 max-w-xl text-base opacity-95">
               {descricao}
             </p>
           )}
@@ -66,46 +65,74 @@ export function OnyxHero({ tenant, imoveis, config }: SectionProps) {
   );
 }
 
-function OnyxSearchBar({ slug }: { slug: string }) {
-  const router = useRouter();
+/**
+ * Search bar com mesma logica do BrisaSearchCard (recarrega URL com
+ * query string filtrando a listagem). Layout horizontal compacto +
+ * tabs Venda/Aluguel + 4 campos + busca avancada que abre filtros
+ * extras (quartos, faixa de preco).
+ */
+function OnyxSearchBar({ slug: _slug }: { slug: string }) {
   const [op, setOp] = useState<'venda' | 'aluguel'>('venda');
   const [tipo, setTipo] = useState('');
   const [cidade, setCidade] = useState('');
-  const [bairro, setBairro] = useState('');
+  const [busca, setBusca] = useState('');
+  const [quartos, setQuartos] = useState('');
+  const [faixa, setFaixa] = useState('');
+  const [codigo, setCodigo] = useState('');
+  const [aberto, setAberto] = useState(false);
+  const [modoCodigo, setModoCodigo] = useState(false);
 
-  function buscar(e: React.FormEvent) {
+  function submeter(e: React.FormEvent) {
     e.preventDefault();
-    const sp = new URLSearchParams();
-    sp.set('op', op);
-    if (tipo) sp.set('tipo', tipo);
-    if (cidade.trim()) sp.set('cidade', cidade.trim());
-    if (bairro.trim()) sp.set('bairro', bairro.trim());
-    router.push(`/s/${slug}?${sp.toString()}`);
+    const params = new URLSearchParams();
+    if (modoCodigo && codigo.trim()) {
+      params.set('q', codigo.trim());
+    } else {
+      params.set('op', op);
+      if (tipo) params.set('tipo', tipo);
+      if (cidade.trim()) params.set('cidade', cidade.trim());
+      if (busca.trim()) params.set('q', busca.trim());
+      if (quartos) params.set('quartos', quartos);
+      if (faixa) params.set('faixa', faixa);
+    }
+    window.location.search = params.toString();
   }
 
   const tipos = [
-    { v: '', l: 'Tipo' },
+    { v: '', l: 'Todos os tipos' },
     { v: 'CASA', l: 'Casa' },
     { v: 'APARTAMENTO', l: 'Apartamento' },
     { v: 'COBERTURA', l: 'Cobertura' },
     { v: 'STUDIO', l: 'Studio' },
     { v: 'TERRENO', l: 'Terreno' },
     { v: 'SALA_COMERCIAL', l: 'Sala Comercial' },
+    { v: 'LOJA', l: 'Loja' },
+    { v: 'GALPAO', l: 'Galpão' },
     { v: 'CHACARA', l: 'Chácara' },
+    { v: 'SITIO', l: 'Sítio' },
+  ];
+
+  const faixas = [
+    { v: '', l: 'Qualquer preço' },
+    { v: '0-300000', l: 'Até R$ 300 mil' },
+    { v: '300000-500000', l: 'R$ 300 — 500 mil' },
+    { v: '500000-1000000', l: 'R$ 500 mil — 1 mi' },
+    { v: '1000000-3000000', l: 'R$ 1 — 3 mi' },
+    { v: '3000000-', l: 'Acima de R$ 3 mi' },
   ];
 
   return (
     <form
-      onSubmit={buscar}
-      className="mt-8 w-full max-w-3xl rounded-lg bg-white/95 p-2 shadow-2xl backdrop-blur"
+      onSubmit={submeter}
+      className="mt-8 w-full max-w-3xl rounded-lg bg-white/97 p-2 shadow-2xl backdrop-blur"
     >
       {/* Tabs VENDA / ALUGUEL */}
       <div className="mb-2 flex gap-1 rounded-md bg-gray-100 p-1">
         <button
           type="button"
-          onClick={() => setOp('venda')}
+          onClick={() => { setOp('venda'); setModoCodigo(false); }}
           className={`flex-1 rounded px-3 py-1.5 text-xs font-semibold uppercase tracking-wider transition-colors ${
-            op === 'venda'
+            !modoCodigo && op === 'venda'
               ? 'bg-black text-white shadow-sm'
               : 'text-gray-500 hover:text-gray-900'
           }`}
@@ -114,9 +141,9 @@ function OnyxSearchBar({ slug }: { slug: string }) {
         </button>
         <button
           type="button"
-          onClick={() => setOp('aluguel')}
+          onClick={() => { setOp('aluguel'); setModoCodigo(false); }}
           className={`flex-1 rounded px-3 py-1.5 text-xs font-semibold uppercase tracking-wider transition-colors ${
-            op === 'aluguel'
+            !modoCodigo && op === 'aluguel'
               ? 'bg-black text-white shadow-sm'
               : 'text-gray-500 hover:text-gray-900'
           }`}
@@ -125,53 +152,97 @@ function OnyxSearchBar({ slug }: { slug: string }) {
         </button>
       </div>
 
-      {/* Search row 4-col */}
-      <div className="grid gap-1.5 sm:grid-cols-[auto_1fr_1fr_auto] sm:gap-2">
-        <select
-          value={tipo}
-          onChange={(e) => setTipo(e.target.value)}
-          className="rounded-md border-0 bg-gray-50 px-3 py-2 text-sm focus:bg-white focus:ring-1 focus:ring-gray-300 focus:outline-none"
-        >
-          {tipos.map((t) => (
-            <option key={t.v} value={t.v}>{t.l}</option>
-          ))}
-        </select>
-        <input
-          type="text"
-          value={cidade}
-          onChange={(e) => setCidade(e.target.value)}
-          placeholder="Cidade"
-          className="rounded-md border-0 bg-gray-50 px-3 py-2 text-sm focus:bg-white focus:ring-1 focus:ring-gray-300 focus:outline-none"
-        />
-        <input
-          type="text"
-          value={bairro}
-          onChange={(e) => setBairro(e.target.value)}
-          placeholder="Bairro ou empreendimento"
-          className="rounded-md border-0 bg-gray-50 px-3 py-2 text-sm focus:bg-white focus:ring-1 focus:ring-gray-300 focus:outline-none"
-        />
-        <button
-          type="submit"
-          className="inline-flex items-center justify-center gap-1.5 rounded-md px-5 py-2 text-sm font-semibold text-black"
-          style={{ background: 'var(--t-primary)' }}
-        >
-          <Search className="h-4 w-4" /> Buscar
-        </button>
-      </div>
+      {modoCodigo ? (
+        <div className="grid gap-1.5 sm:grid-cols-[1fr_auto] sm:gap-2">
+          <input
+            type="text"
+            value={codigo}
+            onChange={(e) => setCodigo(e.target.value)}
+            placeholder="Código do imóvel (ex: IMV-1234)"
+            autoFocus
+            className="rounded-md border-0 bg-gray-50 px-3 py-2 text-sm font-mono focus:bg-white focus:ring-1 focus:ring-gray-300 focus:outline-none"
+          />
+          <button
+            type="submit"
+            className="inline-flex items-center justify-center gap-1.5 rounded-md px-5 py-2 text-sm font-semibold text-black"
+            style={{ background: 'var(--t-primary)' }}
+          >
+            <Search className="h-4 w-4" /> Buscar
+          </button>
+        </div>
+      ) : (
+        <>
+          {/* Linha principal: tipo · busca · buscar */}
+          <div className="grid gap-1.5 sm:grid-cols-[auto_1fr_auto] sm:gap-2">
+            <select
+              value={tipo}
+              onChange={(e) => setTipo(e.target.value)}
+              className="rounded-md border-0 bg-gray-50 px-3 py-2 text-sm focus:bg-white focus:ring-1 focus:ring-gray-300 focus:outline-none"
+            >
+              {tipos.map((t) => (
+                <option key={t.v} value={t.v}>{t.l}</option>
+              ))}
+            </select>
+            <input
+              type="text"
+              value={busca}
+              onChange={(e) => setBusca(e.target.value)}
+              placeholder="Cidade, bairro ou empreendimento"
+              className="rounded-md border-0 bg-gray-50 px-3 py-2 text-sm focus:bg-white focus:ring-1 focus:ring-gray-300 focus:outline-none"
+            />
+            <button
+              type="submit"
+              className="inline-flex items-center justify-center gap-1.5 rounded-md px-5 py-2 text-sm font-semibold text-black"
+              style={{ background: 'var(--t-primary)' }}
+            >
+              <Search className="h-4 w-4" /> Buscar
+            </button>
+          </div>
 
-      {/* Toggles secundarios — mostram que ha mais filtros disponiveis.
-          Sem implementacao ainda. */}
+          {/* Busca avancada — abre quartos + faixa de preco */}
+          {aberto && (
+            <div className="mt-2 grid gap-1.5 sm:grid-cols-2 sm:gap-2">
+              <select
+                value={quartos}
+                onChange={(e) => setQuartos(e.target.value)}
+                className="rounded-md border-0 bg-gray-50 px-3 py-2 text-sm focus:bg-white focus:ring-1 focus:ring-gray-300 focus:outline-none"
+              >
+                <option value="">Quartos (qualquer)</option>
+                <option value="1">1+ quartos</option>
+                <option value="2">2+ quartos</option>
+                <option value="3">3+ quartos</option>
+                <option value="4">4+ quartos</option>
+              </select>
+              <select
+                value={faixa}
+                onChange={(e) => setFaixa(e.target.value)}
+                className="rounded-md border-0 bg-gray-50 px-3 py-2 text-sm focus:bg-white focus:ring-1 focus:ring-gray-300 focus:outline-none"
+              >
+                {faixas.map((f) => (
+                  <option key={f.v} value={f.v}>{f.l}</option>
+                ))}
+              </select>
+            </div>
+          )}
+        </>
+      )}
+
+      {/* Toggles secundarios funcionais */}
       <div className="mt-2 flex flex-wrap items-center justify-center gap-x-4 gap-y-1 text-[11px] text-gray-500">
-        <button type="button" className="inline-flex items-center gap-1 hover:text-gray-900">
-          <span className="opacity-50">⊕</span> Busca avançada
+        <button
+          type="button"
+          onClick={() => { setAberto((v) => !v); setModoCodigo(false); }}
+          className={`inline-flex items-center gap-1 hover:text-gray-900 ${aberto && !modoCodigo ? 'text-gray-900 font-semibold' : ''}`}
+        >
+          {aberto && !modoCodigo ? '−' : '+'} Busca avançada
         </button>
         <span className="opacity-30">·</span>
-        <button type="button" className="inline-flex items-center gap-1 hover:text-gray-900">
-          <span className="opacity-50">#</span> Por código
-        </button>
-        <span className="opacity-30">·</span>
-        <button type="button" className="inline-flex items-center gap-1 hover:text-gray-900">
-          <span className="opacity-50">▦</span> Empreendimentos
+        <button
+          type="button"
+          onClick={() => { setModoCodigo((v) => !v); setAberto(false); }}
+          className={`inline-flex items-center gap-1 hover:text-gray-900 ${modoCodigo ? 'text-gray-900 font-semibold' : ''}`}
+        >
+          # Por código
         </button>
       </div>
     </form>

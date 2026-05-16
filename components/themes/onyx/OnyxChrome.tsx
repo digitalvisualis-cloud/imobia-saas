@@ -1,7 +1,7 @@
 'use client';
 
 import Link from 'next/link';
-import { Phone, MessageCircle, Heart, User, Menu } from 'lucide-react';
+import { Menu } from 'lucide-react';
 import {
   FacebookIcon as Facebook,
   InstagramIcon as Instagram,
@@ -25,33 +25,16 @@ function resolveBrandName(config: Customization, tenant: TenantPublic) {
   );
 }
 
-function formatPhone(raw: string): string {
-  const d = (raw ?? '').replace(/\D/g, '');
-  if (!d) return '';
-  // BR mobile: +55 DDD 9XXXX-XXXX
-  if (d.startsWith('55') && d.length === 13) {
-    return `(${d.slice(2, 4)}) ${d.slice(4, 9)}-${d.slice(9)}`;
-  }
-  // BR fixo: +55 DDD XXXX-XXXX
-  if (d.startsWith('55') && d.length === 12) {
-    return `(${d.slice(2, 4)}) ${d.slice(4, 8)}-${d.slice(8)}`;
-  }
-  if (d.length === 11) return `(${d.slice(0, 2)}) ${d.slice(2, 7)}-${d.slice(7)}`;
-  if (d.length === 10) return `(${d.slice(0, 2)}) ${d.slice(2, 6)}-${d.slice(6)}`;
-  return raw;
-}
-
 /**
- * Header compacto preto, fixo no topo. Logo + telefones inline + favoritos +
- * área do cliente + menu hamburguer. Densidade alta — inspirado em sites
- * de imobiliária boutique tipo Douglas Navarro.
+ * Header compacto (h-12) preto. Logo esquerda + nav central + CTA direita.
+ * Sem telefones inline — eles aparecem no rodape e na pagina do imovel.
  */
 export function OnyxHeader({ config, tenant }: ChromeProps) {
   const brandName = resolveBrandName(config, tenant);
   const slug = tenant.slug;
   const logoUrl = tenant.marca?.logoUrl;
-  const telefone = tenant.marca?.telefone ?? '';
-  const whatsapp = tenant.marca?.whatsapp ?? '';
+  const whatsapp = tenant.marca?.whatsapp?.replace(/\D/g, '') ?? '';
+  const ctaHref = whatsapp ? `https://wa.me/${whatsapp}` : `/s/${slug}#contato`;
 
   const links = [
     { label: 'Início', href: `/s/${slug}` },
@@ -62,68 +45,42 @@ export function OnyxHeader({ config, tenant }: ChromeProps) {
 
   return (
     <header className="sticky top-0 z-40 border-b border-white/10 bg-black/95 text-white backdrop-blur">
-      <div className="mx-auto flex h-14 max-w-[1500px] items-center justify-between gap-4 px-4 sm:px-6">
-        {/* Logo + telefones */}
-        <div className="flex items-center gap-4 min-w-0">
-          <Link href={`/s/${slug}`} className="flex items-center gap-2 shrink-0">
-            {logoUrl ? (
-              // eslint-disable-next-line @next/next/no-img-element
-              <img src={logoUrl} alt={brandName} className="h-7 max-w-[120px] object-contain" />
-            ) : (
-              <span
-                className="font-display text-base font-bold tracking-wider"
-                style={{ fontFamily: 'var(--t-font-heading)' }}
-              >
-                {brandName.toUpperCase()}
-              </span>
-            )}
-          </Link>
+      <div className="mx-auto flex h-12 max-w-[1500px] items-center justify-between gap-6 px-4 sm:px-6">
+        {/* Logo */}
+        <Link href={`/s/${slug}`} className="flex items-center gap-2 shrink-0">
+          {logoUrl ? (
+            // eslint-disable-next-line @next/next/no-img-element
+            <img src={logoUrl} alt={brandName} className="h-7 max-w-[140px] object-contain" />
+          ) : (
+            <span
+              className="text-sm font-bold tracking-wider"
+              style={{ fontFamily: 'var(--t-font-heading)' }}
+            >
+              {brandName.toUpperCase()}
+            </span>
+          )}
+        </Link>
 
-          <div className="hidden md:flex items-center gap-3 text-[11px] text-white/70 border-l border-white/10 pl-4">
-            {telefone && (
-              <a href={`tel:${telefone}`} className="inline-flex items-center gap-1 hover:text-white">
-                <Phone className="h-3 w-3" />
-                {formatPhone(telefone)} <span className="text-white/40">Fixo</span>
-              </a>
-            )}
-            {whatsapp && (
-              <a
-                href={`https://wa.me/${whatsapp.replace(/\D/g, '')}`}
-                target="_blank"
-                rel="noopener"
-                className="inline-flex items-center gap-1 hover:text-white"
-              >
-                <MessageCircle className="h-3 w-3" />
-                {formatPhone(whatsapp)} <span className="text-white/40">WhatsApp</span>
-              </a>
-            )}
-          </div>
-        </div>
-
-        {/* Nav central + ações */}
-        <div className="hidden lg:flex items-center gap-6 text-sm">
+        {/* Nav central — escondido no mobile */}
+        <nav className="hidden lg:flex items-center gap-6 text-sm">
           {links.map((l) => (
             <Link key={l.href} href={l.href} className="text-white/80 hover:text-white">
               {l.label}
             </Link>
           ))}
-        </div>
+        </nav>
 
-        <div className="flex items-center gap-3 text-xs">
-          <button
-            type="button"
-            className="hidden md:inline-flex items-center gap-1 text-white/70 hover:text-white"
-            aria-label="Favoritos"
+        {/* CTA direita */}
+        <div className="flex items-center gap-2">
+          <a
+            href={ctaHref}
+            target={whatsapp ? '_blank' : undefined}
+            rel="noopener"
+            className="hidden sm:inline-flex items-center rounded-md px-4 py-1.5 text-sm font-semibold text-black hover:opacity-90"
+            style={{ background: 'var(--t-primary)' }}
           >
-            <Heart className="h-3.5 w-3.5" /> Favoritos
-          </button>
-          <button
-            type="button"
-            className="hidden md:inline-flex items-center gap-1 text-white/70 hover:text-white"
-            aria-label="Área do cliente"
-          >
-            <User className="h-3.5 w-3.5" /> Área do Cliente
-          </button>
+            Entre em contato
+          </a>
           <button type="button" className="lg:hidden p-1.5" aria-label="Menu">
             <Menu className="h-5 w-5" />
           </button>
@@ -134,7 +91,7 @@ export function OnyxHeader({ config, tenant }: ChromeProps) {
 }
 
 /**
- * Footer 4 colunas, fundo preto, header da seção em destaque (cor primária).
+ * Footer 4 colunas, fundo preto, header em cor primaria.
  */
 export function OnyxFooter({ config, tenant }: ChromeProps) {
   const brandName = resolveBrandName(config, tenant);
@@ -158,16 +115,6 @@ export function OnyxFooter({ config, tenant }: ChromeProps) {
 
   return (
     <footer className="mt-12 bg-black text-white">
-      {/* Faixa CTA */}
-      <div
-        className="border-y border-white/10 py-3 text-center text-sm font-medium"
-        style={{ background: 'var(--t-primary)', color: '#0A0A0A' }}
-      >
-        <a href={`/s/${slug}#contato`} className="inline-flex items-center gap-2">
-          <User className="h-4 w-4" /> Área do Cliente
-        </a>
-      </div>
-
       <div className="mx-auto max-w-[1500px] grid grid-cols-2 gap-8 px-6 py-12 md:grid-cols-4">
         <FCol
           titulo="Quero Alugar"
@@ -175,7 +122,6 @@ export function OnyxFooter({ config, tenant }: ChromeProps) {
             { label: 'Residencial', href: `/s/${slug}?op=aluguel&tipo=CASA,APARTAMENTO` },
             { label: 'Comercial', href: `/s/${slug}?op=aluguel&tipo=SALA_COMERCIAL,LOJA` },
             { label: 'Anunciar meu Imóvel', href: `/s/${slug}#contato` },
-            { label: 'Cadastrar Locação', href: `/s/${slug}#contato` },
           ]}
         />
         <FCol
@@ -184,23 +130,23 @@ export function OnyxFooter({ config, tenant }: ChromeProps) {
             { label: 'Residencial', href: `/s/${slug}?op=venda&tipo=CASA,APARTAMENTO` },
             { label: 'Comercial', href: `/s/${slug}?op=venda&tipo=SALA_COMERCIAL,LOJA` },
             { label: 'Anunciar meu Imóvel', href: `/s/${slug}#contato` },
-            { label: 'Simular Financiamento', href: `/s/${slug}#contato` },
           ]}
         />
         <FCol
           titulo="Proprietários"
           items={[
             { label: 'Anunciar Imóvel', href: `/s/${slug}#contato` },
-            { label: 'Extrato Proprietário', href: `/s/${slug}#contato` },
             { label: 'Prestação de Contas', href: `/s/${slug}#contato` },
           ]}
         />
         <FCol
-          titulo="Inquilinos"
+          titulo="Contato"
           items={[
-            { label: 'Desocupação do Imóvel', href: `/s/${slug}#contato` },
-            { label: 'Rateio e Reserva', href: `/s/${slug}#contato` },
-            { label: '2ª via de Boleto', href: `/s/${slug}#contato` },
+            ...(marca?.whatsapp
+              ? [{ label: 'WhatsApp', href: `https://wa.me/${marca.whatsapp.replace(/\D/g, '')}` }]
+              : []),
+            ...(marca?.telefone ? [{ label: marca.telefone, href: `tel:${marca.telefone}` }] : []),
+            ...(marca?.email ? [{ label: marca.email, href: `mailto:${marca.email}` }] : []),
           ]}
         />
       </div>
@@ -254,13 +200,16 @@ function FCol({
 }) {
   return (
     <div>
-      <h4 className="font-display text-sm font-semibold uppercase tracking-wider text-white/90 mb-3">
+      <h4
+        className="font-display text-sm font-bold uppercase tracking-wider mb-3"
+        style={{ color: 'var(--t-primary)' }}
+      >
         {titulo}
       </h4>
       <ul className="space-y-1.5 text-sm">
         {items.map((it) => (
           <li key={it.href + it.label}>
-            <a href={it.href} className="text-white/60 hover:text-white">
+            <a href={it.href} className="text-white/70 hover:text-white">
               {it.label}
             </a>
           </li>
