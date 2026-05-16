@@ -5,6 +5,8 @@ import {
   InstagramIcon as Instagram,
   TwitterIcon as Twitter,
   LinkedinIcon as Linkedin,
+  YoutubeIcon as Youtube,
+  TiktokIcon as Tiktok,
 } from '../_social-icons';
 import type { Customization } from '@/types/site-customization';
 import type { TenantPublic } from '@/app/_templates/types';
@@ -116,7 +118,7 @@ export function BrisaFooter({ config, tenant }: ChromeProps) {
           {tenant.marca?.endereco && (
             <p className="mt-3 text-sm opacity-70">{tenant.marca.endereco}</p>
           )}
-          <SocialRow social={config.social} />
+          <SocialRow social={mergeSocial(tenant.marca, config.social)} />
         </div>
         <div>
           <div className="mb-3 text-xs font-semibold uppercase tracking-wider opacity-60">
@@ -177,12 +179,43 @@ export function BrisaFooter({ config, tenant }: ChromeProps) {
   );
 }
 
-function SocialRow({ social }: { social: Customization['social'] }) {
+type SocialMerged = {
+  instagram: string;
+  facebook: string;
+  twitter: string;
+  linkedin: string;
+  youtube: string;
+  tiktok: string;
+};
+
+/**
+ * Merge das redes sociais — fonte primaria eh o que o user salvou em
+ * Configuracoes -> Redes Sociais (tenant.marca). Fallback eh o que ele
+ * possa ter setado no editor de site (config.social). Sem isso, o user
+ * salva em Configuracoes e nada aparece no site (bug antigo).
+ */
+function mergeSocial(
+  marca: TenantPublic['marca'],
+  configSocial: Customization['social'],
+): SocialMerged {
+  return {
+    instagram: marca?.instagram || configSocial.instagram || '',
+    facebook: marca?.facebook || configSocial.facebook || '',
+    linkedin: marca?.linkedin || configSocial.linkedin || '',
+    youtube: marca?.youtube || '',
+    tiktok: marca?.tiktok || '',
+    twitter: configSocial.twitter || '',
+  };
+}
+
+function SocialRow({ social }: { social: SocialMerged }) {
   const items = [
     { Icon: Facebook, val: social.facebook },
     { Icon: Instagram, val: social.instagram },
     { Icon: Twitter, val: social.twitter },
     { Icon: Linkedin, val: social.linkedin },
+    { Icon: Youtube, val: social.youtube },
+    { Icon: Tiktok, val: social.tiktok },
   ].filter((i) => i.val);
   if (items.length === 0) return null;
   return (
@@ -191,6 +224,8 @@ function SocialRow({ social }: { social: Customization['social'] }) {
         <a
           key={idx}
           href={val.startsWith('http') ? val : `https://${val}`}
+          target="_blank"
+          rel="noopener"
           className="flex h-9 w-9 items-center justify-center rounded-full border opacity-70 hover:opacity-100"
           style={{ borderColor: 'rgb(var(--t-fg-rgb) / 0.15)' }}
         >

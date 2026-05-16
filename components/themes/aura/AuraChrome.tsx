@@ -5,6 +5,8 @@ import {
   InstagramIcon as Instagram,
   TwitterIcon as Twitter,
   LinkedinIcon as Linkedin,
+  YoutubeIcon as Youtube,
+  TiktokIcon as Tiktok,
 } from '../_social-icons';
 import type { Customization } from '@/types/site-customization';
 import type { TenantPublic } from '@/app/_templates/types';
@@ -112,7 +114,7 @@ export function AuraFooter({ config, tenant }: ChromeProps) {
             {tenant.marca?.descricao ??
               'Curadoria de propriedades excepcionais.'}
           </p>
-          <SocialRow social={config.social} />
+          <SocialRow social={mergeSocial(tenant.marca, config.social)} />
         </div>
         <FCol
           titulo="Navegação"
@@ -164,12 +166,37 @@ function FCol({ titulo, items }: { titulo: string; items: Array<{ label: string;
   );
 }
 
-function SocialRow({ social }: { social: Customization['social'] }) {
+type SocialMerged = {
+  instagram: string;
+  facebook: string;
+  twitter: string;
+  linkedin: string;
+  youtube: string;
+  tiktok: string;
+};
+
+function mergeSocial(
+  marca: TenantPublic['marca'],
+  configSocial: Customization['social'],
+): SocialMerged {
+  return {
+    instagram: marca?.instagram || configSocial.instagram || '',
+    facebook: marca?.facebook || configSocial.facebook || '',
+    linkedin: marca?.linkedin || configSocial.linkedin || '',
+    youtube: marca?.youtube || '',
+    tiktok: marca?.tiktok || '',
+    twitter: configSocial.twitter || '',
+  };
+}
+
+function SocialRow({ social }: { social: SocialMerged }) {
   const items = [
     { Icon: Facebook, val: social.facebook },
     { Icon: Instagram, val: social.instagram },
     { Icon: Twitter, val: social.twitter },
     { Icon: Linkedin, val: social.linkedin },
+    { Icon: Youtube, val: social.youtube },
+    { Icon: Tiktok, val: social.tiktok },
   ].filter((i) => i.val);
   if (items.length === 0) return null;
   return (
@@ -178,6 +205,8 @@ function SocialRow({ social }: { social: Customization['social'] }) {
         <a
           key={idx}
           href={val.startsWith('http') ? val : `https://${val}`}
+          target="_blank"
+          rel="noopener"
           className="flex h-10 w-10 items-center justify-center border opacity-70 hover:opacity-100"
           style={{ borderColor: 'rgb(255 255 255 / 0.2)' }}
         >
