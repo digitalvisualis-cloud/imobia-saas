@@ -58,6 +58,9 @@ type Marca = {
   youtube: string;
   linkedin: string;
   tiktok: string;
+  politicaPrivacidade: string;
+  termosUso: string;
+  politicaCookies: string;
 };
 type TenantInfo = {
   slug: string;
@@ -572,16 +575,7 @@ export default function ConfiguracoesClient(props: {
           {tab === 'site' && <SiteTab tenantInfo={props.tenantInfo} />}
 
           {tab === 'legal' && (
-            <Placeholder
-              title="Páginas legais"
-              description="Política de Privacidade, Termos de Uso e Política de Cookies do seu site público."
-              bullets={[
-                'Editor rich text com placeholders {{nome_empresa}}, {{cidade}}',
-                'Templates prontos LGPD pra preencher na hora',
-                'Aparece automaticamente no rodapé do site público',
-                'Banner de cookies configurável (cor, posição, texto)',
-              ]}
-            />
+            <LegalTab marca={marca} setM={setM} save={saveMarca} saving={saving} />
           )}
 
           {tab === 'equipe' && (
@@ -983,6 +977,111 @@ function ConvidarModal({
           Email automático chega na próxima entrega.
         </p>
       </div>
+    </div>
+  );
+}
+
+/* ---------- Aba Páginas Legais ---------- */
+
+function LegalTab({
+  marca,
+  setM,
+  save,
+  saving,
+}: {
+  marca: Marca;
+  setM: <K extends keyof Marca>(k: K, v: Marca[K]) => void;
+  save: () => void;
+  saving: boolean;
+}) {
+  // Carrega templates lazy quando o user clica "Usar template" — evita
+  // import sincrono dum modulo de ~7KB de texto.
+  async function carregarTemplate(qual: 'privacidade' | 'termos' | 'cookies') {
+    const lib = await import('@/lib/templates-legais');
+    const dados = {
+      nomeEmpresa: marca.nomeEmpresa || '',
+      email: marca.email || '',
+      cidade: marca.endereco || '',
+    };
+    if (qual === 'privacidade') {
+      setM('politicaPrivacidade', lib.templatePoliticaPrivacidade(dados));
+    } else if (qual === 'termos') {
+      setM('termosUso', lib.templateTermosUso(dados));
+    } else {
+      setM('politicaCookies', lib.templatePoliticaCookies(dados));
+    }
+  }
+
+  return (
+    <Section
+      title="Páginas legais"
+      hint="Política de Privacidade, Termos de Uso e Política de Cookies do seu site público. LGPD-compliant — revise com advogado antes de publicar."
+    >
+      <div className="space-y-6">
+        <LegalCampo
+          label="Política de Privacidade"
+          rotaPublica="/s/<seu-slug>/privacidade"
+          value={marca.politicaPrivacidade}
+          onChange={(v) => setM('politicaPrivacidade', v)}
+          onUsarTemplate={() => carregarTemplate('privacidade')}
+        />
+        <LegalCampo
+          label="Termos de Uso"
+          rotaPublica="/s/<seu-slug>/termos"
+          value={marca.termosUso}
+          onChange={(v) => setM('termosUso', v)}
+          onUsarTemplate={() => carregarTemplate('termos')}
+        />
+        <LegalCampo
+          label="Política de Cookies"
+          rotaPublica="/s/<seu-slug>/cookies"
+          value={marca.politicaCookies}
+          onChange={(v) => setM('politicaCookies', v)}
+          onUsarTemplate={() => carregarTemplate('cookies')}
+        />
+      </div>
+      <SaveButton onClick={save} saving={saving} />
+    </Section>
+  );
+}
+
+function LegalCampo({
+  label,
+  rotaPublica,
+  value,
+  onChange,
+  onUsarTemplate,
+}: {
+  label: string;
+  rotaPublica: string;
+  value: string;
+  onChange: (v: string) => void;
+  onUsarTemplate: () => void;
+}) {
+  return (
+    <div>
+      <div className="flex items-center justify-between mb-2 gap-2 flex-wrap">
+        <div>
+          <h4 className="font-semibold">{label}</h4>
+          <p className="text-xs text-muted-foreground font-mono">{rotaPublica}</p>
+        </div>
+        <button
+          type="button"
+          onClick={onUsarTemplate}
+          className="text-xs inline-flex items-center gap-1 rounded-md border border-input bg-background px-3 py-1.5 font-medium hover:bg-muted"
+          title="Preenche com texto modelo LGPD usando o nome da sua empresa"
+        >
+          ✨ Usar template
+        </button>
+      </div>
+      <textarea
+        rows={10}
+        className="input font-mono text-xs"
+        style={{ minHeight: 240 }}
+        value={value}
+        onChange={(e) => onChange(e.target.value)}
+        placeholder='Cole ou edite o texto aqui. Suporta Markdown básico (# Título, **negrito**, listas). Clica em "Usar template" pra começar com modelo LGPD.'
+      />
     </div>
   );
 }

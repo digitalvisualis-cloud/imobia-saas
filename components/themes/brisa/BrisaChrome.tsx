@@ -170,10 +170,17 @@ export function BrisaFooter({ config, tenant }: ChromeProps) {
         </div>
       </div>
       <div
-        className="border-t py-5 text-center text-xs opacity-60"
+        className="border-t py-5 text-xs opacity-60"
         style={{ borderColor: 'rgb(var(--t-fg-rgb) / 0.08)' }}
       >
-        © {new Date().getFullYear()} {brandName}. Todos os direitos reservados.
+        <div className="mx-auto flex max-w-7xl flex-col items-center justify-between gap-2 px-6 sm:flex-row">
+          <span>© {new Date().getFullYear()} {brandName}. Todos os direitos reservados.</span>
+          <nav className="flex gap-4">
+            <a href={`/s/${slug}/privacidade`} className="hover:underline">Privacidade</a>
+            <a href={`/s/${slug}/termos`} className="hover:underline">Termos de Uso</a>
+            <a href={`/s/${slug}/cookies`} className="hover:underline">Cookies</a>
+          </nav>
+        </div>
       </div>
     </footer>
   );

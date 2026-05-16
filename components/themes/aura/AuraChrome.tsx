@@ -143,7 +143,14 @@ export function AuraFooter({ config, tenant }: ChromeProps) {
         className="mx-auto max-w-[1500px] border-t px-8 py-7 text-[11px] uppercase tracking-[0.2em] opacity-60"
         style={{ borderColor: 'rgb(255 255 255 / 0.1)' }}
       >
-        © {new Date().getFullYear()} {brandName} · Todos os direitos reservados
+        <div className="flex flex-col items-center justify-between gap-3 sm:flex-row">
+          <span>© {new Date().getFullYear()} {brandName} · Todos os direitos reservados</span>
+          <nav className="flex gap-5 normal-case tracking-normal">
+            <a href={`/s/${tenant.slug}/privacidade`} className="hover:opacity-100">Privacidade</a>
+            <a href={`/s/${tenant.slug}/termos`} className="hover:opacity-100">Termos</a>
+            <a href={`/s/${tenant.slug}/cookies`} className="hover:opacity-100">Cookies</a>
+          </nav>
+        </div>
       </div>
     </footer>
   );

@@ -304,6 +304,11 @@ model ConfigMarca {
   linkedin        String?
   tiktok          String?
   manualMarcaUrl  String?
+  // Paginas legais — textos editaveis pelo tenant. Quando null, o site
+  // renderiza o template padrao com nome da empresa interpolado.
+  politicaPrivacidade String?
+  termosUso           String?
+  politicaCookies     String?
   createdAt       DateTime @default(now())
   updatedAt       DateTime @updatedAt
 

@@ -65,6 +65,9 @@ export default async function ConfiguracoesPage() {
         youtube: tenant.marca?.youtube ?? '',
         linkedin: tenant.marca?.linkedin ?? '',
         tiktok: tenant.marca?.tiktok ?? '',
+        politicaPrivacidade: tenant.marca?.politicaPrivacidade ?? '',
+        termosUso: tenant.marca?.termosUso ?? '',
+        politicaCookies: tenant.marca?.politicaCookies ?? '',
       }}
       tenantInfo={{
         slug: tenant.slug,

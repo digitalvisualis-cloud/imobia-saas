@@ -4,6 +4,7 @@ import type { Customization, ThemeId } from '@/types/site-customization';
 import type { ImovelPublic, TenantPublic } from '@/app/_templates/types';
 import { ThemeScope } from './ThemeScope';
 import { SectionsRenderer } from './SectionsRenderer';
+import { CookieBanner } from './CookieBanner';
 import { BrisaHeader, BrisaFooter } from './brisa/BrisaChrome';
 import {
   BrisaHero,
@@ -62,6 +63,7 @@ export function ThemeRenderer({ theme, config, tenant, imoveis }: Props) {
           />
         </main>
         <AuraFooter config={config} tenant={tenant} />
+        <CookieBanner slug={tenant.slug} />
       </ThemeScope>
     );
   }
@@ -86,6 +88,7 @@ export function ThemeRenderer({ theme, config, tenant, imoveis }: Props) {
         />
       </main>
       <BrisaFooter config={config} tenant={tenant} />
+      <CookieBanner slug={tenant.slug} />
     </ThemeScope>
   );
 }
