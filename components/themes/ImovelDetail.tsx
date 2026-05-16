@@ -7,6 +7,7 @@ import type { ImovelPublic, TenantPublic } from '@/app/_templates/types';
 import { ThemeScope } from './ThemeScope';
 import { BrisaHeader, BrisaFooter } from './brisa/BrisaChrome';
 import { AuraHeader, AuraFooter } from './aura/AuraChrome';
+import { CookieBanner } from './CookieBanner';
 import { formatPriceBRL, imageUrl } from './_shared';
 
 function formatPhoneBR(raw: string): string {
@@ -41,6 +42,7 @@ export function ImovelDetail({ theme, config, tenant, imovel }: Props) {
         <ImovelInfo imovel={imovel} tenant={tenant} />
       </main>
       <Footer config={config} tenant={tenant} />
+      <CookieBanner slug={tenant.slug} />
     </ThemeScope>
   );
 }
