@@ -1,7 +1,7 @@
 'use client';
 
 import { useState } from 'react';
-import { Bed, Bath, Car, Maximize2, MapPin, MessageCircle, Share2, Check } from 'lucide-react';
+import { Bed, Bath, Car, Maximize2, MapPin, MessageCircle, Share2, Check, Copy } from 'lucide-react';
 import type { Customization, ThemeId } from '@/types/site-customization';
 import type { ImovelPublic, TenantPublic } from '@/app/_templates/types';
 import { ThemeScope } from './ThemeScope';
@@ -203,6 +203,7 @@ function ContactCard({
   wppHref: string;
 }) {
   const [copied, setCopied] = useState(false);
+  const [copiedCode, setCopiedCode] = useState(false);
   const wpp = tenant.marca?.whatsapp ?? '';
   const wppFormatted = wpp ? formatPhoneBR(wpp) : '';
   const nomeEmpresa = tenant.marca?.nomeEmpresa ?? tenant.nome ?? null;
@@ -217,6 +218,13 @@ function ContactCard({
     navigator.clipboard?.writeText(url).then(() => {
       setCopied(true);
       setTimeout(() => setCopied(false), 1800);
+    });
+  }
+
+  function copyCodigo() {
+    navigator.clipboard?.writeText(imovel.codigo).then(() => {
+      setCopiedCode(true);
+      setTimeout(() => setCopiedCode(false), 1800);
     });
   }
 
@@ -236,7 +244,19 @@ function ContactCard({
         >
           {formatPriceBRL(imovel.preco, imovel.operacao)}
         </p>
-        <p className="mt-2 text-xs opacity-60">Cód. {imovel.codigo}</p>
+        <button
+          type="button"
+          onClick={copyCodigo}
+          title={copiedCode ? 'Copiado!' : 'Copiar código'}
+          className="mt-2 inline-flex items-center gap-1.5 text-xs opacity-60 transition-opacity hover:opacity-100"
+        >
+          <span>Cód. {imovel.codigo}</span>
+          {copiedCode ? (
+            <Check className="h-3 w-3 text-green-600" />
+          ) : (
+            <Copy className="h-3 w-3" />
+          )}
+        </button>
 
         {/* CTA principal: WhatsApp */}
         <a
