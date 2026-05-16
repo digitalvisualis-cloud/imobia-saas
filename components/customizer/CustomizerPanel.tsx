@@ -181,7 +181,7 @@ function TemaTab() {
   return (
     <div className="space-y-3">
       <Group title="Escolha o tema" subtitle="Aplica imediatamente no preview">
-        {(['brisa', 'aura'] as ThemeId[]).map((id) => {
+        {(['brisa', 'aura', 'onyx'] as ThemeId[]).map((id) => {
           const meta = THEME_META[id];
           const active = activeTheme === id;
           return (
