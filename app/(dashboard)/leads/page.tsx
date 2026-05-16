@@ -50,7 +50,13 @@ export default function LeadsPage() {
   const [saving, setSaving] = useState(false);
 
   // Form novo lead
-  const [form, setForm] = useState({ nome: '', whatsapp: '', interesse: '', orcamento: '' });
+  const [form, setForm] = useState({ nome: '', whatsapp: '', interesse: '', orcamento: '', imovelId: '' });
+
+  // Imoveis disponiveis pra vincular ao lead (autocomplete)
+  type ImovelOption = { id: string; codigo: string; titulo: string; bairro: string | null; cidade: string };
+  const [imovelOptions, setImovelOptions] = useState<ImovelOption[]>([]);
+  const [imovelSearch, setImovelSearch] = useState('');
+  const [showImovelDropdown, setShowImovelDropdown] = useState(false);
 
   useEffect(() => {
     fetch('/api/leads')
@@ -59,6 +65,32 @@ export default function LeadsPage() {
       .catch(() => toast.error('Erro ao carregar leads'))
       .finally(() => setLoading(false));
   }, []);
+
+  // Busca lista de imoveis quando modal de novo lead abre (lazy + 1x)
+  useEffect(() => {
+    if (showModal && !selected && imovelOptions.length === 0) {
+      fetch('/api/imoveis')
+        .then(r => r.json())
+        .then(d => setImovelOptions(d.data ?? []))
+        .catch(() => {});
+    }
+  }, [showModal, selected, imovelOptions.length]);
+
+  // Filtra options pela busca (codigo, titulo, bairro)
+  const imovelMatches = imovelSearch.trim()
+    ? imovelOptions.filter((i) => {
+        const q = imovelSearch.toLowerCase();
+        return (
+          i.codigo.toLowerCase().includes(q) ||
+          i.titulo.toLowerCase().includes(q) ||
+          (i.bairro ?? '').toLowerCase().includes(q)
+        );
+      }).slice(0, 8)
+    : imovelOptions.slice(0, 8);
+
+  const imovelSelecionado = form.imovelId
+    ? imovelOptions.find((i) => i.id === form.imovelId)
+    : null;
 
   const filtered = leads.filter(l =>
     l.nome.toLowerCase().includes(search.toLowerCase()) ||
@@ -86,13 +118,21 @@ export default function LeadsPage() {
       const res = await fetch('/api/leads', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ nome: form.nome, whatsapp: form.whatsapp, interesse: form.interesse, orcamento: form.orcamento ? Number(form.orcamento) : null }),
+        body: JSON.stringify({
+          nome: form.nome,
+          whatsapp: form.whatsapp,
+          interesse: form.interesse,
+          orcamento: form.orcamento ? Number(form.orcamento) : null,
+          imovelId: form.imovelId || null,
+        }),
       });
       const lead = await res.json();
       if (!res.ok) throw new Error(lead.error || 'Erro');
       setLeads(prev => [lead, ...prev]);
       setShowModal(false);
-      setForm({ nome: '', whatsapp: '', interesse: '', orcamento: '' });
+      setForm({ nome: '', whatsapp: '', interesse: '', orcamento: '', imovelId: '' });
+      setImovelSearch('');
+      setShowImovelDropdown(false);
       toast.success('Lead criado!');
     } catch (e: any) {
       toast.error(e.message);
@@ -232,6 +272,69 @@ export default function LeadsPage() {
                 </div>
                 <div className="form-group"><label className="label">O que busca?</label>
                   <input className="input" placeholder="Ex: Apartamento 3 quartos no Jardins" value={form.interesse} onChange={e => setForm(p => ({ ...p, interesse: e.target.value }))} /></div>
+
+                <div className="form-group" style={{ position: 'relative' }}>
+                  <label className="label">Imóvel de interesse (opcional)</label>
+                  {imovelSelecionado ? (
+                    <div className="flex items-center justify-between gap-2 rounded-md border border-input bg-muted/20 px-3 py-2">
+                      <div className="min-w-0">
+                        <div className="font-mono text-xs text-muted-foreground">{imovelSelecionado.codigo}</div>
+                        <div className="truncate text-sm font-medium">{imovelSelecionado.titulo}</div>
+                        <div className="truncate text-xs text-muted-foreground">
+                          {[imovelSelecionado.bairro, imovelSelecionado.cidade].filter(Boolean).join(' · ')}
+                        </div>
+                      </div>
+                      <button
+                        type="button"
+                        onClick={() => { setForm(p => ({ ...p, imovelId: '' })); setImovelSearch(''); }}
+                        className="shrink-0 rounded p-1 text-xs text-muted-foreground hover:bg-muted hover:text-red-600"
+                        aria-label="Remover"
+                      >✕</button>
+                    </div>
+                  ) : (
+                    <>
+                      <input
+                        className="input"
+                        placeholder="Busca por código (IMV-1234), título ou bairro"
+                        value={imovelSearch}
+                        onChange={e => { setImovelSearch(e.target.value); setShowImovelDropdown(true); }}
+                        onFocus={() => setShowImovelDropdown(true)}
+                        onBlur={() => setTimeout(() => setShowImovelDropdown(false), 150)}
+                      />
+                      {showImovelDropdown && imovelMatches.length > 0 && (
+                        <div className="absolute z-10 mt-1 max-h-64 w-full overflow-y-auto rounded-md border border-input bg-white shadow-lg">
+                          {imovelMatches.map(i => (
+                            <button
+                              key={i.id}
+                              type="button"
+                              onMouseDown={(e) => {
+                                e.preventDefault();
+                                setForm(p => ({ ...p, imovelId: i.id }));
+                                setImovelSearch('');
+                                setShowImovelDropdown(false);
+                              }}
+                              className="block w-full px-3 py-2 text-left text-sm hover:bg-muted/50"
+                            >
+                              <div className="flex items-center gap-2">
+                                <span className="font-mono text-xs text-muted-foreground">{i.codigo}</span>
+                                <span className="truncate font-medium">{i.titulo}</span>
+                              </div>
+                              <div className="truncate text-xs text-muted-foreground">
+                                {[i.bairro, i.cidade].filter(Boolean).join(' · ')}
+                              </div>
+                            </button>
+                          ))}
+                        </div>
+                      )}
+                      {showImovelDropdown && imovelSearch.trim() && imovelMatches.length === 0 && (
+                        <div className="absolute z-10 mt-1 w-full rounded-md border border-input bg-white px-3 py-2 text-sm text-muted-foreground shadow-lg">
+                          Nenhum imóvel encontrado
+                        </div>
+                      )}
+                    </>
+                  )}
+                </div>
+
                 <div className="form-group"><label className="label">Orçamento (R$)</label>
                   <input className="input" type="number" placeholder="Ex: 750000" value={form.orcamento} onChange={e => setForm(p => ({ ...p, orcamento: e.target.value }))} /></div>
                 <button className="btn btn-primary w-full" onClick={createLead} disabled={saving}>{saving ? 'Criando...' : 'Criar Lead'}</button>
