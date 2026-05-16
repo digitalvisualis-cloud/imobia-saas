@@ -396,6 +396,31 @@ export default function NovoImovelPage() {
               </select>
             </div>
           </div>
+
+          {/* Mapa Google embed — aparece quando tem cidade. Sem pin, só
+              a regiao (bairro+cidade+estado) — privacidade do imovel. */}
+          {cidade && (
+            <div className="form-group mt-4">
+              <label className="label">Localização aproximada no mapa</label>
+              <div className="overflow-hidden rounded-md border border-input" style={{ height: 240 }}>
+                <iframe
+                  title="Localização aproximada"
+                  src={`https://www.google.com/maps?q=${encodeURIComponent(
+                    [bairro, cidade, estado].filter(Boolean).join(', '),
+                  )}&z=${bairro ? 15 : 13}&output=embed`}
+                  width="100%"
+                  height="240"
+                  style={{ border: 0 }}
+                  loading="lazy"
+                  referrerPolicy="no-referrer-when-downgrade"
+                />
+              </div>
+              <p className="text-xs text-muted mt-1">
+                Mostra só a região (sem pin exato) — preserva a privacidade do imóvel.
+                Atualiza automaticamente conforme tu preenche bairro/cidade.
+              </p>
+            </div>
+          )}
         </div>
 
         {/* BLOCO 3 — PREÇO E DIMENSÕES */}
@@ -515,30 +540,16 @@ export default function NovoImovelPage() {
           </div>
         </div>
 
-        {/* BLOCO 5 — VÍDEO E DESCRIÇÃO */}
+        {/* BLOCO 5 — DESCRIÇÃO */}
         <div className="card">
-          <h3 className="mb-4">📝 Descrição e vídeo</h3>
-
-          <div className="form-group mb-4">
-            <label className="label">Link do vídeo (YouTube ou Vimeo) — opcional</label>
-            <input
-              className="input"
-              placeholder="https://youtube.com/watch?v=..."
-              value={videoUrl}
-              onChange={(e) => setVideoUrl(e.target.value)}
-            />
-          </div>
-
-          <div className="flex justify-between items-center mb-2">
-            <label className="label" style={{ marginBottom: 0 }}>
-              Descrição
-            </label>
+          <div className="flex justify-between items-center mb-4">
+            <h3 style={{ margin: 0 }}>📝 Descrição</h3>
             <button
               type="button"
               className="btn btn-secondary btn-sm"
               onClick={generateDesc}
               disabled={generating}
-              title="Usa os dados acima pra gerar uma descrição"
+              title="Usa os dados acima pra gerar uma descrição chamativa"
             >
               {generating ? 'Gerando…' : '✨ Gerar com IA'}
             </button>
@@ -550,6 +561,23 @@ export default function NovoImovelPage() {
             onChange={(e) => setDesc(e.target.value)}
             placeholder="Descreva o imóvel ou clique em &quot;Gerar com IA&quot;…"
           />
+        </div>
+
+        {/* BLOCO 6 — VÍDEO */}
+        <div className="card">
+          <h3 className="mb-4">🎬 Vídeo</h3>
+          <div className="form-group">
+            <label className="label">Link do YouTube ou Vimeo — opcional</label>
+            <input
+              className="input"
+              placeholder="https://youtube.com/watch?v=..."
+              value={videoUrl}
+              onChange={(e) => setVideoUrl(e.target.value)}
+            />
+            <p className="text-xs text-muted mt-1">
+              Cola a URL pública. O vídeo aparece embedado no site do imóvel.
+            </p>
+          </div>
         </div>
 
         {/* SUBMIT */}
