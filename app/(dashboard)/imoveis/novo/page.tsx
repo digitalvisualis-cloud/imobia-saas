@@ -440,10 +440,13 @@ export default function NovoImovelPage() {
               <input
                 className="input"
                 style={{ borderLeft: 'none', borderRadius: '0 6px 6px 0' }}
-                placeholder="Ex: 750000"
-                type="number"
-                value={preco}
-                onChange={(e) => setPreco(e.target.value)}
+                placeholder="Ex: 750.000"
+                type="text"
+                inputMode="numeric"
+                // Mostra com separador de milhar (1.500.000) — o state preco
+                // guarda so digitos ('1500000'), o backend recebe raw.
+                value={preco.replace(/\B(?=(\d{3})+(?!\d))/g, '.')}
+                onChange={(e) => setPreco(e.target.value.replace(/\D/g, ''))}
                 required
               />
             </div>
