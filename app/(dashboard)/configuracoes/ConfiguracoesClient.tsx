@@ -47,6 +47,7 @@ type Marca = {
   faviconUrl: string;
   corPrimaria: string;
   corSecundaria: string;
+  corTextoHero: string;
   fonteTitulo: string;
   fonteCorpo: string;
   email: string;
@@ -444,6 +445,18 @@ export default function ConfiguracoesClient(props: {
                   <ColorInput
                     value={marca.corSecundaria}
                     onChange={(v) => setM('corSecundaria', v)}
+                  />
+                </Field>
+              </div>
+
+              <div className="mt-4">
+                <Field
+                  label="Cor do texto sobre foto (hero)"
+                  hint="Slogan e descrição que aparecem sobre a foto principal do site. Use branco em fotos escuras, preto/cinza em fotos claras."
+                >
+                  <ColorInput
+                    value={marca.corTextoHero}
+                    onChange={(v) => setM('corTextoHero', v)}
                   />
                 </Field>
               </div>

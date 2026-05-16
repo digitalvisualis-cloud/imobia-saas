@@ -36,14 +36,22 @@ export function BrisaHero({ tenant, imoveis, config }: SectionProps) {
           <div
             className="absolute inset-0"
             style={{
+              // Gradiente mais forte embaixo (75%) pra texto legivel em qualquer foto.
               background:
-                'linear-gradient(180deg, rgba(0,0,0,0.55) 0%, rgba(0,0,0,0.25) 50%, rgba(0,0,0,0.55) 100%)',
+                'linear-gradient(180deg, rgba(0,0,0,0.45) 0%, rgba(0,0,0,0.25) 40%, rgba(0,0,0,0.75) 100%)',
             }}
           />
           {/* Mobile/tablet: H1 centralizado em cima, search card abaixo. Desktop (lg+): grid 2-col. */}
           <div className="absolute inset-0 flex flex-col justify-end px-5 pb-6 sm:px-8 sm:pb-8 lg:flex-row lg:items-center lg:px-14 lg:pb-0">
             <div className="grid w-full grid-cols-1 items-center gap-8 lg:grid-cols-2">
-              <div className="text-white">
+              <div
+                style={{
+                  // Cor configuravel pelo user (Configuracoes -> Marca -> Cor texto hero).
+                  // Default branco. text-shadow garante leitura em foto clara.
+                  color: tenant.marca?.corTextoHero || '#FFFFFF',
+                  textShadow: '0 2px 12px rgba(0,0,0,0.55)',
+                }}
+              >
                 <span className="inline-block rounded-full bg-white/15 px-3 py-1 text-[11px] font-medium uppercase tracking-wider backdrop-blur">
                   Imóveis selecionados
                 </span>
@@ -53,7 +61,7 @@ export function BrisaHero({ tenant, imoveis, config }: SectionProps) {
                 >
                   {slogan}
                 </h1>
-                <p className="mt-4 max-w-md text-base opacity-90 sm:text-lg">{descricao}</p>
+                <p className="mt-4 max-w-md text-base opacity-95 sm:text-lg">{descricao}</p>
               </div>
               <div className="flex justify-center lg:justify-end">
                 <BrisaSearchCard />

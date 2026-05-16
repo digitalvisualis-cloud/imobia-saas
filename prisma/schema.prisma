@@ -292,6 +292,9 @@ model ConfigMarca {
   faviconUrl      String?
   corPrimaria     String   @default("#7c3aed")
   corSecundaria   String   @default("#06b6d4")
+  // Cor do texto que aparece sobre foto no hero (slogan + descricao).
+  // Default branco — user pode trocar pra preto/escuro se foto for clara.
+  corTextoHero    String?
   fonteTitulo     String?  @default("cormorant") // cormorant | playfair | lora | inter | montserrat
   fonteCorpo      String?  @default("inter")     // inter | system | montserrat | lora
   email           String?

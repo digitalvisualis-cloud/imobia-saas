@@ -23,6 +23,7 @@ export function buildTenantPublic(
           faviconUrl: tenant.marca.faviconUrl,
           corPrimaria: tenant.marca.corPrimaria,
           corSecundaria: tenant.marca.corSecundaria,
+          corTextoHero: tenant.marca.corTextoHero,
           whatsapp: tenant.marca.whatsapp,
           email: tenant.marca.email,
           telefone: tenant.marca.telefone,

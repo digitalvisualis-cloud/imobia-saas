@@ -11,6 +11,7 @@ export type BrandKit = {
   faviconUrl: string | null;
   corPrimaria: string | null;
   corSecundaria: string | null;
+  corTextoHero: string | null;
   whatsapp: string | null;
   email: string | null;
   telefone: string | null;

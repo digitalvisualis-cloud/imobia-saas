@@ -38,12 +38,20 @@ export function AuraHero({ tenant, imoveis, config }: SectionProps) {
       <div
         className="absolute inset-0"
         style={{
+          // Gradiente mais forte embaixo (85%) — texto legivel em foto clara.
           background:
-            'linear-gradient(180deg, rgba(0,0,0,0.55) 0%, rgba(0,0,0,0.15) 35%, rgba(0,0,0,0.75) 100%)',
+            'linear-gradient(180deg, rgba(0,0,0,0.5) 0%, rgba(0,0,0,0.2) 30%, rgba(0,0,0,0.85) 100%)',
         }}
       />
 
-      <div className="relative z-10 flex h-full flex-col justify-end px-4 pb-10 text-white sm:px-8 sm:pb-16 md:px-14 md:pb-20">
+      <div
+        className="relative z-10 flex h-full flex-col justify-end px-4 pb-10 sm:px-8 sm:pb-16 md:px-14 md:pb-20"
+        style={{
+          // Cor configuravel (Configuracoes -> Marca -> Cor texto hero)
+          color: tenant.marca?.corTextoHero || '#FFFFFF',
+          textShadow: '0 2px 12px rgba(0,0,0,0.55)',
+        }}
+      >
         <div className="mx-auto w-full max-w-[1500px]">
           <div className="max-w-3xl">
             <p className="text-[10px] uppercase tracking-[0.3em] opacity-80 sm:text-[11px] sm:tracking-[0.4em]">
@@ -55,7 +63,7 @@ export function AuraHero({ tenant, imoveis, config }: SectionProps) {
             >
               {titulo}
             </h1>
-            <p className="mt-3 max-w-xl text-sm opacity-80 sm:mt-5 sm:text-base md:text-lg">
+            <p className="mt-3 max-w-xl text-sm opacity-90 sm:mt-5 sm:text-base md:text-lg">
               {subtitulo}
             </p>
           </div>
