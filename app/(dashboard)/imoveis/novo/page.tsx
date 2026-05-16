@@ -397,30 +397,37 @@ export default function NovoImovelPage() {
             </div>
           </div>
 
-          {/* Mapa Google embed — aparece quando tem cidade. Sem pin, só
-              a regiao (bairro+cidade+estado) — privacidade do imovel. */}
-          {cidade && (
-            <div className="form-group mt-4">
-              <label className="label">Localização aproximada no mapa</label>
-              <div className="overflow-hidden rounded-md border border-input" style={{ height: 240 }}>
-                <iframe
-                  title="Localização aproximada"
-                  src={`https://www.google.com/maps?q=${encodeURIComponent(
-                    [bairro, cidade, estado].filter(Boolean).join(', '),
-                  )}&z=${bairro ? 15 : 13}&output=embed`}
-                  width="100%"
-                  height="240"
-                  style={{ border: 0 }}
-                  loading="lazy"
-                  referrerPolicy="no-referrer-when-downgrade"
-                />
+          {/* Mapa Google embed — sem pin exato, so a regiao.
+              Prioriza CEP (zoom nivel rua) > bairro > cidade. */}
+          {(cidade || cep.replace(/\D/g, '').length === 8) && (() => {
+            const cepClean = cep.replace(/\D/g, '');
+            const hasCep = cepClean.length === 8;
+            const mapQuery = hasCep
+              ? cepClean
+              : [bairro, cidade, estado].filter(Boolean).join(', ');
+            const zoom = hasCep ? 16 : bairro ? 15 : 13;
+            return (
+              <div className="form-group mt-4">
+                <label className="label">Localização aproximada no mapa</label>
+                <div className="overflow-hidden rounded-md border border-input" style={{ height: 240 }}>
+                  <iframe
+                    title="Localização aproximada"
+                    src={`https://www.google.com/maps?q=${encodeURIComponent(mapQuery)}&z=${zoom}&output=embed`}
+                    width="100%"
+                    height="240"
+                    style={{ border: 0 }}
+                    loading="lazy"
+                    referrerPolicy="no-referrer-when-downgrade"
+                  />
+                </div>
+                <p className="text-xs text-muted mt-1">
+                  {hasCep
+                    ? 'Centralizado pelo CEP (nível de rua, sem número exato — preserva privacidade).'
+                    : 'Mostra a região do bairro/cidade. Preenche o CEP pra mais precisão.'}
+                </p>
               </div>
-              <p className="text-xs text-muted mt-1">
-                Mostra só a região (sem pin exato) — preserva a privacidade do imóvel.
-                Atualiza automaticamente conforme tu preenche bairro/cidade.
-              </p>
-            </div>
-          )}
+            );
+          })()}
         </div>
 
         {/* BLOCO 3 — PREÇO E DIMENSÕES */}
