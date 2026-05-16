@@ -59,30 +59,32 @@ type ImovelLite = {
 
 type View = 'mes' | 'semana' | 'dia';
 
+// Cores solidas estilo Google Calendar — chip colorido + texto branco.
+// Cada tipo de evento tem cor distinta e instantaneamente reconhecivel.
 const TYPE_STYLES: Record<EventoTipo, { bg: string; bar: string; label: string }> = {
   VISITA: {
-    bg: 'bg-primary/15 hover:bg-primary/25 border-primary/30 text-primary',
-    bar: 'bg-primary',
+    bg: 'bg-orange-500 hover:bg-orange-600 border-orange-600 text-white',
+    bar: 'bg-orange-500',
     label: 'Visita',
   },
   RETORNO: {
-    bg: 'bg-blue-500/10 hover:bg-blue-500/20 border-blue-500/30 text-blue-700 dark:text-blue-300',
-    bar: 'bg-blue-500',
+    bg: 'bg-blue-600 hover:bg-blue-700 border-blue-700 text-white',
+    bar: 'bg-blue-600',
     label: 'Retorno',
   },
   REUNIAO: {
-    bg: 'bg-violet-500/10 hover:bg-violet-500/20 border-violet-500/30 text-violet-700 dark:text-violet-300',
-    bar: 'bg-violet-500',
+    bg: 'bg-violet-600 hover:bg-violet-700 border-violet-700 text-white',
+    bar: 'bg-violet-600',
     label: 'Reunião',
   },
   TAREFA: {
-    bg: 'bg-amber-500/10 hover:bg-amber-500/20 border-amber-500/30 text-amber-700 dark:text-amber-400',
-    bar: 'bg-amber-500',
+    bg: 'bg-emerald-600 hover:bg-emerald-700 border-emerald-700 text-white',
+    bar: 'bg-emerald-600',
     label: 'Tarefa',
   },
   OUTRO: {
-    bg: 'bg-zinc-500/10 hover:bg-zinc-500/20 border-zinc-500/30 text-zinc-700 dark:text-zinc-300',
-    bar: 'bg-zinc-500',
+    bg: 'bg-zinc-600 hover:bg-zinc-700 border-zinc-700 text-white',
+    bar: 'bg-zinc-600',
     label: 'Outro',
   },
 };
@@ -161,7 +163,7 @@ export default function AgendaClient({
 }) {
   const router = useRouter();
   const [, startTransition] = useTransition();
-  const [view, setView] = useState<View>('semana');
+  const [view, setView] = useState<View>('mes');
   const [anchor, setAnchor] = useState<Date>(() => {
     const d = new Date();
     d.setHours(0, 0, 0, 0);
