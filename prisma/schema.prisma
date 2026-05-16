@@ -33,6 +33,7 @@ model Tenant {
   eventos   AgendaEvento[]
   contratos Contrato[]
   conversas Conversa[]
+  convites  EquipeConvite[]
   configWhatsApp ConfigWhatsApp?
 
   @@map("tenants")
@@ -683,4 +684,26 @@ enum MsgTipo {
   VIDEO
   DOC
   LOCALIZACAO
+}
+
+/// Convite de membro pra equipe (tenant). Admin gera o token, mandando
+/// o link pelo canal que preferir (WhatsApp, email, etc). O convidado
+/// abre /convite/[token], define senha e vira User do tenant.
+model EquipeConvite {
+  id               String    @id @default(cuid())
+  tenantId         String
+  email            String
+  role             Role      @default(CORRETOR)
+  token            String    @unique
+  invitedBy        String    // userId do admin que convidou
+  expiresAt        DateTime
+  acceptedAt       DateTime?
+  acceptedByUserId String?
+  createdAt        DateTime  @default(now())
+
+  tenant Tenant @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+
+  @@index([tenantId])
+  @@index([token])
+  @@map("equipe_convites")
 }

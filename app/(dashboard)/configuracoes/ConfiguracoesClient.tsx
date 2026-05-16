@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useTransition } from 'react';
+import { useEffect, useState, useTransition } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import {
@@ -84,7 +84,6 @@ type TabId =
   | 'redes'
   | 'site'
   | 'legal'
-  | 'integracoes'
   | 'equipe'
   | 'plano';
 
@@ -98,7 +97,6 @@ const TABS: Tab[] = [
   { id: 'redes', label: 'Redes Sociais', icon: Share2 },
   { id: 'site', label: 'Meu Site', icon: Globe },
   { id: 'legal', label: 'Páginas Legais', icon: ScrollText, soft: true },
-  { id: 'integracoes', label: 'Integrações', icon: Plug, soft: true },
   { id: 'equipe', label: 'Equipe', icon: UsersRound },
   { id: 'plano', label: 'Plano', icon: CreditCard },
 ];
@@ -586,21 +584,6 @@ export default function ConfiguracoesClient(props: {
             />
           )}
 
-          {tab === 'integracoes' && (
-            <Placeholder
-              title="Integrações"
-              description="Conecte ferramentas externas pra rastrear, cobrar e atender clientes."
-              bullets={[
-                'Pixel da Meta (Facebook/Instagram Ads) — código de rastreamento',
-                'Google Analytics 4 — ID de medição',
-                'Google Tag Manager',
-                'Google Maps API (mapa no site)',
-                'Asaas (pagamentos) — credenciais já gerenciadas pela plataforma',
-                'Evolution API (WhatsApp) — chatbot no site',
-              ]}
-            />
-          )}
-
           {tab === 'equipe' && (
             <EquipeTab
               equipe={props.equipe}
@@ -693,6 +676,15 @@ function SiteTab({ tenantInfo }: { tenantInfo: TenantInfo }) {
 
 /* ---------- Aba Equipe ---------- */
 
+type ConvitePendente = {
+  id: string;
+  email: string;
+  role: string;
+  token: string;
+  createdAt: string;
+  expiresAt: string;
+};
+
 function EquipeTab({
   equipe,
   currentUserId,
@@ -700,6 +692,39 @@ function EquipeTab({
   equipe: EquipeUser[];
   currentUserId: string;
 }) {
+  const [convites, setConvites] = useState<ConvitePendente[]>([]);
+  const [modalOpen, setModalOpen] = useState(false);
+  const [linkGerado, setLinkGerado] = useState<string | null>(null);
+
+  useEffect(() => {
+    fetch('/api/equipe/convite')
+      .then((r) => (r.ok ? r.json() : { data: [] }))
+      .then((d) => setConvites(d.data ?? []))
+      .catch(() => {});
+  }, []);
+
+  function onConviteCriado(c: ConvitePendente & { link: string }) {
+    setConvites((prev) => [c, ...prev]);
+    setLinkGerado(c.link);
+  }
+
+  async function revogar(token: string) {
+    if (!confirm('Revogar este convite? O link vai parar de funcionar.')) return;
+    try {
+      const r = await fetch(`/api/equipe/convite/${token}`, { method: 'DELETE' });
+      if (!r.ok) throw new Error();
+      setConvites((prev) => prev.filter((c) => c.token !== token));
+      toast.success('Convite revogado');
+    } catch {
+      toast.error('Erro ao revogar');
+    }
+  }
+
+  function copiarLink(token: string) {
+    const url = `${window.location.origin}/convite/${token}`;
+    navigator.clipboard.writeText(url).then(() => toast.success('Link copiado'));
+  }
+
   return (
     <Section
       title="Equipe"
@@ -708,12 +733,46 @@ function EquipeTab({
       <div className="flex justify-between items-center mb-3">
         <p className="text-sm text-muted-foreground">
           {equipe.length} {equipe.length === 1 ? 'pessoa' : 'pessoas'} na equipe
+          {convites.length > 0 && (
+            <> · {convites.length} convite{convites.length > 1 ? 's' : ''} pendente{convites.length > 1 ? 's' : ''}</>
+          )}
         </p>
-        <Button disabled title="Em breve">
+        <Button onClick={() => { setLinkGerado(null); setModalOpen(true); }}>
           <Plus className="h-4 w-4 mr-2" />
           Convidar corretor
         </Button>
       </div>
+
+      {linkGerado && (
+        <div className="mb-3 rounded-md border border-emerald-300 bg-emerald-50 p-3 text-sm">
+          <p className="font-medium text-emerald-800">
+            ✓ Convite criado. Manda o link pra pessoa:
+          </p>
+          <div className="mt-2 flex gap-2">
+            <input
+              readOnly
+              value={linkGerado}
+              className="flex-1 rounded border border-emerald-200 bg-white px-2 py-1.5 text-xs"
+            />
+            <button
+              type="button"
+              onClick={() => {
+                navigator.clipboard.writeText(linkGerado);
+                toast.success('Link copiado');
+              }}
+              className="rounded bg-emerald-600 px-3 py-1.5 text-xs font-semibold text-white hover:bg-emerald-700"
+            >
+              Copiar
+            </button>
+          </div>
+        </div>
+      )}
+
+      <ConvidarModal
+        open={modalOpen}
+        onClose={() => setModalOpen(false)}
+        onCreated={onConviteCriado}
+      />
 
       <div className="rounded-lg border border-border bg-card overflow-hidden">
         <table className="w-full text-sm">
@@ -773,15 +832,158 @@ function EquipeTab({
                 </tr>
               );
             })}
+            {convites.map((c) => (
+              <tr key={c.id} className="bg-amber-50/50 hover:bg-amber-50">
+                <td className="px-4 py-2.5">
+                  <div className="flex items-center gap-2.5">
+                    <div className="h-8 w-8 rounded-full bg-amber-200 text-amber-800 grid place-items-center text-xs font-semibold shrink-0">
+                      …
+                    </div>
+                    <div className="min-w-0">
+                      <p className="font-medium truncate">{c.email}</p>
+                      <p className="text-xs text-amber-700">aguardando aceitar convite</p>
+                    </div>
+                  </div>
+                </td>
+                <td className="px-4 py-2.5">
+                  <Badge variant="outline" className="text-[10px] uppercase">
+                    {c.role}
+                  </Badge>
+                </td>
+                <td className="px-4 py-2.5 text-xs text-muted-foreground">—</td>
+                <td className="px-4 py-2.5 text-xs">
+                  <button
+                    type="button"
+                    onClick={() => copiarLink(c.token)}
+                    className="text-xs text-violet-600 hover:underline"
+                  >
+                    📋 Copiar link
+                  </button>
+                </td>
+                <td className="px-4 py-2.5 text-right text-xs">
+                  <button
+                    type="button"
+                    onClick={() => revogar(c.token)}
+                    className="text-xs text-red-600 hover:underline"
+                  >
+                    Revogar
+                  </button>
+                </td>
+              </tr>
+            ))}
           </tbody>
         </table>
       </div>
 
       <p className="text-xs text-muted-foreground mt-3">
-        Convite por e-mail, edição de papéis e remoção de membros chegam na
-        próxima entrega.
+        Convites expiram em 7 dias. Email automático e permissões granulares chegam na próxima entrega.
       </p>
     </Section>
+  );
+}
+
+/* ---------- Modal: Convidar membro ---------- */
+
+function ConvidarModal({
+  open,
+  onClose,
+  onCreated,
+}: {
+  open: boolean;
+  onClose: () => void;
+  onCreated: (c: ConvitePendente & { link: string }) => void;
+}) {
+  const [email, setEmail] = useState('');
+  const [role, setRole] = useState<'CORRETOR' | 'ADMIN' | 'VIEWER'>('CORRETOR');
+  const [saving, setSaving] = useState(false);
+  const [erro, setErro] = useState('');
+
+  useEffect(() => {
+    if (!open) {
+      setEmail(''); setRole('CORRETOR'); setErro(''); setSaving(false);
+    }
+  }, [open]);
+
+  async function submeter(e: React.FormEvent) {
+    e.preventDefault();
+    setErro('');
+    setSaving(true);
+    try {
+      const r = await fetch('/api/equipe/convite', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ email, role }),
+      });
+      const d = await r.json();
+      if (!r.ok) {
+        setErro(d.error ?? 'Erro');
+        return;
+      }
+      onCreated(d);
+      onClose();
+    } catch (e: any) {
+      setErro(e.message ?? 'Erro');
+    } finally {
+      setSaving(false);
+    }
+  }
+
+  if (!open) return null;
+
+  return (
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 p-4">
+      <div className="w-full max-w-md rounded-xl bg-white p-6 shadow-2xl">
+        <div className="mb-4 flex items-center justify-between">
+          <h3 className="font-display text-lg font-bold">Convidar membro</h3>
+          <button onClick={onClose} className="rounded-md p-1 hover:bg-gray-100" aria-label="Fechar">✕</button>
+        </div>
+        <form onSubmit={submeter} className="space-y-4">
+          <div>
+            <label className="block text-sm font-medium">Email *</label>
+            <input
+              type="email"
+              required
+              value={email}
+              onChange={(e) => setEmail(e.target.value)}
+              className="mt-1 w-full rounded-md border border-gray-300 px-3 py-2 text-sm"
+              placeholder="corretor@exemplo.com"
+            />
+          </div>
+          <div>
+            <label className="block text-sm font-medium">Papel</label>
+            <select
+              value={role}
+              onChange={(e) => setRole(e.target.value as any)}
+              className="mt-1 w-full rounded-md border border-gray-300 px-3 py-2 text-sm"
+            >
+              <option value="CORRETOR">Corretor</option>
+              <option value="ADMIN">Administrador</option>
+              <option value="VIEWER">Visualizador</option>
+            </select>
+            <p className="mt-1 text-xs text-muted-foreground">
+              {role === 'ADMIN' && 'Acesso total: configurações, equipe, todos os imóveis e leads.'}
+              {role === 'CORRETOR' && 'Pode cadastrar imóveis e atender leads.'}
+              {role === 'VIEWER' && 'Só visualiza — não edita nada.'}
+            </p>
+          </div>
+
+          {erro && <p className="text-sm text-red-600">{erro}</p>}
+
+          <div className="flex gap-2 justify-end">
+            <button type="button" onClick={onClose} className="rounded-md border border-gray-300 px-4 py-2 text-sm">
+              Cancelar
+            </button>
+            <Button type="submit" disabled={saving}>
+              {saving ? 'Criando...' : 'Gerar link de convite'}
+            </Button>
+          </div>
+        </form>
+        <p className="mt-3 text-xs text-muted-foreground">
+          O sistema gera um link único. Você manda pelo canal que preferir (WhatsApp, email, etc).
+          Email automático chega na próxima entrega.
+        </p>
+      </div>
+    </div>
   );
 }
 
