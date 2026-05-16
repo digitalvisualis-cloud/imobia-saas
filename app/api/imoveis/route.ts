@@ -103,6 +103,10 @@ export async function POST(req: Request) {
 
     // Preço & specs
     const preco = Number(formData.get('preco'));
+    const iptuRaw = formData.get('iptuMensal');
+    const condominioRaw = formData.get('condominioMensal');
+    const iptuMensal = iptuRaw ? Number(iptuRaw) || null : null;
+    const condominioMensal = condominioRaw ? Number(condominioRaw) || null : null;
     const quartos = Number(formData.get('quartos') ?? 0);
     const suites = Number(formData.get('suites') ?? 0);
     const banheiros = Number(formData.get('banheiros') ?? 0);
@@ -135,6 +139,8 @@ export async function POST(req: Request) {
         bairro,
         estado,
         preco,
+        iptuMensal,
+        condominioMensal,
         quartos,
         suites,
         banheiros,

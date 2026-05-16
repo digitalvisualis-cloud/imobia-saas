@@ -46,6 +46,8 @@ export function buildImoveisPublic(imoveis: Imovel[]): ImovelPublic[] {
     tipo: i.tipo as unknown as string,
     operacao: i.operacao as unknown as string,
     preco: Number(i.preco),
+    iptuMensal: i.iptuMensal != null ? Number(i.iptuMensal) : null,
+    condominioMensal: i.condominioMensal != null ? Number(i.condominioMensal) : null,
     bairro: i.bairro,
     cidade: i.cidade,
     estado: i.estado,

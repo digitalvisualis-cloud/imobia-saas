@@ -36,6 +36,8 @@ export type ImovelPublic = {
   tipo: string;
   operacao: string;
   preco: number;
+  iptuMensal: number | null;
+  condominioMensal: number | null;
   bairro: string | null;
   cidade: string | null;
   estado: string | null;

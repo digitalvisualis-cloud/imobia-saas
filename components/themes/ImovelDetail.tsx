@@ -244,6 +244,28 @@ function ContactCard({
         >
           {formatPriceBRL(imovel.preco, imovel.operacao)}
         </p>
+
+        {(imovel.iptuMensal || imovel.condominioMensal) && (
+          <div className="mt-3 space-y-0.5 text-xs opacity-70">
+            {imovel.iptuMensal != null && (
+              <div className="flex justify-between gap-4">
+                <span>IPTU</span>
+                <span className="font-medium">
+                  R$ {Number(imovel.iptuMensal).toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+                </span>
+              </div>
+            )}
+            {imovel.condominioMensal != null && (
+              <div className="flex justify-between gap-4">
+                <span>Condomínio</span>
+                <span className="font-medium">
+                  R$ {Number(imovel.condominioMensal).toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+                </span>
+              </div>
+            )}
+          </div>
+        )}
+
         <button
           type="button"
           onClick={copyCodigo}

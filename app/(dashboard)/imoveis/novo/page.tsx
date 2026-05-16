@@ -50,6 +50,8 @@ export default function NovoImovelPage() {
 
   // Preço & dimensões
   const [preco, setPreco] = useState('');
+  const [iptu, setIptu] = useState('');
+  const [condominio, setCondominio] = useState('');
   const [quartos, setQuartos] = useState(0);
   const [suites, setSuites] = useState(0);
   const [banheiros, setBanheiros] = useState(0);
@@ -219,6 +221,8 @@ export default function NovoImovelPage() {
       fd.append('cidadeBairro', [bairro, cidade].filter(Boolean).join(', '));
 
       fd.append('preco', preco);
+      if (iptu) fd.append('iptuMensal', iptu);
+      if (condominio) fd.append('condominioMensal', condominio);
       fd.append('quartos', quartos.toString());
       fd.append('suites', suites.toString());
       fd.append('banheiros', banheiros.toString());
@@ -452,7 +456,32 @@ export default function NovoImovelPage() {
             </div>
           </div>
 
-          <div className="grid-2">
+          <div className="grid-2 mt-3">
+            <div className="form-group">
+              <label className="label">IPTU mensal (R$) — opcional</label>
+              <input
+                className="input"
+                type="text"
+                inputMode="numeric"
+                placeholder="Ex: 233"
+                value={iptu.replace(/\B(?=(\d{3})+(?!\d))/g, '.')}
+                onChange={(e) => setIptu(e.target.value.replace(/\D/g, ''))}
+              />
+            </div>
+            <div className="form-group">
+              <label className="label">Condomínio mensal (R$) — opcional</label>
+              <input
+                className="input"
+                type="text"
+                inputMode="numeric"
+                placeholder="Ex: 1.051"
+                value={condominio.replace(/\B(?=(\d{3})+(?!\d))/g, '.')}
+                onChange={(e) => setCondominio(e.target.value.replace(/\D/g, ''))}
+              />
+            </div>
+          </div>
+
+          <div className="grid-2 mt-3">
             <NumInput label="Quartos" value={quartos} onChange={setQuartos} />
             <NumInput label="Suítes" value={suites} onChange={setSuites} />
           </div>
