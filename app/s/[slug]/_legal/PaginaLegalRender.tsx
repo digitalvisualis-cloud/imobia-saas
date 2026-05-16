@@ -94,11 +94,35 @@ function processInline(texto: string): React.ReactNode[] {
   });
 }
 
-export function PaginaLegalRender({ texto }: { texto: string }) {
+export function PaginaLegalRender({
+  texto,
+  slug,
+  footerExtra,
+}: {
+  texto: string;
+  slug: string;
+  /** Se passado, renderiza apos o conteudo — usado na pagina /cookies pra
+      mostrar o botao "Aceitar cookies e voltar". */
+  footerExtra?: React.ReactNode;
+}) {
   return (
-    <div className="max-w-3xl mx-auto px-6 py-12">
-      <div className="prose prose-gray max-w-none">
-        {renderMarkdownSimples(texto)}
+    <div className="min-h-screen bg-white">
+      <header className="sticky top-0 z-10 border-b border-gray-200 bg-white/90 backdrop-blur">
+        <div className="max-w-3xl mx-auto px-6 py-3 flex items-center justify-between">
+          <a
+            href={`/s/${slug}`}
+            className="inline-flex items-center gap-1.5 text-sm text-gray-600 hover:text-gray-900"
+          >
+            <span aria-hidden>←</span> Voltar pro site
+          </a>
+          <span className="text-xs text-gray-400">/s/{slug}</span>
+        </div>
+      </header>
+      <div className="max-w-3xl mx-auto px-6 py-12">
+        <div className="prose prose-gray max-w-none">
+          {renderMarkdownSimples(texto)}
+        </div>
+        {footerExtra}
       </div>
     </div>
   );

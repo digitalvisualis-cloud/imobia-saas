@@ -21,5 +21,5 @@ export default async function TermosPage({
 }) {
   const { slug } = await params;
   const { texto } = await loadLegalPage(slug, 'termos');
-  return <PaginaLegalRender texto={texto} />;
+  return <PaginaLegalRender texto={texto} slug={slug} />;
 }

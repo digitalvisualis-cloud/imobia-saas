@@ -21,5 +21,5 @@ export default async function PrivacidadePage({
 }) {
   const { slug } = await params;
   const { texto } = await loadLegalPage(slug, 'privacidade');
-  return <PaginaLegalRender texto={texto} />;
+  return <PaginaLegalRender texto={texto} slug={slug} />;
 }

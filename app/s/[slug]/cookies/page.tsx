@@ -1,6 +1,7 @@
 import type { Metadata } from 'next';
 import { loadLegalPage } from '../_legal/loader';
 import { PaginaLegalRender } from '../_legal/PaginaLegalRender';
+import { BotaoAceitarCookies } from '../_legal/BotaoAceitarCookies';
 
 export const dynamic = 'force-dynamic';
 
@@ -21,5 +22,11 @@ export default async function CookiesPage({
 }) {
   const { slug } = await params;
   const { texto } = await loadLegalPage(slug, 'cookies');
-  return <PaginaLegalRender texto={texto} />;
+  return (
+    <PaginaLegalRender
+      texto={texto}
+      slug={slug}
+      footerExtra={<BotaoAceitarCookies slug={slug} />}
+    />
+  );
 }
