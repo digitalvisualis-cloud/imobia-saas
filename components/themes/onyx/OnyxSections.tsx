@@ -158,6 +158,22 @@ function OnyxSearchBar({ slug }: { slug: string }) {
           <Search className="h-4 w-4" /> Buscar
         </button>
       </div>
+
+      {/* Toggles secundarios — mostram que ha mais filtros disponiveis.
+          Sem implementacao ainda. */}
+      <div className="mt-2 flex flex-wrap items-center justify-center gap-x-4 gap-y-1 text-[11px] text-gray-500">
+        <button type="button" className="inline-flex items-center gap-1 hover:text-gray-900">
+          <span className="opacity-50">⊕</span> Busca avançada
+        </button>
+        <span className="opacity-30">·</span>
+        <button type="button" className="inline-flex items-center gap-1 hover:text-gray-900">
+          <span className="opacity-50">#</span> Por código
+        </button>
+        <span className="opacity-30">·</span>
+        <button type="button" className="inline-flex items-center gap-1 hover:text-gray-900">
+          <span className="opacity-50">▦</span> Empreendimentos
+        </button>
+      </div>
     </form>
   );
 }
@@ -181,7 +197,7 @@ export function OnyxDestaques({ tenant, imoveis }: SectionProps) {
           Os melhores imóveis selecionados pra você
         </p>
       </div>
-      <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+      <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
         {lista.map((imv) => (
           <OnyxCard key={imv.id} imovel={imv} tenant={tenant} />
         ))}
