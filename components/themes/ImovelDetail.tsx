@@ -54,7 +54,13 @@ function ImovelGallery({
   capa: string | null;
   titulo: string;
 }) {
-  const all = [capa, ...imagens].filter((x): x is string => Boolean(x));
+  // capa eh uma das URLs de imagens — usar [capa, ...imagens] duplica.
+  // Dedupe via Set garante cada foto so 1x (capa fica primeira). Tambem
+  // protege contra duplicatas que possam ter entrado no array imagens
+  // por bug de reorder/upload antigo.
+  const all = Array.from(
+    new Set([capa, ...imagens].filter((x): x is string => Boolean(x))),
+  );
   const [active, setActive] = useState(0);
   const main = all[active] ?? imageUrl(null);
 
