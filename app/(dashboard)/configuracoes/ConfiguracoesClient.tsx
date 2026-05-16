@@ -27,6 +27,7 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
 import { PageHeader } from '@/components/ui/page-header';
+import { PhoneInput } from '@/components/ui/phone-input';
 import { toast } from '@/lib/toast';
 import { cn } from '@/lib/utils';
 import { FONTES_TITULO, FONTES_CORPO } from '@/lib/fonts';
@@ -329,17 +330,17 @@ export default function ConfiguracoesClient(props: {
               hint="Aparecem no rodapé do site, no botão de WhatsApp e nas peças de marketing."
             >
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <Field label="WhatsApp da imobiliária *" hint="Sem espaços. Ex: 5511999999999">
-                  <Input
+                <Field label="WhatsApp da imobiliária *" hint="Seleciona o país e digita só o número.">
+                  <PhoneInput
                     value={marca.whatsapp}
-                    onChange={(e) => setM('whatsapp', e.target.value)}
-                    placeholder="5511999999999"
+                    onChange={(v) => setM('whatsapp', v)}
+                    placeholder="(11) 99999-9999"
                   />
                 </Field>
                 <Field label="Telefone fixo">
-                  <Input
+                  <PhoneInput
                     value={marca.telefone}
-                    onChange={(e) => setM('telefone', e.target.value)}
+                    onChange={(v) => setM('telefone', v)}
                     placeholder="(11) 3333-4444"
                   />
                 </Field>
