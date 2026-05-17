@@ -34,6 +34,7 @@ import {
   ArrowRightLeft,
   AlertCircle,
   Zap,
+  Library,
   type LucideIcon,
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
@@ -106,6 +107,7 @@ export default function DashboardLayout({
         { name: 'Meu Site', href: '/sites', icon: Globe },
         { name: 'Blog', href: '/blog', icon: FileText },
         { name: 'Criador de Posts', href: '/conteudo', icon: Sparkles },
+        { name: 'Biblioteca', href: '/biblioteca', icon: Library, soon: true },
         {
           name: 'Cadastrar portais',
           href: '/configuracoes/portais',

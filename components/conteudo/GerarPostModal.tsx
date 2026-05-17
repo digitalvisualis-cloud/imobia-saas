@@ -114,7 +114,7 @@ export function GerarPostModal({
       }
       toast.success('Post gerado!');
       close();
-      router.push(`/conteudo/imovel/${imovelId}`);
+      router.push(`/conteudo/legacy/imovel/${imovelId}`);
       router.refresh();
     } catch (err) {
       toast.error(err instanceof Error ? err.message : 'Erro ao gerar');
