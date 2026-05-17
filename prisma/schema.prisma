@@ -653,6 +653,8 @@ model Contrato {
   pdfNome         String?
   // Observações
   observacoes     String?
+  /// Hook n8n: evita disparos duplicados quando cron varrer "vence em X dias"
+  eventoVencimentoEmitido Boolean @default(false)
   // Auditoria
   createdAt       DateTime        @default(now())
   updatedAt       DateTime        @updatedAt
@@ -663,6 +665,7 @@ model Contrato {
 
   @@index([tenantId, status])
   @@index([tenantId, dataInicio])
+  @@index([tenantId, dataFim])
   @@map("contratos")
 }
 
@@ -670,6 +673,7 @@ enum TipoContrato {
   VENDA
   ALUGUEL
   ADMINISTRACAO
+  CAPTACAO
 }
 
 enum StatusContrato {

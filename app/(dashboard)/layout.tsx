@@ -128,6 +128,7 @@ export default function DashboardLayout({
         { name: 'Captação', href: '/captacao', icon: Briefcase },
         { name: 'Alertas (e-mail)', href: '/newsletter', icon: Mail },
         { name: 'Controle de Chaves', href: '/controle-chaves', icon: KeyRound },
+        { name: 'Contratos', href: '/contratos', icon: FileText },
         { name: 'Financeiro', href: '/financeiro', icon: Wallet },
       ],
     },

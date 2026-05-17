@@ -59,6 +59,13 @@ export async function PATCH(
     if (body.pdfUrl !== undefined) data.pdfUrl = body.pdfUrl || null;
     if (body.pdfNome !== undefined) data.pdfNome = body.pdfNome || null;
     if (body.observacoes !== undefined) data.observacoes = body.observacoes || null;
+    // Hook n8n: ao renovar/editar dataFim, reseta flag pra cron disparar
+    // novos alertas (30/15/5 dias) sem duplicar.
+    if (typeof body.eventoVencimentoEmitido === 'boolean')
+      data.eventoVencimentoEmitido = body.eventoVencimentoEmitido;
+    if (body.dataFim !== undefined && data.dataFim !== undefined) {
+      data.eventoVencimentoEmitido = false;
+    }
 
     if (data.dataInicio && data.dataFim && data.dataFim < data.dataInicio) {
       return NextResponse.json(
