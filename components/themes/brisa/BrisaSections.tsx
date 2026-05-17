@@ -33,7 +33,7 @@ export function BrisaHero({ tenant, imoveis, config }: SectionProps) {
     <div className="relative overflow-hidden">
       <div className="relative mx-auto max-w-7xl px-4 pt-4 sm:px-6 sm:pt-6">
         <div className="relative overflow-hidden rounded-2xl sm:rounded-3xl">
-          <img src={heroImg} alt="" className="h-[520px] w-full object-cover sm:h-[600px] lg:h-[680px]" />
+          <img src={heroImg} alt="" className="h-[440px] w-full object-cover sm:h-[520px] lg:h-[580px]" />
           <div
             className="absolute inset-0"
             style={{
@@ -58,11 +58,11 @@ export function BrisaHero({ tenant, imoveis, config }: SectionProps) {
                 </span>
                 <h1
                   style={{ fontFamily: 'var(--t-font-heading)' }}
-                  className="mt-4 whitespace-pre-line text-4xl font-semibold leading-[1.05] sm:text-5xl lg:text-6xl"
+                  className="mt-3 whitespace-pre-line text-3xl font-semibold leading-[1.05] sm:text-4xl lg:text-5xl"
                 >
                   {slogan}
                 </h1>
-                <p className="mt-4 max-w-md text-base opacity-95 sm:text-lg">{descricao}</p>
+                <p className="mt-3 max-w-md text-sm opacity-95 sm:text-base">{descricao}</p>
               </div>
               <div className="flex justify-center lg:justify-end">
                 <BrisaSearchCard />
@@ -111,15 +111,15 @@ function BarraConfianca({ total }: { total: number }) {
 export function BrisaDestaques({ tenant, imoveis }: SectionProps) {
   if (imoveis.length === 0) return null;
   return (
-    <div className="mx-auto mt-16 max-w-7xl px-6 md:mt-24">
+    <div className="mx-auto mt-12 max-w-7xl px-6 md:mt-16">
       <SectionHeader
         sub="Vitrine"
         titulo="Imóveis em destaque"
         cta="Ver todos"
         ctaTo={`/s/${tenant.slug}`}
       />
-      <div className="mt-10 grid gap-6 md:grid-cols-3">
-        {imoveis.slice(0, 6).map((i) => (
+      <div className="mt-6 grid gap-4 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
+        {imoveis.slice(0, 8).map((i) => (
           <BrisaCard key={i.id} imovel={i} slug={tenant.slug} />
         ))}
       </div>
@@ -144,13 +144,13 @@ export function BrisaCategorias({ imoveis }: SectionProps) {
   ];
 
   return (
-    <div className="mx-auto mt-16 max-w-7xl px-6 md:mt-24">
+    <div className="mx-auto mt-12 max-w-7xl px-6 md:mt-16">
       <SectionHeader sub="Bairros" titulo="Explore por região" />
-      <div className="mt-10 grid gap-5 md:grid-cols-4">
+      <div className="mt-6 grid gap-4 sm:grid-cols-2 md:grid-cols-4">
         {top.map(([nome, count], idx) => (
           <a
             key={nome}
-            className="group relative block aspect-[4/5] overflow-hidden rounded-2xl"
+            className="group relative block aspect-[4/3] overflow-hidden rounded-xl"
           >
             <img
               src={fallbackImgs[idx % fallbackImgs.length]}
@@ -187,8 +187,8 @@ export function BrisaSobre({ tenant }: SectionProps) {
     `Há anos a ${nome} conecta famílias a lares pensados em cada detalhe. Trabalhamos com poucos imóveis por corretor, garantindo conhecimento profundo de cada negociação.`;
 
   return (
-    <div id="sobre" className="mx-auto mt-16 max-w-7xl scroll-mt-24 px-6 md:mt-24">
-      <div className="grid gap-12 md:grid-cols-2 md:items-center">
+    <div id="sobre" className="mx-auto mt-12 max-w-7xl scroll-mt-24 px-6 md:mt-16">
+      <div className="grid gap-10 md:grid-cols-2 md:items-center">
         <div className="grid grid-cols-2 gap-4">
           <img
             src="https://images.unsplash.com/photo-1582407947304-fd86f028f716?auto=format&fit=crop&w=700&q=80"
@@ -226,7 +226,7 @@ const DEPS = [
 
 export function BrisaDepoimentos() {
   return (
-    <div className="mx-auto mt-16 max-w-7xl px-6 md:mt-24">
+    <div className="mx-auto mt-12 max-w-7xl px-6 md:mt-16">
       <SectionHeader sub="Depoimentos" titulo="Quem comprou com a gente" />
       <div className="mt-10 grid gap-6 md:grid-cols-3">
         {DEPS.map((d) => (
@@ -302,7 +302,7 @@ export function BrisaFAQ() {
 
 export function BrisaCTA({ tenant }: { tenant?: TenantPublic }) {
   return (
-    <div id="anuncie" className="mx-auto mt-16 max-w-7xl px-6 md:mt-24">
+    <div id="anuncie" className="mx-auto mt-12 max-w-7xl px-6 md:mt-16">
       <div
         className="relative overflow-hidden rounded-3xl px-8 py-14 md:px-16 md:py-20"
         style={{ background: 'var(--t-primary)', color: 'var(--t-bg)' }}

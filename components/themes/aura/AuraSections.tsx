@@ -34,7 +34,7 @@ export function AuraHero({ tenant, imoveis, config }: SectionProps) {
     'Selecionamos cada propriedade com criterio. Voce escolhe entre o que ja foi aprovado.';
 
   return (
-    <div className="relative h-screen min-h-[760px] w-full overflow-hidden">
+    <div className="relative min-h-[640px] w-full overflow-hidden sm:min-h-[720px]">
       <img src={heroImg} alt="" className="absolute inset-0 h-full w-full object-cover" />
       <div
         className="absolute inset-0"
@@ -46,25 +46,25 @@ export function AuraHero({ tenant, imoveis, config }: SectionProps) {
       />
 
       <div
-        className="relative z-10 flex h-full flex-col justify-end px-4 pb-10 sm:px-8 sm:pb-16 md:px-14 md:pb-20"
+        className="relative z-10 flex min-h-[640px] flex-col justify-end px-4 pb-8 sm:min-h-[720px] sm:px-8 sm:pb-12 md:px-14 md:pb-16"
         style={{
           // Cor configuravel (Configuracoes -> Marca -> Cor texto hero)
           color: tenant.marca?.corTextoHero || '#FFFFFF',
           textShadow: '0 2px 12px rgba(0,0,0,0.55)',
         }}
       >
-        <div className="mx-auto w-full max-w-[1500px]">
-          <div className="max-w-3xl">
-            <p className="text-[10px] uppercase tracking-[0.3em] opacity-80 sm:text-[11px] sm:tracking-[0.4em]">
+        <div className="mx-auto w-full max-w-[1400px]">
+          <div className="max-w-2xl">
+            <p className="text-[10px] uppercase tracking-[0.3em] opacity-80 sm:text-[11px]">
               {eyebrow}
             </p>
             <h1
               style={{ fontFamily: 'var(--t-font-heading)' }}
-              className="mt-3 whitespace-pre-line text-4xl leading-[1.05] sm:mt-5 sm:text-5xl sm:leading-[1] md:text-6xl lg:text-7xl"
+              className="mt-3 whitespace-pre-line text-3xl leading-[1.05] sm:mt-4 sm:text-4xl sm:leading-[1.05] md:text-5xl"
             >
               {titulo}
             </h1>
-            <p className="mt-3 max-w-xl text-sm opacity-90 sm:mt-5 sm:text-base md:text-lg">
+            <p className="mt-3 max-w-xl text-sm opacity-90 sm:text-base">
               {subtitulo}
             </p>
           </div>
@@ -196,7 +196,7 @@ function SearchSelect({
 export function AuraDestaques({ tenant, imoveis }: SectionProps) {
   if (imoveis.length === 0) return null;
   return (
-    <div className="mx-auto mt-16 max-w-[1500px] px-4 sm:mt-32 sm:px-8">
+    <div className="mx-auto mt-12 max-w-[1400px] px-4 sm:mt-20 sm:px-8">
       <div className="grid gap-6 sm:gap-10 md:grid-cols-12 md:items-end">
         <div className="md:col-span-4">
           <p className="text-[10px] uppercase tracking-[0.3em] opacity-60 sm:text-[11px] sm:tracking-[0.35em]">A coleção</p>
@@ -216,11 +216,9 @@ export function AuraDestaques({ tenant, imoveis }: SectionProps) {
         </div>
       </div>
 
-      <div className="mt-20 grid gap-x-10 gap-y-20 md:grid-cols-2">
-        {imoveis.slice(0, 4).map((i, idx) => (
-          <div key={i.id} className={idx === 0 ? 'md:col-span-2' : ''}>
-            <AuraCard imovel={i} slug={tenant.slug} large={idx === 0} />
-          </div>
+      <div className="mt-8 grid gap-x-6 gap-y-10 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
+        {imoveis.slice(0, 8).map((i) => (
+          <AuraCard key={i.id} imovel={i} slug={tenant.slug} />
         ))}
       </div>
     </div>
@@ -242,7 +240,7 @@ export function AuraCategorias({ imoveis }: SectionProps) {
   ];
 
   return (
-    <div className="mx-auto mt-16 max-w-[1500px] px-4 sm:mt-32 sm:px-8">
+    <div className="mx-auto mt-12 max-w-[1400px] px-4 sm:mt-20 sm:px-8">
       <p className="text-[10px] uppercase tracking-[0.3em] opacity-60 sm:text-[11px] sm:tracking-[0.35em]">Endereços</p>
       <div
         className="mt-8 grid gap-px sm:mt-16"
@@ -287,7 +285,7 @@ export function AuraSobre({ tenant }: SectionProps) {
           <p className="text-[10px] uppercase tracking-[0.3em] opacity-60 sm:text-[11px] sm:tracking-[0.35em]">Estúdio</p>
           <h2
             style={{ fontFamily: 'var(--t-font-heading)' }}
-            className="mt-3 text-3xl leading-[1.1] sm:mt-4 sm:text-4xl sm:leading-[1.05] md:text-6xl"
+            className="mt-3 text-3xl leading-[1.1] sm:mt-4 sm:text-4xl sm:leading-[1.05] md:text-5xl"
           >
             Quietos.
             <br />
@@ -320,7 +318,7 @@ const DEPS = [
 
 export function AuraDepoimentos() {
   return (
-    <div className="mx-auto mt-16 max-w-[1500px] px-4 sm:mt-32 sm:px-8">
+    <div className="mx-auto mt-12 max-w-[1400px] px-4 sm:mt-20 sm:px-8">
       <p className="text-[10px] uppercase tracking-[0.3em] opacity-60 sm:text-[11px] sm:tracking-[0.35em]">Clientes</p>
       <div className="mt-8 grid gap-8 sm:mt-12 sm:gap-12 md:grid-cols-3">
         {DEPS.map((d) => (
@@ -350,7 +348,7 @@ const FAQS = [
 export function AuraFAQ() {
   const [open, setOpen] = useState(0);
   return (
-    <div className="mx-auto mt-16 max-w-[1500px] px-4 sm:mt-32 sm:px-8">
+    <div className="mx-auto mt-12 max-w-[1400px] px-4 sm:mt-20 sm:px-8">
       <div className="grid gap-8 sm:gap-16 md:grid-cols-12">
         <div className="md:col-span-4">
           <p className="text-[10px] uppercase tracking-[0.3em] opacity-60 sm:text-[11px] sm:tracking-[0.35em]">Perguntas</p>
@@ -393,9 +391,9 @@ export function AuraFAQ() {
 
 export function AuraCTA({ tenant }: SectionProps) {
   return (
-    <div id="anuncie" className="mx-auto mt-16 max-w-[1500px] px-4 sm:mt-32 sm:px-8">
+    <div id="anuncie" className="mx-auto mt-12 max-w-[1400px] px-4 sm:mt-20 sm:px-8">
       <div
-        className="relative overflow-hidden px-5 py-12 sm:px-8 sm:py-24 md:px-20 md:py-32"
+        className="relative overflow-hidden px-5 py-10 sm:px-8 sm:py-16 md:px-14 md:py-20"
         style={{ background: 'var(--t-primary)', color: 'var(--t-bg)' }}
       >
         <div className="grid gap-10 md:grid-cols-[1.2fr_1fr] md:items-center md:gap-16">
@@ -405,7 +403,7 @@ export function AuraCTA({ tenant }: SectionProps) {
             </p>
             <h2
               style={{ fontFamily: 'var(--t-font-heading)' }}
-              className="mt-3 text-3xl leading-[1.05] sm:mt-5 sm:text-4xl sm:leading-[1] md:text-6xl"
+              className="mt-3 text-3xl leading-[1.05] sm:mt-4 sm:text-4xl sm:leading-[1.05] md:text-5xl"
             >
               Sua propriedade merece{' '}
               <span style={{ color: 'var(--t-secondary)' }}>uma narrativa.</span>
@@ -427,7 +425,7 @@ export function AuraCTA({ tenant }: SectionProps) {
 
 export function AuraContato() {
   return (
-    <div className="mx-auto mt-16 max-w-[1500px] px-4 sm:mt-32 sm:px-8">
+    <div className="mx-auto mt-12 max-w-[1400px] px-4 sm:mt-20 sm:px-8">
       <div className="grid gap-6 sm:gap-12 md:grid-cols-12">
         <div className="md:col-span-5">
           <p className="text-[10px] uppercase tracking-[0.3em] opacity-60 sm:text-[11px] sm:tracking-[0.35em]">Newsletter</p>

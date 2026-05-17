@@ -12,10 +12,9 @@ export function BrisaCard({ imovel, slug }: Props) {
   return (
     <Link
       href={imovelHref(slug, imovel.codigo)}
-      className="group block overflow-hidden rounded-2xl bg-white shadow-sm transition-shadow hover:shadow-xl"
-      style={{ background: 'rgb(255 255 255 / 0.6)' }}
+      className="group block overflow-hidden rounded-xl bg-white shadow-sm ring-1 ring-stone-200/60 transition-shadow hover:shadow-lg"
     >
-      <div className="relative aspect-[4/3] overflow-hidden">
+      <div className="relative aspect-[16/10] overflow-hidden">
         <img
           src={imageUrl(imovel.capaUrl ?? imovel.imagens[0])}
           alt={imovel.titulo}
@@ -23,39 +22,41 @@ export function BrisaCard({ imovel, slug }: Props) {
           className="h-full w-full object-cover transition-transform duration-700 group-hover:scale-105"
         />
         <span
-          className="absolute left-3 top-3 rounded-full px-3 py-1 text-[10px] font-semibold uppercase tracking-wider"
+          className="absolute left-2.5 top-2.5 rounded-full px-2.5 py-0.5 text-[10px] font-semibold uppercase tracking-wider"
           style={{ background: 'var(--t-secondary)', color: 'var(--t-fg)' }}
         >
           {imovel.operacao.toLowerCase()}
         </span>
+        <span className="absolute right-2.5 top-2.5 rounded-md bg-black/60 px-2 py-0.5 text-[10px] font-mono text-white backdrop-blur">
+          {imovel.codigo}
+        </span>
       </div>
-      <div className="p-4 sm:p-5">
-        <p className="text-[10px] font-medium uppercase tracking-[0.12em] opacity-60 sm:text-[11px] sm:tracking-[0.15em]">
+      <div className="p-3.5">
+        <p className="text-[10px] font-medium uppercase tracking-wider opacity-60">
           {imovel.bairro ?? '—'} {imovel.cidade && `· ${imovel.cidade}`}
         </p>
         <h3
           style={{ fontFamily: 'var(--t-font-heading)' }}
-          className="mt-1.5 text-base font-semibold leading-snug sm:text-lg"
+          className="mt-1 text-sm font-semibold leading-snug line-clamp-1"
         >
           {imovel.titulo}
         </h3>
-        <div className="mt-3.5 flex items-center gap-4 text-xs opacity-70">
+        <div className="mt-2 flex items-center gap-3 text-[11px] opacity-70">
           {imovel.quartos > 0 && <Spec icon={Bed} v={imovel.quartos} />}
           {imovel.banheiros > 0 && <Spec icon={Bath} v={imovel.banheiros} />}
           {imovel.vagas > 0 && <Spec icon={Car} v={imovel.vagas} />}
           {imovel.areaM2 != null && <Spec icon={Maximize2} v={`${imovel.areaM2}m²`} />}
         </div>
         <div
-          className="mt-4 flex items-end justify-between border-t pt-4"
+          className="mt-3 border-t pt-2.5"
           style={{ borderColor: 'rgb(var(--t-fg-rgb) / 0.08)' }}
         >
           <span
             style={{ fontFamily: 'var(--t-font-heading)', color: 'var(--t-primary)' }}
-            className="text-xl font-bold"
+            className="text-base font-bold"
           >
             {formatPriceBRL(imovel.preco, imovel.operacao)}
           </span>
-          <span className="text-[11px] opacity-50">{imovel.codigo}</span>
         </div>
       </div>
     </Link>
