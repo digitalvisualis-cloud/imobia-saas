@@ -2057,3 +2057,331 @@
   transform: scale(var(--lab-artboard-scale));
   transform-origin: top left;
 }
+
+/* QA pass 3: final approval pass for small dashboard previews. */
+.ref-post .top-logo {
+  max-width: calc(100% - 44px);
+  overflow: hidden;
+  white-space: nowrap;
+}
+
+.ref-post .headline strong,
+.ref-post .price-box b,
+.ref-post .spec-strip small,
+.ref-post .footer-brand,
+.ref-post .contact-pill {
+  overflow-wrap: normal;
+  word-break: normal;
+}
+
+.ref-post .price-box b {
+  white-space: nowrap;
+}
+
+.p1 .headline,
+.p11 .headline {
+  bottom: 19%;
+  width: 31%;
+}
+
+.p1 .headline strong,
+.p11 .headline strong {
+  font-size: 16px;
+}
+
+.p1 .price-box,
+.p11 .price-box {
+  right: 20px;
+  bottom: 18.5%;
+  padding: 6px 0;
+}
+
+.p1 .price-box small,
+.p11 .price-box small {
+  font-size: 8px;
+}
+
+.p1 .price-box b,
+.p11 .price-box b {
+  font-size: 19px;
+}
+
+.p3 .top-logo,
+.p3 .location,
+.p13 .top-logo,
+.p13 .location {
+  display: none;
+}
+
+.p3 .thumb-stack,
+.p13 .thumb-stack {
+  top: 34px;
+  bottom: 150px;
+  width: 84px;
+  gap: 10px;
+}
+
+.p3 .headline,
+.p13 .headline {
+  top: 62px;
+  left: 46%;
+  right: 20px;
+}
+
+.p3 .headline strong,
+.p13 .headline strong {
+  font-size: 21px;
+  line-height: 0.98;
+}
+
+.p3 .headline em,
+.p13 .headline em {
+  font-size: 17px;
+}
+
+.p3 .price-box,
+.p13 .price-box {
+  right: 20px;
+  bottom: 30%;
+  min-width: 112px;
+}
+
+.p4 .headline,
+.p14 .headline {
+  left: 43%;
+  right: 20px;
+  top: 54px;
+  padding: 10px 14px;
+}
+
+.p4 .headline strong,
+.p14 .headline strong {
+  font-size: 18px;
+  line-height: 0.95;
+}
+
+.p4 .price-box,
+.p14 .price-box {
+  right: 22px;
+  bottom: 37%;
+}
+
+.p4 .cta-pill,
+.p14 .cta-pill {
+  bottom: 23%;
+  max-width: calc(100% - 156px);
+  white-space: nowrap;
+}
+
+.p10 .headline,
+.p20 .headline {
+  top: 31%;
+}
+
+.p10 .headline strong,
+.p20 .headline strong {
+  font-size: 29px;
+}
+
+.p10 .price-box,
+.p20 .price-box {
+  bottom: 22.5%;
+}
+
+.p10 .spec-strip,
+.p20 .spec-strip {
+  bottom: 8.5%;
+}
+
+.p18 .headline {
+  right: 31%;
+}
+
+.p18 .headline strong {
+  font-size: 22px;
+}
+
+.format-story .p3 .thumb.t3,
+.format-story .p13 .thumb.t3 {
+  display: none;
+}
+
+.format-story .p3 .thumb-stack,
+.format-story .p13 .thumb-stack {
+  top: 66px;
+  bottom: 48%;
+  width: 72px;
+}
+
+.format-story .p3 .headline,
+.format-story .p13 .headline {
+  top: 96px;
+  left: 48%;
+  right: 14px;
+}
+
+.format-story .p3 .headline strong,
+.format-story .p13 .headline strong {
+  font-size: 15px;
+  -webkit-line-clamp: 2;
+}
+
+.format-story .p3 .headline em,
+.format-story .p13 .headline em {
+  font-size: 10px;
+}
+
+.format-story .p4 .thumb-stack,
+.format-story .p14 .thumb-stack {
+  top: 42px;
+}
+
+.format-story .p4 .cta-pill,
+.format-story .p14 .cta-pill {
+  max-width: none;
+  white-space: normal;
+}
+
+.format-story .p10 .headline,
+.format-story .p20 .headline {
+  top: 30%;
+}
+
+.format-story .p10 .headline strong,
+.format-story .p20 .headline strong {
+  font-size: 27px;
+}
+
+.format-story .p20 .price-box {
+  bottom: 24%;
+}
+
+.format-story .p20 .spec-strip {
+  bottom: 8.5%;
+}
+
+/* QA pass 4: lock long copy so imported project data cannot break the art. */
+.p3 .headline,
+.p13 .headline {
+  left: 49%;
+}
+
+.p3 .headline strong,
+.p13 .headline strong {
+  font-size: 22px;
+  -webkit-line-clamp: 2;
+}
+
+.p3 .price-box,
+.p13 .price-box {
+  bottom: 31%;
+}
+
+.p4 .cta-pill,
+.p14 .cta-pill {
+  min-width: 118px;
+  padding-left: 12px;
+  padding-right: 12px;
+  text-align: center;
+}
+
+.p4 .headline strong,
+.p14 .headline strong {
+  font-size: 17px;
+}
+
+.p5 .headline strong,
+.p15 .headline strong {
+  font-size: 22px;
+}
+
+.p9 .headline strong,
+.p19 .headline strong {
+  font-size: 22px;
+}
+
+.p10 .headline strong,
+.p20 .headline strong {
+  font-size: 27px;
+}
+
+.p17 .headline strong {
+  font-size: 31px;
+}
+
+.format-square .p3 .headline,
+.format-square .p13 .headline {
+  left: 46%;
+  top: 48px;
+}
+
+.format-square .p3 .headline strong,
+.format-square .p13 .headline strong {
+  font-size: 17px;
+}
+
+.format-square .p4 .headline strong,
+.format-square .p14 .headline strong {
+  font-size: 16px;
+}
+
+.format-square .p4 .cta-pill,
+.format-square .p14 .cta-pill {
+  bottom: 21%;
+}
+
+.format-square .p1 .headline,
+.format-square .p11 .headline {
+  left: 22px;
+  bottom: 18%;
+  width: 36%;
+}
+
+.format-square .p1 .headline strong,
+.format-square .p11 .headline strong {
+  font-size: 14px;
+}
+
+.format-square .p1 .price-box,
+.format-square .p11 .price-box {
+  right: 12px;
+  bottom: 17%;
+}
+
+.format-square .p1 .price-box b,
+.format-square .p11 .price-box b {
+  font-size: 16px;
+}
+
+.format-story .p1 .contact-pill,
+.format-story .p11 .contact-pill {
+  left: 18%;
+  right: 18%;
+}
+
+.format-story .p1 .headline strong,
+.format-story .p11 .headline strong {
+  font-size: 15px;
+}
+
+.format-story .p3 .headline,
+.format-story .p13 .headline {
+  left: 50%;
+  top: 92px;
+}
+
+.format-story .p3 .headline strong,
+.format-story .p13 .headline strong {
+  font-size: 16px;
+  -webkit-line-clamp: 2;
+}
+
+.format-story .p4 .price-box,
+.format-story .p14 .price-box {
+  bottom: 36%;
+}
+
+.format-story .p10 .headline strong,
+.format-story .p20 .headline strong {
+  font-size: 24px;
+}

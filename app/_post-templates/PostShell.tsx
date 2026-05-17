@@ -32,7 +32,19 @@ function headlineForVariant(
   formato: PostTemplateProps['formato'],
 ) {
   const story = formato === 'STORY';
+  const compactTitle = fullTitle.trim().split(/\s+/).slice(0, 2).join(' ') || 'Imóvel disponível';
   switch (variant) {
+    case 'p1':
+    case 'p3':
+    case 'p11':
+    case 'p13':
+    case 'p15':
+    case 'p19':
+    case 'p20':
+      return compactTitle;
+    case 'p4':
+    case 'p14':
+      return 'Tour premium';
     case 'p7':
       return 'Entrada zero';
     case 'p8':
@@ -166,8 +178,10 @@ export function PostShell({ imovel, marca, formato, variant }: PostShellProps) {
 
         {/* CTA pill (p4, p6) */}
         <div className="cta-pill">
-          {variant === 'p4' || variant === 'p14'
-            ? 'DM to schedule tour'
+          {variant === 'p4'
+            ? 'Agende o tour'
+            : variant === 'p14'
+              ? 'Ver detalhes'
             : variant === 'p6' || variant === 'p16'
               ? 'Entre em contato'
               : 'Mais informações'}
