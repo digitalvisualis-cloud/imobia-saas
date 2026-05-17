@@ -1,7 +1,10 @@
 // Tipos compartilhados pelos componentes de Criador de Posts.
 // Adaptados da arquitetura do lovable mas com a shape do nosso Prisma.
 
+// Os 20 IDs novos (p1..p20) vem do visual-lab; os legados (ia, clean,
+// minimal, etc) ficam pra compat com posts ja gerados.
 export type TemplateVariant =
+  // Legados
   | 'ia'
   | 'clean'
   | 'borda'
@@ -14,7 +17,12 @@ export type TemplateVariant =
   | 'polaroid'
   | 'listing'
   | 'luxegold'
-  | 'showcase';
+  | 'showcase'
+  // Lab v2 — 20 templates do CATALOGO_TEMPLATES_POSTS.md
+  | 'p1' | 'p2' | 'p3' | 'p4' | 'p5'
+  | 'p6' | 'p7' | 'p8' | 'p9' | 'p10'
+  | 'p11' | 'p12' | 'p13' | 'p14' | 'p15'
+  | 'p16' | 'p17' | 'p18' | 'p19' | 'p20';
 
 export interface ImovelLite {
   id: string;
@@ -63,6 +71,29 @@ export const TEMPLATES: Array<{
   nome: string;
   descricao: string;
 }> = [
+  // 20 templates do visual-lab (CATALOGO_TEMPLATES_POSTS.md) — primeiro
+  // na lista pra serem a opcao default no picker.
+  { id: 'p1', nome: 'Barra Técnica Clean', descricao: 'Foto full bleed com barra creme inferior' },
+  { id: 'p2', nome: 'Listing Glass Premium', descricao: 'Painel glass com preço e localização' },
+  { id: 'p3', nome: 'Diagonal Modern Home', descricao: 'Diagonal clara com mini galeria' },
+  { id: 'p4', nome: 'Bolhas Luxury Tour', descricao: 'Fotos circulares + CTA gold' },
+  { id: 'p5', nome: 'Disponível Dark', descricao: 'Foto + bloco preto premium' },
+  { id: 'p6', nome: 'Contato Soft Blur', descricao: 'Fundo blur para captação' },
+  { id: 'p7', nome: 'Entrada Zero Impacto', descricao: 'Headline laranja grande' },
+  { id: 'p8', nome: 'Faixa Amarela Vertical', descricao: 'Faixa técnica amarela vertical' },
+  { id: 'p9', nome: 'Minimal Living', descricao: 'Editorial com muito respiro' },
+  { id: 'p10', nome: 'Dream Homes Luxury', descricao: 'Black/gold com mini galeria' },
+  { id: 'p11', nome: 'Ficha Creme Horizontal', descricao: 'Variação creme técnica' },
+  { id: 'p12', nome: 'Painel Vidro Alto Padrão', descricao: 'Glass alto padrão' },
+  { id: 'p13', nome: 'Galeria Lateral', descricao: 'Mini galeria lateral + headline' },
+  { id: 'p14', nome: 'Gold Label Tour', descricao: 'CTA pill com painel escuro' },
+  { id: 'p15', nome: 'Preço Central', descricao: 'Preço como foco principal' },
+  { id: 'p16', nome: 'Busca Contato', descricao: 'Lead/contato blur' },
+  { id: 'p17', nome: 'Chamada Forte Laranja', descricao: 'Urgência laranja' },
+  { id: 'p18', nome: 'Card Amarelo Técnico', descricao: 'Specs em faixa amarela' },
+  { id: 'p19', nome: 'Minimal Editorial', descricao: 'Editorial leve' },
+  { id: 'p20', nome: 'Capa Carrossel Premium', descricao: 'Capa black/gold pra carrossel' },
+  // Legados (compat — posts antigos ainda usam estes IDs)
   { id: 'ia', nome: 'IA Vibrante', descricao: 'Gradiente colorido sobre foto' },
   { id: 'clean', nome: 'Clean', descricao: 'Card branco minimalista' },
   { id: 'borda', nome: 'Moldura', descricao: 'Borda com faixa de preço' },

@@ -3,6 +3,12 @@
 import { Bed, Bath, Car, Maximize2, MapPin } from 'lucide-react';
 import type { ImovelLite, TemplateVariant, Customizacao } from './types';
 import { TIPO_LABEL } from './types';
+import { getTemplate } from '@/app/_post-templates/registry';
+import type {
+  PostFormato,
+  ImovelParaPost,
+  MarcaParaPost,
+} from '@/app/_post-templates/types';
 
 const FALLBACK_IMG =
   'https://images.unsplash.com/photo-1568605114967-8130f3a36994?auto=format&fit=crop&w=900&q=80';
@@ -27,6 +33,22 @@ export function PostPreview({
   custom?: Partial<Customizacao>;
   ratio?: '1/1' | '4/5' | '9/16';
 }) {
+  // Se o variant eh um template do lab (p1..p20 ou legados clean/borda/
+  // premium do registry), renderiza via PostShell. Caso contrario usa o
+  // template inline antigo (retrocompat com 'ia', 'minimal', etc).
+  const labTemplate = getTemplate(variant);
+  if (labTemplate) {
+    return (
+      <LabTemplateWrapper
+        Template={labTemplate.Component}
+        imovel={imovel}
+        scale={scale}
+        custom={custom}
+        ratio={ratio}
+      />
+    );
+  }
+
   // Dimensoes base ja em proporcoes corretas:
   // 1:1   = quadrado IG/FB (1080x1080) → 360x360
   // 4:5   = retrato IG (1080x1350)     → 360x450
@@ -61,6 +83,90 @@ export function PostPreview({
         }}
       >
         <TemplateBody imovel={imovel} variant={variant} c={c} />
+      </div>
+    </div>
+  );
+}
+
+/**
+ * Adapta o template do lab (PostShell-based) pro mesmo contrato de
+ * scale + preview pequeno do PostPreview. Os templates do lab renderizam
+ * em dim nativa (1080x1350 etc.) e a gente escala pra o preview.
+ */
+function LabTemplateWrapper({
+  Template,
+  imovel,
+  scale,
+  custom,
+  ratio,
+}: {
+  Template: React.ComponentType<{
+    imovel: ImovelParaPost;
+    marca: MarcaParaPost;
+    formato: PostFormato;
+  }>;
+  imovel: ImovelLite;
+  scale: number;
+  custom?: Partial<Customizacao>;
+  ratio: '1/1' | '4/5' | '9/16';
+}) {
+  // ratio -> PostFormato
+  const formato: PostFormato =
+    ratio === '9/16' ? 'STORY' : ratio === '1/1' ? 'POST_QUADRADO' : 'POST_VERTICAL';
+
+  // Dim nativa do template (escolhida pelo formato)
+  const nativeW = 1080;
+  const nativeH = ratio === '9/16' ? 1920 : ratio === '1/1' ? 1080 : 1350;
+
+  // Preview dim — mesma escala do PostPreview legado
+  const baseW = 360;
+  const baseH = ratio === '9/16' ? 640 : ratio === '4/5' ? 450 : 360;
+  const innerScale = baseW / nativeW; // ~0.333
+
+  // Adapta ImovelLite -> ImovelParaPost
+  const imovelAdapt: ImovelParaPost = {
+    id: imovel.id,
+    codigo: imovel.codigo,
+    titulo: imovel.titulo,
+    tipo: imovel.tipo,
+    operacao: imovel.operacao,
+    preco: imovel.preco,
+    bairro: imovel.bairro,
+    cidade: imovel.cidade,
+    estado: imovel.estado,
+    capaUrl: imovel.capaUrl,
+    imagens: imovel.imagens,
+    areaM2: imovel.areaM2,
+    quartos: imovel.quartos,
+    banheiros: imovel.banheiros,
+    vagas: imovel.vagas,
+    amenidades: [],
+  };
+
+  // Customizacao -> MarcaParaPost (com defaults razoaveis)
+  const marca: MarcaParaPost = {
+    nomeEmpresa: null,
+    logoUrl: custom?.logoUrl ?? null,
+    corPrimaria: custom?.corPrincipal ?? '#187a57',
+    corSecundaria: '#d7ae5e', // gold do lab — usado em CTAs travados
+    whatsapp: null,
+    instagram: null,
+  };
+
+  return (
+    <div
+      className="relative overflow-hidden rounded-lg shadow-xl"
+      style={{ width: baseW * scale, height: baseH * scale }}
+    >
+      <div
+        style={{
+          transform: `scale(${innerScale * scale})`,
+          transformOrigin: 'top left',
+          width: nativeW,
+          height: nativeH,
+        }}
+      >
+        <Template imovel={imovelAdapt} marca={marca} formato={formato} />
       </div>
     </div>
   );
