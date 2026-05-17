@@ -3,7 +3,7 @@
 import { useMemo, useRef, useState } from 'react';
 import { useSearchParams } from 'next/navigation';
 import Link from 'next/link';
-import { Sparkles, Download, Save, Loader2, ArrowLeft, Library } from 'lucide-react';
+import { Sparkles, Download, Save, Loader2, ArrowLeft, Library, Wand2 } from 'lucide-react';
 import { CanvasPreview } from '@/app/_post-templates/lovable/CanvasPreview';
 import { ExportStage, type ExportStageHandle } from '@/app/_post-templates/lovable/ExportStage';
 import { TEMPLATES } from '@/app/_post-templates/lovable/templates/registry';
@@ -14,7 +14,7 @@ import {
   DEFAULT_FONT_PAIR,
 } from '@/app/_post-templates/lovable/templates/tokens';
 import { FORMATO_LIST, FORMATOS } from '@/app/_post-templates/lovable/lib/formats';
-import { exportSlides } from '@/app/_post-templates/lovable/lib/export';
+import { exportSlides, nodeToThumbnail } from '@/app/_post-templates/lovable/lib/export';
 import type {
   Customizacao,
   FormatoPost,
@@ -109,10 +109,83 @@ export default function ConteudoClient({ imoveis, marca }: Props) {
   }
 
   async function handleSaveLibrary() {
-    // Placeholder — Fase C implementa upload do thumb + persistencia
-    // em posts_gerados_lib via Supabase Storage.
-    toast.info('Biblioteca chega na próxima fase 📚');
-    setSaving(false);
+    const nodes = stageRef.current?.getSlideNodes() ?? [];
+    if (!nodes.length || !imovel) return;
+    setSaving(true);
+    try {
+      // 1. Gera thumb (slide 0, ~360px largura → PNG ~50-100KB)
+      const thumbDataUrl = await nodeToThumbnail(nodes[0], 360);
+
+      // 2. Upload pro Supabase Storage
+      const uploadRes = await fetch('/api/posts-lib/upload-thumb', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ dataUrl: thumbDataUrl }),
+      });
+      const upload = await uploadRes.json();
+      if (!uploadRes.ok) throw new Error(upload?.error || 'Falha no upload do thumb');
+
+      // 3. Persiste metadata no banco
+      const local = [imovel.bairro, imovel.cidade].filter(Boolean).join(' · ');
+      const saveRes = await fetch('/api/posts-lib', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          imovelId: imovel.id,
+          imovelTitulo: imovel.titulo,
+          imovelLocal: local,
+          templateId: template.id,
+          templateNome: template.nome,
+          formato: formato.id,
+          formatoLabel: formato.label,
+          thumbUrl: upload.url,
+          thumbPath: upload.path,
+          copy: useCustomMsg && customMsg.trim() ? customMsg.trim() : null,
+          customizacao: {
+            paletteId,
+            fontPairId,
+            operacao: imovel.operacao,
+            showTitle,
+            showPrice,
+            showSpecs,
+            showCTA,
+            ctaText,
+            customMsg,
+            useCustomMsg,
+          },
+        }),
+      });
+      const saved = await saveRes.json();
+      if (!saveRes.ok) throw new Error(saved?.error || 'Falha ao salvar');
+
+      toast.success('Salvo na biblioteca ✓');
+    } catch (e) {
+      toast.error('Erro ao salvar', { description: (e as Error).message });
+    } finally {
+      setSaving(false);
+    }
+  }
+
+  const [generatingCopy, setGeneratingCopy] = useState(false);
+  async function handleGenerateCopy() {
+    if (!imovel) return;
+    setGeneratingCopy(true);
+    try {
+      const res = await fetch('/api/posts/legenda', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ imovelId: imovel.id }),
+      });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data?.error || 'Falha na IA');
+      setCustomMsg(data.legenda ?? '');
+      setUseCustomMsg(false); // copy IA vai pra textarea como sugestao, nao substitui headline
+      toast.success('Copy gerada ✨');
+    } catch (e) {
+      toast.error('Erro ao gerar copy', { description: (e as Error).message });
+    } finally {
+      setGeneratingCopy(false);
+    }
   }
 
   if (!imovel) {
@@ -350,16 +423,34 @@ export default function ConteudoClient({ imoveis, marca }: Props) {
             </Section>
           )}
 
-          <Section title="Mensagem personalizada">
+          <Section title="Mensagem / legenda IA">
             <textarea
               value={customMsg}
               onChange={(e) => setCustomMsg(e.target.value)}
-              placeholder="Escreva uma chamada (substitui o título)…"
-              rows={3}
+              placeholder="Escreva ou gere com IA…"
+              rows={5}
               className="w-full resize-y rounded-md border border-input bg-background p-2 text-xs focus:outline-none focus:ring-2 focus:ring-ring"
             />
-            <div className="mt-1.5">
-              <Toggle label="Usar essa mensagem" value={useCustomMsg} onChange={setUseCustomMsg} />
+            <div className="mt-1.5 flex items-center justify-between gap-2">
+              <Toggle label="Usar como headline" value={useCustomMsg} onChange={setUseCustomMsg} />
+              <button
+                type="button"
+                onClick={handleGenerateCopy}
+                disabled={generatingCopy}
+                className="inline-flex items-center gap-1 rounded-md border border-primary/40 bg-primary/5 px-2 py-1 text-[11px] font-medium text-primary hover:bg-primary/10 disabled:opacity-50"
+              >
+                {generatingCopy ? (
+                  <>
+                    <Loader2 className="h-3 w-3 animate-spin" />
+                    Gerando…
+                  </>
+                ) : (
+                  <>
+                    <Wand2 className="h-3 w-3" />
+                    Gerar com IA
+                  </>
+                )}
+              </button>
             </div>
           </Section>
         </aside>

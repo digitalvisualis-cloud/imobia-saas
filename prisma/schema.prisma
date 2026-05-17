@@ -41,6 +41,7 @@ model Tenant {
   comissaoSplits ComissaoSplit[]
   repasses Repasse[]
   cobrancas Cobranca[]
+  postsLib PostGeradoLib[]
 
   @@map("tenants")
 }
@@ -182,6 +183,7 @@ model Imovel {
   tenant       Tenant          @relation(fields: [tenantId], references: [id], onDelete: Cascade)
   leads        Lead[]
   posts        PostGerado[]
+  postsLib     PostGeradoLib[]
   eventos      AgendaEvento[]
   contratos    Contrato[]
   conversas    Conversa[]
@@ -573,6 +575,34 @@ enum TipoPost {
   WHATSAPP
   FICHA_PDF
   DESCRICAO_SITE
+}
+
+/// Biblioteca persistente do gerador de posts (engine Lovable).
+/// 1 linha por arte salva, thumb fica no Supabase Storage.
+model PostGeradoLib {
+  id            String    @id @default(cuid())
+  tenantId      String
+  imovelId      String?
+  imovelTitulo  String
+  imovelLocal   String?
+  templateId    String
+  templateNome  String
+  formato       String    // SQUARE | VERTICAL | STORY | CARROSSEL
+  formatoLabel  String
+  thumbUrl      String    // URL publica no Supabase Storage
+  thumbPath     String?   // caminho interno pra apagar do storage no delete
+  copy          String?
+  /// Snapshot da customizacao pra reabrir no editor (paleta, fonte, toggles, etc)
+  customizacao  Json      @default("{}")
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
+
+  tenant        Tenant    @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  imovel        Imovel?   @relation(fields: [imovelId], references: [id], onDelete: SetNull)
+
+  @@index([tenantId, createdAt])
+  @@index([imovelId])
+  @@map("posts_gerados_lib")
 }
 
 // ─── AGENDA ─────────────────────────────────────────────────────────────────
