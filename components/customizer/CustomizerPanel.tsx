@@ -5,8 +5,6 @@ import {
   Layers,
   Palette,
   Settings,
-  ChevronLeft,
-  ChevronRight,
   Eye,
   EyeOff,
   GripVertical,
@@ -70,21 +68,12 @@ export function CustomizerPanel({ onSave, saving, saved }: Props) {
   const dirty = useSiteStore((s) => s.dirty);
   const [tab, setTab] = useState<Tab>('tema');
 
-  if (!panelOpen) {
-    return (
-      <button
-        type="button"
-        onClick={() => setPanelOpen(true)}
-        className="fixed left-3 top-1/2 z-50 -translate-y-1/2 rounded-r-md border border-l-0 bg-white px-2 py-3 text-slate-700 shadow-md hover:bg-slate-50"
-        aria-label="Abrir painel"
-      >
-        <ChevronRight className="h-4 w-4" />
-      </button>
-    );
-  }
+  // Painel sempre aberto na pagina /sites — o close button confundia o user
+  // (clicava sem querer e o painel sumia atras de uma setinha minuscula).
+  // Se precisar maximizar o preview, usa o toggle desktop/mobile no topo.
 
   return (
-    <aside className="fixed left-0 top-0 z-40 flex h-screen w-[380px] border-r border-slate-200 bg-white text-slate-800 shadow-xl lg:left-64">
+    <aside className="fixed left-0 top-0 z-40 flex h-screen w-[340px] border-r border-slate-200 bg-white text-slate-800 shadow-xl lg:left-64">
       <div className="flex w-[60px] flex-col items-center border-r border-slate-200 bg-slate-50 py-3">
         {RAIL.map((r) => (
           <button
@@ -106,23 +95,13 @@ export function CustomizerPanel({ onSave, saving, saved }: Props) {
       </div>
 
       <div className="flex flex-1 flex-col">
-        <header className="flex items-center justify-between border-b border-slate-200 px-4 py-3">
-          <div className="flex items-center gap-2">
-            <span className="text-sm font-semibold text-slate-900">
-              {RAIL.find((r) => r.id === tab)?.label}
-            </span>
-            <span className="rounded-full bg-violet-100 px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wider text-violet-700">
-              {THEME_META[activeTheme].nome}
-            </span>
-          </div>
-          <button
-            type="button"
-            onClick={() => setPanelOpen(false)}
-            className="rounded p-1 text-slate-500 hover:bg-slate-100"
-            aria-label="Fechar painel"
-          >
-            <ChevronLeft className="h-4 w-4" />
-          </button>
+        <header className="flex items-center gap-2 border-b border-slate-200 px-4 py-3">
+          <span className="text-sm font-semibold text-slate-900">
+            {RAIL.find((r) => r.id === tab)?.label}
+          </span>
+          <span className="rounded-full bg-violet-100 px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wider text-violet-700">
+            {THEME_META[activeTheme].nome}
+          </span>
         </header>
 
         <div className="flex-1 overflow-y-auto p-4">

@@ -39,12 +39,21 @@ import {
   OnyxContato,
   OnyxAnuncie,
 } from './onyx/OnyxSections';
+import { BlogTeaser } from './BlogTeaser';
 
 interface Props {
   theme: ThemeId;
   config: Customization;
   tenant: TenantPublic;
   imoveis: ImovelPublic[];
+  artigos?: Array<{
+    id: string;
+    slug: string;
+    titulo: string;
+    resumo: string | null;
+    capaUrl: string | null;
+    publicadoEm: string | null;
+  }>;
 }
 
 /**
@@ -52,7 +61,7 @@ interface Props {
  * configurada. Componente client porque alguns sub-componentes (FAQ accordion) usam
  * estado local. O ThemeScope injeta CSS vars; SectionsRenderer filtra/ordena.
  */
-export function ThemeRenderer({ theme, config, tenant, imoveis }: Props) {
+export function ThemeRenderer({ theme, config, tenant, imoveis, artigos = [] }: Props) {
   const sectionProps = { tenant, imoveis, config };
 
   if (theme === 'aura') {
@@ -69,7 +78,12 @@ export function ThemeRenderer({ theme, config, tenant, imoveis }: Props) {
               sobre: () => <AuraSobre {...sectionProps} />,
               depoimentos: () => <AuraDepoimentos />,
               faq: () => <AuraFAQ />,
-              cta: () => <AuraCTA {...sectionProps} />,
+              cta: () => (
+                <>
+                  <AuraCTA {...sectionProps} />
+                  <BlogTeaser slug={tenant.slug} artigos={artigos} variant="dark" />
+                </>
+              ),
               contato: () => <AuraContato />,
             }}
           />
@@ -97,6 +111,7 @@ export function ThemeRenderer({ theme, config, tenant, imoveis }: Props) {
               cta: () => (
                 <>
                   <OnyxAnuncie {...sectionProps} />
+                  <BlogTeaser slug={tenant.slug} artigos={artigos} variant="light" />
                   <OnyxCTA {...sectionProps} />
                 </>
               ),
@@ -124,7 +139,12 @@ export function ThemeRenderer({ theme, config, tenant, imoveis }: Props) {
             sobre: () => <BrisaSobre {...sectionProps} />,
             depoimentos: () => <BrisaDepoimentos />,
             faq: () => <BrisaFAQ />,
-            cta: () => <BrisaCTA tenant={tenant} />,
+            cta: () => (
+              <>
+                <BrisaCTA tenant={tenant} />
+                <BlogTeaser slug={tenant.slug} artigos={artigos} variant="light" />
+              </>
+            ),
             contato: () => <BrisaContato />,
           }}
         />

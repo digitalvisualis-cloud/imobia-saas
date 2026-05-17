@@ -42,11 +42,29 @@ export default async function SiteHome({
   const filters = parseFilters(sp);
   const isSearching = hasFilters(filters);
 
-  const imoveis = await prisma.imovel.findMany({
-    where: { tenantId: tenant.id, publicado: true },
-    orderBy: [{ destaque: 'desc' }, { createdAt: 'desc' }],
-    take: isSearching ? 200 : 30,
-  });
+  const [imoveis, artigos] = await Promise.all([
+    prisma.imovel.findMany({
+      where: { tenantId: tenant.id, publicado: true },
+      orderBy: [{ destaque: 'desc' }, { createdAt: 'desc' }],
+      take: isSearching ? 200 : 30,
+    }),
+    // Pega ate 3 artigos publicados pro teaser na home (skip se isSearching)
+    isSearching
+      ? Promise.resolve([])
+      : prisma.artigoBlog.findMany({
+          where: { tenantId: tenant.id, publicado: true },
+          orderBy: { publicadoEm: 'desc' },
+          take: 3,
+          select: {
+            id: true,
+            slug: true,
+            titulo: true,
+            resumo: true,
+            capaUrl: true,
+            publicadoEm: true,
+          },
+        }),
+  ]);
 
   const siteAny = tenant.site as any;
   const rawConfig = (siteAny.config ?? {}) as Record<string, unknown>;
@@ -80,6 +98,10 @@ export default async function SiteHome({
             config={config}
             tenant={tenantPublic}
             imoveis={imoveisPublic}
+            artigos={artigos.map((a) => ({
+              ...a,
+              publicadoEm: a.publicadoEm?.toISOString() ?? null,
+            }))}
           />
         </>
       );
