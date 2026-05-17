@@ -94,7 +94,7 @@ export function ThemeRenderer({ theme, config, tenant, imoveis }: Props) {
               depoimentos: () => <OnyxDepoimentos />,
               faq: () => <OnyxFAQ />,
               cta: () => <OnyxCTA {...sectionProps} />,
-              contato: () => <OnyxContato />,
+              contato: () => <OnyxContato tenant={tenant} />,
             }}
           />
         </main>

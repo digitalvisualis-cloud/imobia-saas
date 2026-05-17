@@ -287,16 +287,16 @@ export function OnyxSobre({ tenant }: SectionProps) {
   const nomeEmpresa = tenant.marca?.nomeEmpresa ?? tenant.nome;
   return (
     <section id="sobre" className="bg-gray-50">
-      <div className="mx-auto grid max-w-[1200px] gap-10 px-6 py-20 md:grid-cols-2 md:items-center">
-        <div className="aspect-[4/5] overflow-hidden rounded-md bg-gray-200 md:max-w-md">
+      <div className="mx-auto grid max-w-[1100px] gap-10 px-6 py-16 md:grid-cols-[280px_1fr] md:items-center md:gap-12">
+        <div className="aspect-square overflow-hidden rounded-md bg-gray-100">
           {tenant.marca?.logoUrl ? (
-            // Sem foto de equipe — usa logo grande como placeholder visual.
+            // Sem foto de equipe — usa logo como placeholder visual.
             // O user pode trocar com uma foto custom no editor depois.
             // eslint-disable-next-line @next/next/no-img-element
             <img
               src={tenant.marca.logoUrl}
               alt={nomeEmpresa}
-              className="h-full w-full object-contain p-12"
+              className="h-full w-full object-contain p-6"
             />
           ) : (
             <div className="grid h-full w-full place-items-center text-gray-400">
@@ -453,4 +453,65 @@ export function OnyxCTA({ tenant }: SectionProps) {
 // Re-exports pra ThemeRenderer encontrar
 export function OnyxDepoimentos() { return null; }
 export function OnyxFAQ() { return null; }
-export function OnyxContato() { return null; }
+
+/**
+ * Newsletter — faixa preta com email signup que dispara WhatsApp pro
+ * corretor com a mensagem "Quero receber novidades". Evita backend extra
+ * e ja entrega o lead direto pro funil principal (WA).
+ */
+export function OnyxContato({ tenant }: { tenant?: TenantPublic }) {
+  const whatsapp = tenant?.marca?.whatsapp?.replace(/\D/g, '') ?? '';
+
+  function submeter(e: React.FormEvent<HTMLFormElement>) {
+    e.preventDefault();
+    const form = e.currentTarget;
+    const email = (form.elements.namedItem('email') as HTMLInputElement)?.value?.trim();
+    if (!email) return;
+    const msg = encodeURIComponent(
+      `Olá! Gostaria de receber novidades sobre imóveis. Meu e-mail: ${email}`,
+    );
+    if (whatsapp) {
+      window.open(`https://wa.me/${whatsapp}?text=${msg}`, '_blank');
+    } else {
+      window.location.href = `mailto:${tenant?.marca?.email ?? ''}?subject=Quero receber novidades&body=${msg}`;
+    }
+    form.reset();
+  }
+
+  return (
+    <section className="bg-black text-white py-14">
+      <div className="mx-auto max-w-[1100px] px-6 grid gap-6 md:grid-cols-2 md:items-center">
+        <div>
+          <p className="text-[11px] font-semibold uppercase tracking-[0.2em]" style={{ color: 'var(--t-primary)' }}>
+            Newsletter
+          </p>
+          <h2
+            style={{ fontFamily: 'var(--t-font-heading)' }}
+            className="mt-2 text-2xl font-semibold sm:text-3xl"
+          >
+            Receba novidades de imóveis em primeira mão
+          </h2>
+          <p className="mt-2 text-sm text-white/60">
+            Lançamentos, oportunidades e dicas direto no seu e-mail.
+          </p>
+        </div>
+        <form onSubmit={submeter} className="flex flex-col gap-2 sm:flex-row">
+          <input
+            name="email"
+            type="email"
+            required
+            placeholder="seu@email.com"
+            className="flex-1 rounded-md border-0 bg-white/10 px-4 py-2.5 text-sm text-white placeholder-white/40 focus:bg-white/15 focus:outline-none focus:ring-1 focus:ring-white/30"
+          />
+          <button
+            type="submit"
+            className="rounded-md px-5 py-2.5 text-sm font-semibold text-black hover:opacity-90"
+            style={{ background: 'var(--t-primary)' }}
+          >
+            Quero receber
+          </button>
+        </form>
+      </div>
+    </section>
+  );
+}
