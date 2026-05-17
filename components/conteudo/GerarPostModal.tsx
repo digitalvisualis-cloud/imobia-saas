@@ -290,8 +290,9 @@ export function GerarPostModal({
                       <PostPreview
                         imovel={imovelAtual}
                         variant={t.id}
-                        scale={0.4}
+                        scale={0.32}
                         custom={customizacao}
+                        ratio={fmtAtual?.ratio ?? '4/5'}
                       />
                     </div>
                     <div className="w-full px-1">

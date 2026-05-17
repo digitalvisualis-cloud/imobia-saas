@@ -22,7 +22,7 @@ import { PostPreview } from '@/components/conteudo/PostPreview';
 import { CarrosselPreview } from '@/components/conteudo/CarrosselPreview';
 import { GerarPostModal } from '@/components/conteudo/GerarPostModal';
 import type { ImovelLite, PostLite, Customizacao } from '@/components/conteudo/types';
-import { FORMATOS } from '@/components/conteudo/types';
+import { FORMATOS, ratioFromFormato } from '@/components/conteudo/types';
 
 type CustomTab = 'logo' | 'cor-principal' | 'cor-texto' | 'fonte' | null;
 
@@ -387,7 +387,7 @@ export default function MediaKitClient({
                           variant={p.template}
                           scale={0.75}
                           custom={custom}
-                          ratio={p.formato.includes('story') ? '9/16' : '1/1'}
+                          ratio={ratioFromFormato(p.formato)}
                         />
                       )}
                     </div>

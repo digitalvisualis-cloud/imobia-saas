@@ -11,7 +11,10 @@ export type TemplateVariant =
   | 'split'
   | 'dark'
   | 'tag'
-  | 'polaroid';
+  | 'polaroid'
+  | 'listing'
+  | 'luxegold'
+  | 'showcase';
 
 export interface ImovelLite {
   id: string;
@@ -70,6 +73,9 @@ export const TEMPLATES: Array<{
   { id: 'dark', nome: 'Dark Mode', descricao: 'Fundo escuro elegante' },
   { id: 'tag', nome: 'Tag', descricao: 'Etiqueta diagonal sobre foto' },
   { id: 'polaroid', nome: 'Polaroid', descricao: 'Inspirado em polaroide' },
+  { id: 'listing', nome: 'New Listing', descricao: 'Card translucido com endereco + preco' },
+  { id: 'luxegold', nome: 'Luxe Gold', descricao: 'Card escuro dourado + selo NEW LISTING' },
+  { id: 'showcase', nome: 'Showcase', descricao: 'Card branco bottom estilo flyer' },
 ];
 
 export const FORMATOS = [
@@ -79,8 +85,16 @@ export const FORMATOS = [
   { id: 'story', nome: 'Story do Instagram', dim: '1080x1920', tipo: 'INSTAGRAM_STORIES', carrossel: false, ratio: '9/16' as const },
   { id: 'feed-carrossel', nome: 'Carrossel do Instagram', dim: '1080x1350', tipo: 'INSTAGRAM_FEED', carrossel: true, ratio: '4/5' as const, hint: 'multiplos cards' },
   { id: 'story-carrossel', nome: 'Carrossel de Stories', dim: '1080x1920', tipo: 'INSTAGRAM_STORIES', carrossel: true, ratio: '9/16' as const, hint: 'multiplos cards' },
-  { id: 'facebook-square', nome: 'Post do Facebook', dim: '1080x1080', tipo: 'INSTAGRAM_FEED', carrossel: false, ratio: '1/1' as const },
+  // Quadrado serve tanto pro Facebook quanto pro Instagram (compat. legado).
+  { id: 'facebook-square', nome: 'Post quadrado (FB / IG)', dim: '1080x1080', tipo: 'INSTAGRAM_FEED', carrossel: false, ratio: '1/1' as const },
 ];
+
+/** Resolve o ratio do PostPreview a partir do id do formato salvo no banco. */
+export function ratioFromFormato(formato: string | undefined | null): '1/1' | '4/5' | '9/16' {
+  if (!formato) return '4/5';
+  const f = FORMATOS.find((x) => x.id === formato);
+  return f?.ratio ?? (formato.includes('story') ? '9/16' : '4/5');
+}
 
 /** Mapeia tipo enum (CASA, APARTAMENTO...) pra label legível. */
 export const TIPO_LABEL: Record<string, string> = {

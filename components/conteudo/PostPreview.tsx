@@ -333,6 +333,174 @@ function TemplateBody({
     );
   }
 
+  // 11. Listing — card translucido bottom (estilo Rimberio): NEW LISTING + endereco + price box + specs grid
+  if (variant === 'listing') {
+    return (
+      <div className="relative h-full w-full overflow-hidden bg-black">
+        {/* eslint-disable-next-line @next/next/no-img-element */}
+        <img src={img} alt="" className="absolute inset-0 h-full w-full object-cover" />
+        <div className="absolute inset-0 bg-gradient-to-t from-black/30 via-transparent to-black/20" />
+
+        {/* Card translucido bottom */}
+        <div className="absolute inset-x-3 bottom-3 rounded-xl border border-white/30 bg-white/85 p-3 backdrop-blur-md">
+          <div className="grid grid-cols-[1fr_auto] gap-3 border-b border-black/10 pb-2">
+            <div>
+              <div className="text-[15px] font-bold leading-tight" style={{ fontFamily: 'Georgia, serif', color: c.texto }}>
+                NEW LISTING
+              </div>
+              <div className="mt-0.5 text-[10px] opacity-70" style={{ color: c.texto }}>
+                {bairroOuTitulo}, {localUF}
+              </div>
+            </div>
+            <div className="text-right">
+              <div className="text-[9px] uppercase tracking-wide opacity-60" style={{ color: c.texto }}>
+                {labelPreco}
+              </div>
+              <div className="text-[15px] font-bold leading-tight" style={{ fontFamily: 'Georgia, serif', color: c.texto }}>
+                {preco}
+                <span className="text-[9px] font-normal">{sufixoPreco}</span>
+              </div>
+            </div>
+          </div>
+          <div className="mt-2 grid grid-cols-2 gap-x-3 gap-y-1 text-[10px]" style={{ color: c.texto }}>
+            {imovel.quartos > 0 && (
+              <span className="inline-flex items-center gap-1"><Bed className="h-3 w-3" /> {imovel.quartos} BED</span>
+            )}
+            {imovel.banheiros > 0 && (
+              <span className="inline-flex items-center gap-1"><Bath className="h-3 w-3" /> {imovel.banheiros} BATH</span>
+            )}
+            {imovel.vagas > 0 && (
+              <span className="inline-flex items-center gap-1"><Car className="h-3 w-3" /> {imovel.vagas} VAGAS</span>
+            )}
+            {imovel.areaM2 > 0 && (
+              <span className="inline-flex items-center gap-1"><Maximize2 className="h-3 w-3" /> {imovel.areaM2}m²</span>
+            )}
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  // 12. Luxe Gold — card escuro a direita + selo NEW LISTING dourado
+  if (variant === 'luxegold') {
+    return (
+      <div className="relative h-full w-full overflow-hidden bg-neutral-900">
+        {/* eslint-disable-next-line @next/next/no-img-element */}
+        <img src={img} alt="" className="absolute inset-0 h-full w-full object-cover" />
+        <div className="absolute inset-0 bg-gradient-to-r from-black/10 via-black/30 to-black/60" />
+
+        {/* Selo NEW LISTING — pill dourado canto sup */}
+        <div
+          className="absolute right-3 top-3 rounded-l-full rounded-tr-full px-4 py-1.5 text-[12px] font-semibold tracking-wider"
+          style={{ backgroundColor: c.principal, color: '#0F172A', fontFamily: 'Georgia, serif' }}
+        >
+          NEW LISTING
+        </div>
+
+        {/* Card escuro principal */}
+        <div className="absolute inset-x-3 bottom-3 rounded-lg border border-white/10 bg-black/75 p-3 backdrop-blur-sm">
+          <div className="text-center">
+            <div className="text-[9px] uppercase tracking-[0.3em] text-white/60">{labelPreco}</div>
+            <div
+              className="my-1 rounded border border-white/30 px-2 py-1 text-[20px] font-bold text-white"
+              style={{ fontFamily: 'Georgia, serif' }}
+            >
+              {preco}
+            </div>
+            <div className="text-[10px] text-white/80">
+              <MapPin className="mr-0.5 inline h-3 w-3" />
+              {bairroOuTitulo}, {imovel.cidade}
+            </div>
+          </div>
+          <div className="mt-2 flex items-center justify-around border-t border-white/10 pt-2 text-[9px] text-white/80">
+            {imovel.quartos > 0 && <span className="inline-flex items-center gap-1"><Bed className="h-3 w-3" />{imovel.quartos}</span>}
+            {imovel.banheiros > 0 && <span className="inline-flex items-center gap-1"><Bath className="h-3 w-3" />{imovel.banheiros}</span>}
+            {imovel.vagas > 0 && <span className="inline-flex items-center gap-1"><Car className="h-3 w-3" />{imovel.vagas}</span>}
+            {imovel.areaM2 > 0 && <span className="inline-flex items-center gap-1"><Maximize2 className="h-3 w-3" />{imovel.areaM2}m²</span>}
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  // 13. Showcase — card branco bottom estilo flyer (THE HAYNES): brand + stats inline + price right
+  if (variant === 'showcase') {
+    return (
+      <div className="relative h-full w-full overflow-hidden bg-white">
+        {/* Foto cobre top 70% */}
+        <div className="relative h-[70%] w-full">
+          {/* eslint-disable-next-line @next/next/no-img-element */}
+          <img src={img} alt="" className="absolute inset-0 h-full w-full object-cover" />
+          {/* Badge marca */}
+          <div
+            className="absolute top-3 left-3 inline-flex items-center gap-1.5 rounded-full bg-black/85 px-3 py-1 text-[10px] font-semibold tracking-wider text-white"
+          >
+            <span style={{ color: c.principal }}>●</span> TELEMARKETING
+          </div>
+        </div>
+
+        {/* Card branco bottom 30% */}
+        <div className="absolute inset-x-0 bottom-0 h-[30%] bg-white px-4 py-3" style={{ color: c.texto }}>
+          <div className="flex h-full items-center justify-between gap-3">
+            {/* Esquerda: brand */}
+            <div className="min-w-0 flex-shrink-0">
+              {c.logoUrl ? (
+                // eslint-disable-next-line @next/next/no-img-element
+                <img src={c.logoUrl} alt="logo" className="h-6 w-auto object-contain" />
+              ) : (
+                <div
+                  className="text-[11px] font-bold leading-tight"
+                  style={{ fontFamily: 'Georgia, serif', color: c.principal }}
+                >
+                  {(imovel.titulo || bairroOuTitulo).slice(0, 20).toUpperCase()}
+                </div>
+              )}
+              <div className="mt-0.5 text-[8px] uppercase tracking-wider opacity-50">
+                {tipoLabel}
+              </div>
+            </div>
+
+            {/* Centro: stats inline */}
+            <div className="flex flex-1 items-center justify-center gap-2 text-center text-[9px]">
+              {imovel.areaM2 > 0 && (
+                <div>
+                  <div className="text-base font-bold leading-none" style={{ color: c.principal }}>{imovel.areaM2}<span className="text-[8px]">m²</span></div>
+                  <div className="opacity-50">Área</div>
+                </div>
+              )}
+              {imovel.quartos > 0 && (
+                <div>
+                  <Bed className="mx-auto h-3 w-3" style={{ color: c.principal }} />
+                  <div>{imovel.quartos}</div>
+                </div>
+              )}
+              {imovel.banheiros > 0 && (
+                <div>
+                  <Bath className="mx-auto h-3 w-3" style={{ color: c.principal }} />
+                  <div>{imovel.banheiros}</div>
+                </div>
+              )}
+              {imovel.vagas > 0 && (
+                <div>
+                  <Car className="mx-auto h-3 w-3" style={{ color: c.principal }} />
+                  <div>{imovel.vagas}</div>
+                </div>
+              )}
+            </div>
+
+            {/* Direita: preco */}
+            <div className="flex-shrink-0 text-right">
+              <div className="text-[8px] uppercase opacity-50">{labelPreco}</div>
+              <div className="text-[15px] font-bold leading-tight" style={{ color: c.principal }}>
+                {preco}
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
   // 10. Polaroid
   if (variant === 'polaroid') {
     return (

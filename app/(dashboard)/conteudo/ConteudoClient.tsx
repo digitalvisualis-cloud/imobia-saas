@@ -13,6 +13,7 @@ import type {
   PostLite,
   Customizacao,
 } from '@/components/conteudo/types';
+import { ratioFromFormato } from '@/components/conteudo/types';
 
 export default function ConteudoClient(props: {
   imoveis: ImovelLite[];
@@ -185,6 +186,7 @@ function ImovelGroup({
                 variant={p.template}
                 scale={0.5}
                 custom={customizacao}
+                ratio={ratioFromFormato(p.formato)}
               />
             </Link>
             <button
