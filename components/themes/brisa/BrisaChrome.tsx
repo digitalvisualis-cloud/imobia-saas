@@ -77,7 +77,8 @@ export function BrisaHeader({ config, tenant }: ChromeProps) {
           <Link href={`/s/${tenant.slug}`} className="opacity-70 hover:opacity-100">Início</Link>
           <Link href={`/s/${tenant.slug}?op=venda`} className="opacity-70 hover:opacity-100">Comprar</Link>
           <Link href={`/s/${tenant.slug}?op=aluguel`} className="opacity-70 hover:opacity-100">Alugar</Link>
-          <Link href={`/s/${tenant.slug}#anuncie`} className="opacity-70 hover:opacity-100">Anuncie seu imóvel</Link>
+          <Link href={`/s/${tenant.slug}#anuncie`} className="opacity-70 hover:opacity-100">Anuncie</Link>
+          <Link href={`/s/${tenant.slug}/blog`} className="opacity-70 hover:opacity-100">Blog</Link>
           <Link href={`/s/${tenant.slug}#sobre`} className="opacity-70 hover:opacity-100">Sobre</Link>
         </nav>
         <a

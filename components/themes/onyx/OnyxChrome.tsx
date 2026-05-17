@@ -40,7 +40,8 @@ export function OnyxHeader({ config, tenant }: ChromeProps) {
     { label: 'Início', href: `/s/${slug}` },
     { label: 'Comprar', href: `/s/${slug}?op=venda` },
     { label: 'Alugar', href: `/s/${slug}?op=aluguel` },
-    { label: 'Anuncie seu imóvel', href: `/s/${slug}#anuncie` },
+    { label: 'Anuncie', href: `/s/${slug}#anuncie` },
+    { label: 'Blog', href: `/s/${slug}/blog` },
     { label: 'Sobre', href: `/s/${slug}#sobre` },
   ];
 

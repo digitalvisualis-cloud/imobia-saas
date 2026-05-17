@@ -36,6 +36,7 @@ model Tenant {
   convites  EquipeConvite[]
   configWhatsApp ConfigWhatsApp?
   newsletterInscricoes NewsletterInscricao[]
+  artigosBlog ArtigoBlog[]
 
   @@map("tenants")
 }
@@ -273,6 +274,31 @@ enum TipoLead {
   LOCATARIO
   VENDEDOR
   LOCADOR
+}
+
+model ArtigoBlog {
+  id               String    @id @default(cuid())
+  tenantId         String
+  slug             String
+  titulo           String
+  resumo           String?
+  conteudoMd       String    @default("")
+  capaUrl          String?
+  tags             String[]  @default([])
+  autor            String?
+  publicado        Boolean   @default(false)
+  publicadoEm      DateTime?
+  visualizacoes    Int       @default(0)
+  metaTitle        String?
+  metaDescription  String?
+  createdAt        DateTime  @default(now())
+  updatedAt        DateTime  @updatedAt
+
+  tenant           Tenant    @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+
+  @@unique([tenantId, slug])
+  @@index([tenantId, publicado, publicadoEm(sort: Desc)])
+  @@map("artigos_blog")
 }
 
 model NewsletterInscricao {
