@@ -27,6 +27,9 @@ export function OnyxHero({ tenant, imoveis, config }: SectionProps) {
     (imoveis.length > 0 ? heroImage(imoveis[0]) : HERO_FALLBACK);
   const slogan = tenant.marca?.slogan ?? 'Encontre seu imóvel\nVenha viver o extraordinário!';
   const descricao = tenant.marca?.descricao ?? '';
+  const cidades = Array.from(
+    new Set(imoveis.map((i) => i.cidade).filter(Boolean) as string[]),
+  ).sort();
 
   return (
     <div className="relative min-h-[640px] w-full overflow-hidden">
@@ -59,25 +62,31 @@ export function OnyxHero({ tenant, imoveis, config }: SectionProps) {
           )}
         </div>
 
-        <OnyxSearchBar slug={tenant.slug} />
+        <OnyxSearchBar cidades={cidades} />
       </div>
     </div>
   );
 }
 
 /**
- * Search bar com mesma logica do BrisaSearchCard (recarrega URL com
- * query string filtrando a listagem). Layout horizontal compacto +
- * tabs Venda/Aluguel + 4 campos + busca avancada que abre filtros
- * extras (quartos, faixa de preco).
+ * Search bar inspirada no Douglas Navarro. 3 modos:
+ *  - simples (default): tipo · cidade · bairro/empreend · buscar
+ *  - avançada (aberto): + chips de quartos/suites/banheiros/vagas + faixas
+ *  - por código: input mono + buscar
+ *
+ * Submete via window.location.search → page.tsx parsea com parseFilters().
  */
-function OnyxSearchBar({ slug: _slug }: { slug: string }) {
+function OnyxSearchBar({ cidades }: { cidades: string[] }) {
   const [op, setOp] = useState<'venda' | 'aluguel'>('venda');
   const [tipo, setTipo] = useState('');
   const [cidade, setCidade] = useState('');
   const [busca, setBusca] = useState('');
   const [quartos, setQuartos] = useState('');
+  const [suites, setSuites] = useState('');
+  const [banheiros, setBanheiros] = useState('');
+  const [vagas, setVagas] = useState('');
   const [faixa, setFaixa] = useState('');
+  const [areaMin, setAreaMin] = useState('');
   const [codigo, setCodigo] = useState('');
   const [aberto, setAberto] = useState(false);
   const [modoCodigo, setModoCodigo] = useState(false);
@@ -90,16 +99,20 @@ function OnyxSearchBar({ slug: _slug }: { slug: string }) {
     } else {
       params.set('op', op);
       if (tipo) params.set('tipo', tipo);
-      if (cidade.trim()) params.set('cidade', cidade.trim());
+      if (cidade) params.set('cidade', cidade);
       if (busca.trim()) params.set('q', busca.trim());
       if (quartos) params.set('quartos', quartos);
+      if (suites) params.set('suites', suites);
+      if (banheiros) params.set('banheiros', banheiros);
+      if (vagas) params.set('vagas', vagas);
       if (faixa) params.set('faixa', faixa);
+      if (areaMin) params.set('areaMin', areaMin);
     }
     window.location.search = params.toString();
   }
 
   const tipos = [
-    { v: '', l: 'Todos os tipos' },
+    { v: '', l: 'Tipo' },
     { v: 'CASA', l: 'Casa' },
     { v: 'APARTAMENTO', l: 'Apartamento' },
     { v: 'COBERTURA', l: 'Cobertura' },
@@ -121,10 +134,19 @@ function OnyxSearchBar({ slug: _slug }: { slug: string }) {
     { v: '3000000-', l: 'Acima de R$ 3 mi' },
   ];
 
+  const areas = [
+    { v: '', l: 'Área (qualquer)' },
+    { v: '50', l: '50m²+' },
+    { v: '100', l: '100m²+' },
+    { v: '200', l: '200m²+' },
+    { v: '300', l: '300m²+' },
+    { v: '500', l: '500m²+' },
+  ];
+
   return (
     <form
       onSubmit={submeter}
-      className="mt-8 w-full max-w-3xl rounded-lg bg-white/97 p-2 shadow-2xl backdrop-blur"
+      className={`mt-8 w-full rounded-lg bg-white/97 p-3 shadow-2xl backdrop-blur ${aberto && !modoCodigo ? 'max-w-5xl' : 'max-w-3xl'}`}
     >
       {/* Tabs VENDA / ALUGUEL */}
       <div className="mb-2 flex gap-1 rounded-md bg-gray-100 p-1">
@@ -133,9 +155,10 @@ function OnyxSearchBar({ slug: _slug }: { slug: string }) {
           onClick={() => { setOp('venda'); setModoCodigo(false); }}
           className={`flex-1 rounded px-3 py-1.5 text-xs font-semibold uppercase tracking-wider transition-colors ${
             !modoCodigo && op === 'venda'
-              ? 'bg-black text-white shadow-sm'
+              ? 'text-white shadow-sm'
               : 'text-gray-500 hover:text-gray-900'
           }`}
+          style={!modoCodigo && op === 'venda' ? { background: 'var(--t-primary)', color: '#000' } : undefined}
         >
           Venda
         </button>
@@ -144,7 +167,7 @@ function OnyxSearchBar({ slug: _slug }: { slug: string }) {
           onClick={() => { setOp('aluguel'); setModoCodigo(false); }}
           className={`flex-1 rounded px-3 py-1.5 text-xs font-semibold uppercase tracking-wider transition-colors ${
             !modoCodigo && op === 'aluguel'
-              ? 'bg-black text-white shadow-sm'
+              ? 'bg-gray-800 text-white shadow-sm'
               : 'text-gray-500 hover:text-gray-900'
           }`}
         >
@@ -172,56 +195,78 @@ function OnyxSearchBar({ slug: _slug }: { slug: string }) {
         </div>
       ) : (
         <>
-          {/* Linha principal: tipo · busca · buscar */}
-          <div className="grid gap-1.5 sm:grid-cols-[auto_1fr_auto] sm:gap-2">
+          {/* Linha principal: tipo · cidade · bairro/empreend · buscar */}
+          <div className="grid gap-1.5 sm:grid-cols-[180px_180px_1fr_auto] sm:gap-2">
             <select
               value={tipo}
               onChange={(e) => setTipo(e.target.value)}
-              className="rounded-md border-0 bg-gray-50 px-3 py-2 text-sm focus:bg-white focus:ring-1 focus:ring-gray-300 focus:outline-none"
+              className="rounded-md border-0 bg-gray-50 px-3 py-2 text-sm focus:bg-white focus:ring-1 focus:ring-gray-300 focus:outline-none uppercase tracking-wide font-semibold text-gray-700"
             >
               {tipos.map((t) => (
                 <option key={t.v} value={t.v}>{t.l}</option>
+              ))}
+            </select>
+            <select
+              value={cidade}
+              onChange={(e) => setCidade(e.target.value)}
+              className="rounded-md border-0 bg-gray-50 px-3 py-2 text-sm focus:bg-white focus:ring-1 focus:ring-gray-300 focus:outline-none uppercase tracking-wide font-semibold text-gray-700"
+            >
+              <option value="">Cidade</option>
+              {cidades.map((c) => (
+                <option key={c} value={c}>{c}</option>
               ))}
             </select>
             <input
               type="text"
               value={busca}
               onChange={(e) => setBusca(e.target.value)}
-              placeholder="Cidade, bairro ou empreendimento"
-              className="rounded-md border-0 bg-gray-50 px-3 py-2 text-sm focus:bg-white focus:ring-1 focus:ring-gray-300 focus:outline-none"
+              placeholder="BAIRRO OU EMPREENDIMENTO"
+              className="rounded-md border-0 bg-gray-50 px-3 py-2 text-sm focus:bg-white focus:ring-1 focus:ring-gray-300 focus:outline-none placeholder:uppercase placeholder:tracking-wide placeholder:font-semibold placeholder:text-gray-400"
             />
             <button
               type="submit"
-              className="inline-flex items-center justify-center gap-1.5 rounded-md px-5 py-2 text-sm font-semibold text-black"
+              className="inline-flex items-center justify-center gap-1.5 rounded-md px-6 py-2 text-sm font-bold text-black uppercase tracking-wider"
               style={{ background: 'var(--t-primary)' }}
             >
               <Search className="h-4 w-4" /> Buscar
             </button>
           </div>
 
-          {/* Busca avancada — abre quartos + faixa de preco */}
+          {/* Painel avancado — chips de comodos + areaMin + faixaPreco */}
           {aberto && (
-            <div className="mt-2 grid gap-1.5 sm:grid-cols-2 sm:gap-2">
-              <select
-                value={quartos}
-                onChange={(e) => setQuartos(e.target.value)}
-                className="rounded-md border-0 bg-gray-50 px-3 py-2 text-sm focus:bg-white focus:ring-1 focus:ring-gray-300 focus:outline-none"
-              >
-                <option value="">Quartos (qualquer)</option>
-                <option value="1">1+ quartos</option>
-                <option value="2">2+ quartos</option>
-                <option value="3">3+ quartos</option>
-                <option value="4">4+ quartos</option>
-              </select>
-              <select
-                value={faixa}
-                onChange={(e) => setFaixa(e.target.value)}
-                className="rounded-md border-0 bg-gray-50 px-3 py-2 text-sm focus:bg-white focus:ring-1 focus:ring-gray-300 focus:outline-none"
-              >
-                {faixas.map((f) => (
-                  <option key={f.v} value={f.v}>{f.l}</option>
-                ))}
-              </select>
+            <div className="mt-3 space-y-3 rounded-md bg-gray-50/50 p-3">
+              <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
+                <ChipGroup label="Quartos" value={quartos} onChange={setQuartos} options={['1', '2', '3', '4']} suffixLast="+" />
+                <ChipGroup label="Suítes" value={suites} onChange={setSuites} options={['1', '2', '3', '4']} suffix="+" />
+                <ChipGroup label="Banheiros" value={banheiros} onChange={setBanheiros} options={['1', '2', '3', '4']} suffix="+" />
+                <ChipGroup label="Vagas" value={vagas} onChange={setVagas} options={['1', '2', '3', '4']} suffix="+" />
+              </div>
+              <div className="grid gap-2 sm:grid-cols-2">
+                <label className="flex flex-col gap-1 text-[11px] font-semibold uppercase tracking-wider text-gray-600">
+                  Preço
+                  <select
+                    value={faixa}
+                    onChange={(e) => setFaixa(e.target.value)}
+                    className="rounded-md border-0 bg-white px-3 py-2 text-sm font-normal normal-case tracking-normal text-gray-900 focus:ring-1 focus:ring-gray-300 focus:outline-none"
+                  >
+                    {faixas.map((f) => (
+                      <option key={f.v} value={f.v}>{f.l}</option>
+                    ))}
+                  </select>
+                </label>
+                <label className="flex flex-col gap-1 text-[11px] font-semibold uppercase tracking-wider text-gray-600">
+                  Área
+                  <select
+                    value={areaMin}
+                    onChange={(e) => setAreaMin(e.target.value)}
+                    className="rounded-md border-0 bg-white px-3 py-2 text-sm font-normal normal-case tracking-normal text-gray-900 focus:ring-1 focus:ring-gray-300 focus:outline-none"
+                  >
+                    {areas.map((a) => (
+                      <option key={a.v} value={a.v}>{a.l}</option>
+                    ))}
+                  </select>
+                </label>
+              </div>
             </div>
           )}
         </>
@@ -234,7 +279,7 @@ function OnyxSearchBar({ slug: _slug }: { slug: string }) {
           onClick={() => { setAberto((v) => !v); setModoCodigo(false); }}
           className={`inline-flex items-center gap-1 hover:text-gray-900 ${aberto && !modoCodigo ? 'text-gray-900 font-semibold' : ''}`}
         >
-          {aberto && !modoCodigo ? '−' : '+'} Busca avançada
+          {aberto && !modoCodigo ? '∧ Simples' : '+ Busca avançada'}
         </button>
         <span className="opacity-30">·</span>
         <button
@@ -246,6 +291,59 @@ function OnyxSearchBar({ slug: _slug }: { slug: string }) {
         </button>
       </div>
     </form>
+  );
+}
+
+/**
+ * Grupo de chips estilo Douglas Navarro pra filtros numericos mínimos
+ * (quartos/suítes/banheiros/vagas). Clique no chip ativo desmarca.
+ */
+function ChipGroup({
+  label,
+  value,
+  onChange,
+  options,
+  suffix,
+  suffixLast,
+}: {
+  label: string;
+  value: string;
+  onChange: (v: string) => void;
+  options: string[];
+  /** Sufixo aplicado a todos os chips, ex "+" → "1+","2+","3+","4+" */
+  suffix?: string;
+  /** Sufixo aplicado apenas ao ultimo chip (caso Quartos: 1,2,3,4+) */
+  suffixLast?: string;
+}) {
+  return (
+    <div className="flex flex-col gap-1.5">
+      <span className="text-[11px] font-semibold uppercase tracking-wider text-gray-600 text-left">
+        {label}
+      </span>
+      <div className="grid grid-cols-4 gap-1">
+        {options.map((opt, idx) => {
+          const isLast = idx === options.length - 1;
+          const sfx = suffix ?? (isLast ? suffixLast ?? '' : '');
+          const active = value === opt;
+          return (
+            <button
+              key={opt}
+              type="button"
+              onClick={() => onChange(active ? '' : opt)}
+              className={`rounded border px-2 py-1.5 text-xs font-semibold transition-colors ${
+                active
+                  ? 'border-transparent text-black'
+                  : 'border-gray-200 bg-white text-gray-600 hover:border-gray-400'
+              }`}
+              style={active ? { background: 'var(--t-primary)' } : undefined}
+            >
+              {opt}
+              {sfx}
+            </button>
+          );
+        })}
+      </div>
+    </div>
   );
 }
 

@@ -4,13 +4,29 @@ export interface ImovelFilters {
   q?: string;
   op?: string; // venda | aluguel | lancamento
   tipo?: string; // CASA | APARTAMENTO | ...
+  cidade?: string;
   faixa?: string; // "min-max" em reais, ex "300000-500000" ou "3000000-"
-  dorm?: string; // "1" "2" "3" "4" — mínimo
+  dorm?: string; // "1" "2" "3" "4" — mínimo de quartos
+  suites?: string; // mínimo
+  banheiros?: string; // mínimo
+  vagas?: string; // mínimo
+  areaMin?: string; // m² mínimo
 }
 
 /** True se algum filtro está aplicado. */
 export function hasFilters(f: ImovelFilters): boolean {
-  return Boolean(f.q || f.op || f.tipo || f.faixa || f.dorm);
+  return Boolean(
+    f.q ||
+      f.op ||
+      f.tipo ||
+      f.cidade ||
+      f.faixa ||
+      f.dorm ||
+      f.suites ||
+      f.banheiros ||
+      f.vagas ||
+      f.areaMin,
+  );
 }
 
 export function parseFilters(
@@ -21,13 +37,26 @@ export function parseFilters(
     if (Array.isArray(v)) return v[0];
     return v;
   };
+  // Aceita 'quartos' como alias de 'dorm' (search bars novos)
+  const dorm = get('dorm') ?? get('quartos');
   return {
     q: get('q'),
     op: get('op'),
     tipo: get('tipo'),
+    cidade: get('cidade'),
     faixa: get('faixa'),
-    dorm: get('dorm'),
+    dorm,
+    suites: get('suites'),
+    banheiros: get('banheiros'),
+    vagas: get('vagas'),
+    areaMin: get('areaMin'),
   };
+}
+
+function minOf(value: string | undefined): number | null {
+  if (!value) return null;
+  const n = parseInt(value, 10);
+  return Number.isFinite(n) ? n : null;
 }
 
 export function applyFilters(
@@ -52,11 +81,29 @@ export function applyFilters(
     out = out.filter((i) => i.tipo === f.tipo);
   }
 
-  if (f.dorm) {
-    const min = parseInt(f.dorm, 10);
-    if (Number.isFinite(min)) {
-      out = out.filter((i) => i.quartos >= min);
-    }
+  if (f.cidade) {
+    const needle = f.cidade.toLowerCase().trim();
+    out = out.filter((i) => (i.cidade ?? '').toLowerCase() === needle);
+  }
+
+  const minDorm = minOf(f.dorm);
+  if (minDorm != null) out = out.filter((i) => (i.quartos ?? 0) >= minDorm);
+
+  const minSuites = minOf(f.suites);
+  if (minSuites != null) out = out.filter((i) => ((i as any).suites ?? 0) >= minSuites);
+
+  const minBanheiros = minOf(f.banheiros);
+  if (minBanheiros != null) out = out.filter((i) => ((i as any).banheiros ?? 0) >= minBanheiros);
+
+  const minVagas = minOf(f.vagas);
+  if (minVagas != null) out = out.filter((i) => ((i as any).vagas ?? 0) >= minVagas);
+
+  const minArea = minOf(f.areaMin);
+  if (minArea != null) {
+    out = out.filter((i) => {
+      const a = (i as any).areaM2 ?? (i as any).areaTotal ?? 0;
+      return Number(a) >= minArea;
+    });
   }
 
   if (f.faixa) {
@@ -111,7 +158,12 @@ export function filtersSummary(f: ImovelFilters): string[] {
     out.push(ops[f.op.toLowerCase()] ?? f.op);
   }
   if (f.tipo) out.push(TIPOS[f.tipo] ?? f.tipo);
+  if (f.cidade) out.push(f.cidade);
   if (f.dorm) out.push(`${f.dorm}+ dorm.`);
+  if (f.suites) out.push(`${f.suites}+ suíte${f.suites === '1' ? '' : 's'}`);
+  if (f.banheiros) out.push(`${f.banheiros}+ banh.`);
+  if (f.vagas) out.push(`${f.vagas}+ vaga${f.vagas === '1' ? '' : 's'}`);
+  if (f.areaMin) out.push(`${f.areaMin}m²+`);
   if (f.faixa) {
     const parts = f.faixa.split('-');
     const min = parts[0] ? parseInt(parts[0], 10) : 0;
