@@ -73,11 +73,13 @@ export const TEMPLATES: Array<{
 ];
 
 export const FORMATOS = [
-  { id: 'feed-square', nome: 'Post do Instagram (quadrado)', dim: '1080x1080', tipo: 'INSTAGRAM_FEED', carrossel: false, ratio: '1/1' as const },
+  // Novo formato padrao do Instagram (4:5) — substitui o antigo 1:1 que perdeu prioridade no feed.
+  // Mantemos o id 'feed-square' por compatibilidade com posts ja salvos.
+  { id: 'feed-square', nome: 'Post do Instagram', dim: '1080x1350', tipo: 'INSTAGRAM_FEED', carrossel: false, ratio: '4/5' as const },
   { id: 'story', nome: 'Story do Instagram', dim: '1080x1920', tipo: 'INSTAGRAM_STORIES', carrossel: false, ratio: '9/16' as const },
-  { id: 'feed-carrossel', nome: 'Post do Instagram', dim: '1080x1080', tipo: 'INSTAGRAM_FEED', carrossel: true, ratio: '1/1' as const, hint: 'formato: carrossel' },
-  { id: 'story-carrossel', nome: 'Story do Instagram', dim: '1080x1920', tipo: 'INSTAGRAM_STORIES', carrossel: true, ratio: '9/16' as const, hint: 'formato: carrossel' },
-  { id: 'facebook-square', nome: 'Post do Facebook (quadrado)', dim: '1080x1080', tipo: 'INSTAGRAM_FEED', carrossel: false, ratio: '1/1' as const },
+  { id: 'feed-carrossel', nome: 'Carrossel do Instagram', dim: '1080x1350', tipo: 'INSTAGRAM_FEED', carrossel: true, ratio: '4/5' as const, hint: 'multiplos cards' },
+  { id: 'story-carrossel', nome: 'Carrossel de Stories', dim: '1080x1920', tipo: 'INSTAGRAM_STORIES', carrossel: true, ratio: '9/16' as const, hint: 'multiplos cards' },
+  { id: 'facebook-square', nome: 'Post do Facebook', dim: '1080x1080', tipo: 'INSTAGRAM_FEED', carrossel: false, ratio: '1/1' as const },
 ];
 
 /** Mapeia tipo enum (CASA, APARTAMENTO...) pra label legível. */
