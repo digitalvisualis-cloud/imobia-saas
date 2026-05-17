@@ -246,10 +246,13 @@ export default function BlogClient({ initialArtigos, slug, cidades }: Props) {
         </div>
       )}
 
-      {/* Modal editor — items-center pra centralizar vertical; overflow-y-auto interno scrolla se cresce */}
+      {/* Modal editor — padrao canonico: overlay scrolla + min-h-full pro flex
+          centralizar quando cabe e crescer quando nao cabe. Sem max-h interno
+          (evita clipar conteudo no topo quando modal eh maior que viewport). */}
       {editing && (
-        <div className="fixed inset-0 z-50 bg-black/50 flex items-center justify-center p-4">
-          <div className="bg-background rounded-xl shadow-xl max-w-3xl w-full max-h-[90vh] overflow-y-auto">
+        <div className="fixed inset-0 z-50 bg-black/50 overflow-y-auto">
+          <div className="min-h-full flex items-start sm:items-center justify-center p-4">
+          <div className="bg-background rounded-xl shadow-xl max-w-3xl w-full my-4">
             <div className="sticky top-0 bg-background border-b border-border px-5 py-3 flex items-center justify-between">
               <h2 className="font-display text-lg font-semibold">
                 {(editing as Artigo).id ? 'Editar artigo' : 'Novo artigo'}
@@ -404,6 +407,7 @@ export default function BlogClient({ initialArtigos, slug, cidades }: Props) {
                 {saving ? 'Salvando...' : 'Salvar'}
               </button>
             </div>
+          </div>
           </div>
         </div>
       )}
