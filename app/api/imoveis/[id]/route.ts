@@ -64,10 +64,10 @@ export async function PATCH(
   const tenantId = (session.user as any).tenantId as string;
   const { id } = await ctx.params;
 
-  // Garante ownership
+  // Garante ownership + le publicado atual pra detectar transicao false→true
   const existente = await prisma.imovel.findFirst({
     where: { id, tenantId },
-    select: { id: true },
+    select: { id: true, publicado: true },
   });
   if (!existente) {
     return NextResponse.json({ error: 'Imóvel não encontrado' }, { status: 404 });
@@ -110,6 +110,14 @@ export async function PATCH(
     where: { id },
     data,
   });
+
+  // Se acabou de ser publicado (transicao false→true), dispara alerta
+  // pros inscritos da newsletter — fire-and-forget.
+  if (!existente.publicado && updated.publicado) {
+    import('@/lib/newsletter-dispatcher')
+      .then(({ dispatchNewsletterForImovel }) => dispatchNewsletterForImovel(updated.id))
+      .catch((err) => console.error('[newsletter] fire-and-forget falhou:', err));
+  }
 
   return NextResponse.json(serializeImovel(updated));
 }

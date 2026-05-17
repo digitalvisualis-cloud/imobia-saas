@@ -100,7 +100,7 @@ export function ThemeRenderer({ theme, config, tenant, imoveis }: Props) {
                   <OnyxCTA {...sectionProps} />
                 </>
               ),
-              contato: () => <OnyxContato tenant={tenant} />,
+              contato: () => <OnyxContato tenant={tenant} imoveis={imoveis} />,
             }}
           />
         </main>

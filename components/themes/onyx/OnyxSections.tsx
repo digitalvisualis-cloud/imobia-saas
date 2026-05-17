@@ -637,7 +637,10 @@ export function OnyxFAQ() { return null; }
  * Kanban de Negocios. Quando corretor cadastra imovel novo, dispara
  * email pros inscritos que batem com cidade/tipo/operacao/preco.
  */
-export function OnyxContato({ tenant }: { tenant?: TenantPublic }) {
+export function OnyxContato({ tenant, imoveis }: { tenant?: TenantPublic; imoveis?: ImovelPublic[] }) {
+  const cidades = imoveis
+    ? Array.from(new Set(imoveis.map((i) => i.cidade).filter(Boolean) as string[])).sort()
+    : [];
   return (
     <section className="bg-black text-white py-14">
       <div className="mx-auto max-w-[1100px] px-6 grid gap-6 md:grid-cols-2 md:items-center">
@@ -653,16 +656,21 @@ export function OnyxContato({ tenant }: { tenant?: TenantPublic }) {
           </h2>
           <p className="mt-2 text-sm text-white/60">
             Avisamos por email assim que cadastrarmos um imóvel que combina com você.
+            Defina filtros opcionais pra receber só o que importa.
           </p>
         </div>
-        {tenant?.slug && <NewsletterForm slug={tenant.slug} />}
+        {tenant?.slug && <NewsletterForm slug={tenant.slug} cidades={cidades} />}
       </div>
     </section>
   );
 }
 
-function NewsletterForm({ slug }: { slug: string }) {
+function NewsletterForm({ slug, cidades }: { slug: string; cidades: string[] }) {
   const [email, setEmail] = useState('');
+  const [nome, setNome] = useState('');
+  const [cidade, setCidade] = useState('');
+  const [tipo, setTipo] = useState('');
+  const [operacao, setOperacao] = useState('');
   const [enviando, setEnviando] = useState(false);
   const [ok, setOk] = useState(false);
   const [erro, setErro] = useState<string | null>(null);
@@ -676,14 +684,20 @@ function NewsletterForm({ slug }: { slug: string }) {
       const res = await fetch('/api/public/newsletter', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ slug, email: email.trim() }),
+        body: JSON.stringify({
+          slug,
+          email: email.trim(),
+          nome: nome.trim() || undefined,
+          cidadeInteresse: cidade || undefined,
+          tipoInteresse: tipo || undefined,
+          operacaoInteresse: operacao || undefined,
+        }),
       });
       if (!res.ok) {
         const j = await res.json().catch(() => ({}));
         throw new Error(j.error ?? 'Erro ao inscrever.');
       }
       setOk(true);
-      setEmail('');
     } catch (err: any) {
       setErro(err.message ?? 'Erro ao inscrever.');
     } finally {
@@ -696,31 +710,65 @@ function NewsletterForm({ slug }: { slug: string }) {
       <div className="rounded-md bg-white/10 p-4 text-sm text-white">
         <p className="font-semibold">✓ Inscrição confirmada!</p>
         <p className="text-white/70">
-          Avisaremos quando tivermos novidades pra você.
+          Avisaremos por e-mail assim que tivermos um imóvel que bate com seu filtro.
         </p>
       </div>
     );
   }
 
+  const inputCls =
+    'rounded-md border-0 bg-white/10 px-3 py-2 text-sm text-white placeholder-white/40 focus:bg-white/15 focus:outline-none focus:ring-1 focus:ring-white/30';
+
   return (
-    <form onSubmit={submeter} className="flex flex-col gap-2 sm:flex-row">
-      <input
-        type="email"
-        required
-        placeholder="seu@email.com"
-        value={email}
-        onChange={(e) => setEmail(e.target.value)}
-        className="flex-1 rounded-md border-0 bg-white/10 px-4 py-2.5 text-sm text-white placeholder-white/40 focus:bg-white/15 focus:outline-none focus:ring-1 focus:ring-white/30"
-      />
+    <form onSubmit={submeter} className="grid gap-2">
+      <div className="grid gap-2 sm:grid-cols-2">
+        <input
+          type="email"
+          required
+          placeholder="seu@email.com"
+          value={email}
+          onChange={(e) => setEmail(e.target.value)}
+          className={inputCls}
+        />
+        <input
+          type="text"
+          placeholder="Seu nome (opcional)"
+          value={nome}
+          onChange={(e) => setNome(e.target.value)}
+          className={inputCls}
+        />
+      </div>
+      <div className="grid gap-2 sm:grid-cols-3">
+        <select value={cidade} onChange={(e) => setCidade(e.target.value)} className={inputCls}>
+          <option value="">Cidade (qualquer)</option>
+          {cidades.map((c) => (
+            <option key={c} value={c}>{c}</option>
+          ))}
+        </select>
+        <select value={tipo} onChange={(e) => setTipo(e.target.value)} className={inputCls}>
+          <option value="">Tipo (qualquer)</option>
+          <option value="CASA">Casa</option>
+          <option value="APARTAMENTO">Apartamento</option>
+          <option value="COBERTURA">Cobertura</option>
+          <option value="STUDIO">Studio</option>
+          <option value="TERRENO">Terreno</option>
+          <option value="SALA_COMERCIAL">Sala Comercial</option>
+        </select>
+        <select value={operacao} onChange={(e) => setOperacao(e.target.value)} className={inputCls}>
+          <option value="">Operação</option>
+          <option value="VENDA">Venda</option>
+          <option value="ALUGUEL">Aluguel</option>
+        </select>
+      </div>
+      {erro && <p className="text-xs text-red-300">{erro}</p>}
       <button
         type="submit"
         disabled={enviando}
-        className="rounded-md px-5 py-2.5 text-sm font-semibold text-black hover:opacity-90 disabled:opacity-60"
+        className="mt-1 rounded-md px-5 py-2.5 text-sm font-semibold text-black hover:opacity-90 disabled:opacity-60"
         style={{ background: 'var(--t-primary)' }}
       >
-        {enviando ? 'Inscrevendo...' : 'Quero receber'}
+        {enviando ? 'Inscrevendo...' : 'Quero receber alertas'}
       </button>
-      {erro && <p className="text-xs text-red-300">{erro}</p>}
     </form>
   );
 }

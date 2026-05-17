@@ -157,6 +157,16 @@ export async function POST(req: Request) {
       },
     });
 
+    // Fire-and-forget: dispara alertas pros inscritos do tenant que
+    // batem com cidade/tipo/operacao/precoMax. Nao bloqueia a resposta
+    // (cadastro do imovel nao depende do envio dos emails).
+    if (imovel.publicado) {
+      // Import dinamico pra evitar bundle do dispatcher no client/edge
+      import('@/lib/newsletter-dispatcher')
+        .then(({ dispatchNewsletterForImovel }) => dispatchNewsletterForImovel(imovel.id))
+        .catch((err) => console.error('[newsletter] fire-and-forget falhou:', err));
+    }
+
     return NextResponse.json({ success: true, imovel });
   } catch (error: any) {
     console.error('Erro ao salvar imóvel:', error);

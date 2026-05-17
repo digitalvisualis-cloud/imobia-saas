@@ -21,12 +21,22 @@ type Lead = {
 
 type TipoTab = 'COMPRADOR' | 'VENDEDOR';
 
-const STAGES = [
+// Etapas pra COMPRADOR (funil padrao)
+const STAGES_COMPRADOR = [
   { id: 'NOVO', label: 'Novo Lead', color: '#3b82f6' },
   { id: 'CONTATO', label: 'Em Contato', color: '#8b5cf6' },
   { id: 'VISITA_AGENDADA', label: 'Visita Marcada', color: '#eab308' },
   { id: 'PROPOSTA', label: 'Proposta', color: '#f97316' },
   { id: 'FECHADO', label: 'Fechado ✓', color: '#22c55e' },
+];
+
+// Etapas pra VENDEDOR (captacao) — mesma enum subjacente, labels especificos
+const STAGES_VENDEDOR = [
+  { id: 'NOVO', label: 'Novo proprietário', color: '#3b82f6' },
+  { id: 'CONTATO', label: 'Avaliação agendada', color: '#8b5cf6' },
+  { id: 'VISITA_AGENDADA', label: 'Avaliado', color: '#eab308' },
+  { id: 'PROPOSTA', label: 'Contrato em negociação', color: '#f97316' },
+  { id: 'FECHADO', label: 'Listado ✓', color: '#22c55e' },
 ];
 
 const TEMP_LABEL: Record<string, string> = { FRIO: 'Frio', MORNO: 'Morno', QUENTE: '🔥 Quente' };
@@ -117,6 +127,8 @@ export default function LeadsPage() {
       (l.imovel?.titulo ?? '').toLowerCase().includes(search.toLowerCase()),
     );
 
+  const STAGES_VIEW = tipoTab === 'VENDEDOR' ? STAGES_VENDEDOR : STAGES_COMPRADOR;
+
   function onDragStart(id: string) { setDragging(id); }
   async function onDrop(stage: string) {
     if (!dragging || leads.find(l => l.id === dragging)?.etapa === stage) { setDragging(null); return; }
@@ -201,7 +213,7 @@ export default function LeadsPage() {
 
       {/* METRICS */}
       <div className={styles.metricsRow}>
-        {STAGES.map(s => {
+        {STAGES_VIEW.map(s => {
           const count = filtered.filter(l => l.etapa === s.id).length;
           return (
             <div key={s.id} className={styles.metricChip} style={{ borderColor: s.color + '44' }}>
@@ -216,7 +228,7 @@ export default function LeadsPage() {
         <p className="text-muted mt-8 text-center">Carregando leads...</p>
       ) : (
         <div className={styles.kanban}>
-          {STAGES.map(stage => {
+          {STAGES_VIEW.map(stage => {
             const col = filtered.filter(l => l.etapa === stage.id);
             return (
               <div
@@ -296,7 +308,7 @@ export default function LeadsPage() {
                   <div className="form-group"><label className="label">Orçamento</label><input className="input" defaultValue={selected.orcamento?.toString() ?? ''} /></div>
                   <div className="form-group"><label className="label">Etapa</label>
                     <select className="input" defaultValue={selected.etapa}>
-                      {STAGES.map(s => <option key={s.id} value={s.id}>{s.label}</option>)}
+                      {STAGES_VIEW.map(s => <option key={s.id} value={s.id}>{s.label}</option>)}
                     </select>
                   </div>
                 </div>

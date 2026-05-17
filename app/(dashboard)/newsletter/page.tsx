@@ -29,7 +29,7 @@ export default async function NewsletterPage() {
     <div className="fade-in">
       <PageHeader
         title="Alertas de imóveis novos"
-        description={`${inscricoes.length} inscrito${inscricoes.length === 1 ? '' : 's'} pra receber imóveis em primeira mão`}
+        description={`${inscricoes.length} inscrito${inscricoes.length === 1 ? '' : 's'} pra receber imóveis em primeira mão. Disparamos email automático quando você cadastra um imóvel que bate com o filtro de cada um.`}
         icon={Mail}
       />
 
@@ -76,6 +76,7 @@ export default async function NewsletterPage() {
                 <th className="px-4 py-2.5">E-mail</th>
                 <th className="px-4 py-2.5">Nome</th>
                 <th className="px-4 py-2.5">Interesse</th>
+                <th className="px-4 py-2.5">Último alerta</th>
                 <th className="px-4 py-2.5 text-right">Inscrito em</th>
               </tr>
             </thead>
@@ -86,6 +87,9 @@ export default async function NewsletterPage() {
                   <td className="px-4 py-2.5">{i.nome ?? <span className="opacity-40">—</span>}</td>
                   <td className="px-4 py-2.5 text-xs text-muted-foreground">
                     {[i.cidadeInteresse, i.tipoInteresse, i.operacaoInteresse].filter(Boolean).join(' · ') || <span className="opacity-40">qualquer</span>}
+                  </td>
+                  <td className="px-4 py-2.5 text-xs text-muted-foreground">
+                    {i.ultimoEnvio ? i.ultimoEnvio.toLocaleDateString('pt-BR') : <span className="opacity-40">—</span>}
                   </td>
                   <td className="px-4 py-2.5 text-right text-xs text-muted-foreground">
                     {i.createdAt.toLocaleDateString('pt-BR')}
