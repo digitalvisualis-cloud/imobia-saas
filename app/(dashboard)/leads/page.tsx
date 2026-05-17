@@ -1,5 +1,5 @@
 'use client';
-import { useState, useEffect } from 'react';
+import { useState, useEffect, Suspense } from 'react';
 import { useSearchParams } from 'next/navigation';
 import toast from 'react-hot-toast';
 import styles from './leads.module.css';
@@ -55,7 +55,17 @@ function timeAgo(dateStr: string) {
   return Math.floor(diff / 86400) + 'd';
 }
 
-export default function LeadsPage() {
+// Wrapper com Suspense pra useSearchParams() — Next 16 exige isso pra
+// nao quebrar o prerender estatico.
+export default function LeadsPageWrapper() {
+  return (
+    <Suspense fallback={<p className="text-muted mt-8 text-center">Carregando...</p>}>
+      <LeadsPage />
+    </Suspense>
+  );
+}
+
+function LeadsPage() {
   const searchParams = useSearchParams();
   const initialTab: TipoTab = searchParams.get('tab') === 'vendedor' ? 'VENDEDOR' : 'COMPRADOR';
   const [leads, setLeads] = useState<Lead[]>([]);
