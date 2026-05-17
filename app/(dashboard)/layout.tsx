@@ -31,6 +31,7 @@ import {
   FileText,
   Receipt,
   Users,
+  ArrowRightLeft,
   type LucideIcon,
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
@@ -132,6 +133,7 @@ export default function DashboardLayout({
         { name: 'Controle de Chaves', href: '/controle-chaves', icon: KeyRound },
         { name: 'Contratos', href: '/contratos', icon: FileText },
         { name: 'Inquilinos', href: '/inquilinos', icon: Users },
+        { name: 'Repasses', href: '/repasses', icon: ArrowRightLeft },
         { name: 'Comissões', href: '/comissoes', icon: Receipt },
         { name: 'Financeiro', href: '/financeiro', icon: Wallet },
       ],

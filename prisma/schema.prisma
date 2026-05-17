@@ -39,6 +39,7 @@ model Tenant {
   artigosBlog ArtigoBlog[]
   chaveRetiradas ChaveRetirada[]
   comissaoSplits ComissaoSplit[]
+  repasses Repasse[]
 
   @@map("tenants")
 }
@@ -670,6 +671,7 @@ model Contrato {
   imovel          Imovel?         @relation(fields: [imovelId], references: [id], onDelete: SetNull)
   lead            Lead?           @relation(fields: [leadId], references: [id], onDelete: SetNull)
   splits          ComissaoSplit[]
+  repasses        Repasse[]
 
   @@index([tenantId, status])
   @@index([tenantId, dataInicio])
@@ -725,6 +727,47 @@ enum PapelComissao {
 enum StatusComissao {
   PENDENTE
   PAGO
+  CANCELADO
+}
+
+/// Repasse mensal pro proprietario na locacao administrada.
+/// 1 linha = 1 mes/contrato (unique constraint contratoId+mesReferencia).
+model Repasse {
+  id                    String          @id @default(cuid())
+  tenantId              String
+  contratoId            String
+  proprietarioNome      String
+  proprietarioContato   String?
+  proprietarioConta     String?         // chave PIX, banco/agencia/conta livre
+  mesReferencia         String          // YYYY-MM (ex: "2026-05")
+  valorBruto            Decimal         @db.Decimal(15, 2)  // recebido do inquilino
+  taxaAdmPct            Decimal?        @db.Decimal(5, 2)
+  taxaAdmFixa           Decimal?        @db.Decimal(15, 2)
+  outrosDescontos       Decimal         @default(0) @db.Decimal(15, 2)
+  descontosNotas        String?
+  valorLiquido          Decimal         @db.Decimal(15, 2)  // a repassar
+  status                StatusRepasse   @default(PENDENTE)
+  pagoEm                DateTime?
+  comprovanteUrl        String?
+  observacao            String?
+  /// Hook n8n: evita duplicar lembrete
+  eventoCobrancaEmitido Boolean         @default(false)
+  createdAt             DateTime        @default(now())
+  updatedAt             DateTime        @updatedAt
+
+  tenant                Tenant          @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  contrato              Contrato        @relation(fields: [contratoId], references: [id], onDelete: Cascade)
+
+  @@unique([contratoId, mesReferencia])
+  @@index([tenantId, status])
+  @@index([tenantId, mesReferencia])
+  @@map("repasses")
+}
+
+enum StatusRepasse {
+  PENDENTE      // aluguel ainda nao pago pelo inquilino
+  A_REPASSAR    // inquilino pagou, falta repassar
+  PAGO          // repasse concluido
   CANCELADO
 }
 
