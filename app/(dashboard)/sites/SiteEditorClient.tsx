@@ -19,15 +19,25 @@ interface SiteData {
   configOnyx: Customization;
 }
 
+interface ArtigoPreview {
+  id: string;
+  slug: string;
+  titulo: string;
+  resumo: string | null;
+  capaUrl: string | null;
+  publicadoEm: string | null;
+}
+
 interface Props {
   site: SiteData;
   tenant: TenantPublic;
   imoveis: ImovelPublic[];
+  artigos?: ArtigoPreview[];
 }
 
 type Viewport = 'desktop' | 'mobile';
 
-export default function SiteEditorClient({ site, tenant, imoveis }: Props) {
+export default function SiteEditorClient({ site, tenant, imoveis, artigos = [] }: Props) {
   const hydrate = useSiteStore((s) => s.hydrate);
   const setActiveTheme = useSiteStore((s) => s.setActiveTheme);
   const markSaved = useSiteStore((s) => s.markSaved);
@@ -88,7 +98,7 @@ export default function SiteEditorClient({ site, tenant, imoveis }: Props) {
     setActiveTheme(site.themeId);
     markSaved();
     try {
-      localStorage.setItem('site-preview-data', JSON.stringify({ tenant, imoveis }));
+      localStorage.setItem('site-preview-data', JSON.stringify({ tenant, imoveis, artigos }));
       const s = useSiteStore.getState();
       localStorage.setItem(
         'site-preview-state',
@@ -138,7 +148,7 @@ export default function SiteEditorClient({ site, tenant, imoveis }: Props) {
       window.location.origin,
     );
     iframeRef.current?.contentWindow?.postMessage(
-      { type: 'site-preview/data', payload: { tenant, imoveis } },
+      { type: 'site-preview/data', payload: { tenant, imoveis, artigos } },
       window.location.origin,
     );
   }

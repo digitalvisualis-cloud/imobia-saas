@@ -17,9 +17,18 @@ import type { ImovelPublic, TenantPublic } from '@/app/_templates/types';
  *   - { type: 'site-preview/data', payload: { tenant, imoveis } }
  *   - { type: 'site-preview/state', payload: { theme, config } }
  */
+interface PreviewArtigo {
+  id: string;
+  slug: string;
+  titulo: string;
+  resumo: string | null;
+  capaUrl: string | null;
+  publicadoEm: string | null;
+}
 interface PreviewData {
   tenant: TenantPublic;
   imoveis: ImovelPublic[];
+  artigos?: PreviewArtigo[];
 }
 interface PreviewState {
   theme: ThemeId;
@@ -88,6 +97,8 @@ export default function SitePreviewPage() {
       config={state.config}
       tenant={data.tenant}
       imoveis={data.imoveis}
+      artigos={data.artigos ?? []}
+      isPreview
     />
   );
 }

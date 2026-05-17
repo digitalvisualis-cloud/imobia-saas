@@ -16,7 +16,7 @@ export default async function SitesPage() {
   if (!session?.user) redirect('/login');
   const tenantId = (session.user as any).tenantId as string;
 
-  const [tenant, imoveis] = await Promise.all([
+  const [tenant, imoveis, artigos] = await Promise.all([
     prisma.tenant.findUnique({
       where: { id: tenantId },
       include: { marca: true, site: true },
@@ -25,6 +25,12 @@ export default async function SitesPage() {
       where: { tenantId, publicado: true },
       orderBy: [{ destaque: 'desc' }, { createdAt: 'desc' }],
       take: 30,
+    }),
+    prisma.artigoBlog.findMany({
+      where: { tenantId, publicado: true },
+      orderBy: { publicadoEm: 'desc' },
+      take: 3,
+      select: { id: true, slug: true, titulo: true, resumo: true, capaUrl: true, publicadoEm: true },
     }),
   ]);
 
@@ -84,6 +90,10 @@ export default async function SitesPage() {
       }}
       tenant={tenantPublic}
       imoveis={imoveisPublic}
+      artigos={artigos.map((a) => ({
+        ...a,
+        publicadoEm: a.publicadoEm?.toISOString() ?? null,
+      }))}
     />
   );
 }

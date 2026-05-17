@@ -54,6 +54,8 @@ interface Props {
     capaUrl: string | null;
     publicadoEm: string | null;
   }>;
+  /** True quando renderiza dentro do editor preview — mostra placeholders. */
+  isPreview?: boolean;
 }
 
 /**
@@ -61,7 +63,7 @@ interface Props {
  * configurada. Componente client porque alguns sub-componentes (FAQ accordion) usam
  * estado local. O ThemeScope injeta CSS vars; SectionsRenderer filtra/ordena.
  */
-export function ThemeRenderer({ theme, config, tenant, imoveis, artigos = [] }: Props) {
+export function ThemeRenderer({ theme, config, tenant, imoveis, artigos = [], isPreview = false }: Props) {
   const sectionProps = { tenant, imoveis, config };
 
   if (theme === 'aura') {
@@ -78,12 +80,8 @@ export function ThemeRenderer({ theme, config, tenant, imoveis, artigos = [] }: 
               sobre: () => <AuraSobre {...sectionProps} />,
               depoimentos: () => <AuraDepoimentos />,
               faq: () => <AuraFAQ />,
-              cta: () => (
-                <>
-                  <AuraCTA {...sectionProps} />
-                  <BlogTeaser slug={tenant.slug} artigos={artigos} variant="dark" />
-                </>
-              ),
+              cta: () => <AuraCTA {...sectionProps} />,
+              blog: () => <BlogTeaser slug={tenant.slug} artigos={artigos} variant="dark" showPlaceholder={isPreview} />,
               contato: () => <AuraContato />,
             }}
           />
@@ -111,10 +109,10 @@ export function ThemeRenderer({ theme, config, tenant, imoveis, artigos = [] }: 
               cta: () => (
                 <>
                   <OnyxAnuncie {...sectionProps} />
-                  <BlogTeaser slug={tenant.slug} artigos={artigos} variant="light" />
                   <OnyxCTA {...sectionProps} />
                 </>
               ),
+              blog: () => <BlogTeaser slug={tenant.slug} artigos={artigos} variant="light" showPlaceholder={isPreview} />,
               contato: () => <OnyxContato tenant={tenant} imoveis={imoveis} />,
             }}
           />
@@ -139,12 +137,8 @@ export function ThemeRenderer({ theme, config, tenant, imoveis, artigos = [] }: 
             sobre: () => <BrisaSobre {...sectionProps} />,
             depoimentos: () => <BrisaDepoimentos />,
             faq: () => <BrisaFAQ />,
-            cta: () => (
-              <>
-                <BrisaCTA tenant={tenant} />
-                <BlogTeaser slug={tenant.slug} artigos={artigos} variant="light" />
-              </>
-            ),
+            cta: () => <BrisaCTA tenant={tenant} />,
+            blog: () => <BlogTeaser slug={tenant.slug} artigos={artigos} variant="light" showPlaceholder={isPreview} />,
             contato: () => <BrisaContato />,
           }}
         />

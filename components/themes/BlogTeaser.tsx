@@ -22,14 +22,23 @@ export function BlogTeaser({
   slug,
   artigos,
   variant = 'light',
+  showPlaceholder = false,
 }: {
   slug: string;
   artigos: ArtigoTeaser[];
   /** 'light' = bg branco/claro (Brisa/Onyx homes); 'dark' = bg escuro (Aura) */
   variant?: 'light' | 'dark';
+  /** Quando true, mostra placeholders se nao ha artigos (uso no editor preview). */
+  showPlaceholder?: boolean;
 }) {
-  if (artigos.length === 0) return null;
+  if (artigos.length === 0 && !showPlaceholder) return null;
   const isDark = variant === 'dark';
+  const items: ArtigoTeaser[] = artigos.length > 0 ? artigos : [
+    { id: 'p1', slug: '', titulo: 'Seu próximo artigo aparecerá aqui', resumo: 'Crie posts em /blog. Quando publicar, os 3 mais recentes aparecem nesta faixa automaticamente.', capaUrl: null, publicadoEm: null },
+    { id: 'p2', slug: '', titulo: 'Exemplo: "Vale a pena financiar pela MCMV em 2026?"', resumo: null, capaUrl: null, publicadoEm: null },
+    { id: 'p3', slug: '', titulo: 'Exemplo: "5 bairros valorizando em Atibaia"', resumo: null, capaUrl: null, publicadoEm: null },
+  ];
+  const isPlaceholder = artigos.length === 0;
 
   return (
     <section className={`py-16 ${isDark ? 'bg-neutral-900 text-white' : 'bg-stone-50 text-stone-900'}`}>
@@ -56,7 +65,23 @@ export function BlogTeaser({
         </div>
 
         <div className="grid gap-5 sm:grid-cols-2 lg:grid-cols-3">
-          {artigos.slice(0, 3).map((a) => (
+          {items.slice(0, 3).map((a) => (
+            isPlaceholder ? (
+              <div
+                key={a.id}
+                className={`block rounded-xl overflow-hidden ${
+                  isDark ? 'bg-white/5 ring-1 ring-white/10' : 'bg-white ring-1 ring-stone-200'
+                } opacity-60`}
+              >
+                <div className={`h-44 w-full ${isDark ? 'bg-white/5' : 'bg-stone-100'}`} />
+                <div className="p-4">
+                  <h3 className="font-semibold leading-snug line-clamp-2 italic opacity-60" style={{ fontFamily: 'var(--t-font-heading)' }}>
+                    {a.titulo || 'Seu próximo artigo aqui'}
+                  </h3>
+                  {a.resumo && <p className="mt-2 text-sm opacity-50 line-clamp-3">{a.resumo}</p>}
+                </div>
+              </div>
+            ) : (
             <Link
               key={a.id}
               href={`/s/${slug}/blog/${a.slug}`}
@@ -91,6 +116,7 @@ export function BlogTeaser({
                 )}
               </div>
             </Link>
+            )
           ))}
         </div>
       </div>

@@ -15,6 +15,7 @@ export type SectionId =
   | 'depoimentos'
   | 'faq'
   | 'cta'
+  | 'blog'
   | 'contato';
 
 export interface SectionConfig {
@@ -92,6 +93,7 @@ export const DEFAULT_SECTIONS: SectionConfig[] = [
   { id: 'depoimentos', label: 'Depoimentos de clientes', visible: true },
   { id: 'faq', label: 'Perguntas frequentes', visible: false },
   { id: 'cta', label: 'Chamada — Anuncie seu imóvel', visible: true },
+  { id: 'blog', label: 'Blog — Artigos recentes', visible: true },
   { id: 'contato', label: 'Newsletter / Contato', visible: true },
 ];
 
