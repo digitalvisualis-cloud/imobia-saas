@@ -353,7 +353,7 @@ function NovaCaptacaoModal({
 
   return (
     <div className="fixed inset-0 z-50 bg-black/50 overflow-y-auto">
-      <div className="min-h-full flex items-start sm:items-center justify-center p-4">
+      <div className="min-h-screen flex items-center justify-center p-4">
       <div className="bg-background rounded-xl shadow-xl max-w-lg w-full my-4">
         <div className="border-b border-border px-5 py-3 flex items-center justify-between">
           <h2 className="font-display text-lg font-semibold">Nova captação</h2>
@@ -431,7 +431,7 @@ function EditCaptacaoModal({
 
   return (
     <div className="fixed inset-0 z-50 bg-black/50 overflow-y-auto">
-      <div className="min-h-full flex items-start sm:items-center justify-center p-4">
+      <div className="min-h-screen flex items-center justify-center p-4">
       <div className="bg-background rounded-xl shadow-xl max-w-lg w-full my-4">
         <div className="border-b border-border px-5 py-3 flex items-center justify-between">
           <h2 className="font-display text-lg font-semibold">{lead.nome}</h2>

@@ -1,10 +1,11 @@
 'use client';
 
 import { useState } from 'react';
-import { Plus, Edit3, Trash2, ExternalLink, Sparkles, X, Eye, EyeOff, FileText } from 'lucide-react';
+import { Plus, Edit3, Trash2, ExternalLink, Sparkles, X, Eye, EyeOff, FileText, ImageIcon } from 'lucide-react';
 import { PageHeader } from '@/components/ui/page-header';
 import { EmptyState } from '@/components/ui/empty-state';
 import { toast } from '@/lib/toast';
+import { renderMarkdown } from '@/lib/markdown';
 
 interface Artigo {
   id: string;
@@ -47,8 +48,10 @@ export default function BlogClient({ initialArtigos, slug, cidades }: Props) {
   const [editing, setEditing] = useState<Partial<Artigo> | null>(null);
   const [saving, setSaving] = useState(false);
   const [gerandoIA, setGerandoIA] = useState(false);
+  const [gerandoImagem, setGerandoImagem] = useState(false);
   const [iaTopico, setIaTopico] = useState('');
   const [iaCidade, setIaCidade] = useState(cidades[0] ?? '');
+  const [conteudoTab, setConteudoTab] = useState<'editar' | 'preview'>('editar');
 
   function abrirNovo() {
     setEditing({ ...EMPTY_FORM });
@@ -121,6 +124,29 @@ export default function BlogClient({ initialArtigos, slug, cidades }: Props) {
       toast.success(saved.publicado ? 'Publicado' : 'Despublicado');
     } catch {
       toast.error('Erro');
+    }
+  }
+
+  async function gerarImagem() {
+    if (!editing?.titulo?.trim()) {
+      toast.error('Defina um título antes de gerar a imagem');
+      return;
+    }
+    setGerandoImagem(true);
+    try {
+      const res = await fetch('/api/blog/gerar-imagem', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ titulo: editing.titulo, resumo: editing.resumo }),
+      });
+      if (!res.ok) throw new Error((await res.json()).error ?? 'erro');
+      const { capaUrl } = await res.json();
+      setEditing((prev) => ({ ...(prev ?? {}), capaUrl }));
+      toast.success('Imagem gerada — pode levar uns segundos pra carregar');
+    } catch (e: any) {
+      toast.error(e.message ?? 'Erro ao gerar imagem');
+    } finally {
+      setGerandoImagem(false);
     }
   }
 
@@ -246,12 +272,12 @@ export default function BlogClient({ initialArtigos, slug, cidades }: Props) {
         </div>
       )}
 
-      {/* Modal editor — padrao canonico: overlay scrolla + min-h-full pro flex
-          centralizar quando cabe e crescer quando nao cabe. Sem max-h interno
-          (evita clipar conteudo no topo quando modal eh maior que viewport). */}
+      {/* Modal editor — min-h-screen (100vh absoluto, nao min-h-full que
+          depende de parent height resolvido) + flex items-center pra
+          centralizar quando cabe + sem max-h interno pra crescer naturalmente. */}
       {editing && (
         <div className="fixed inset-0 z-50 bg-black/50 overflow-y-auto">
-          <div className="min-h-full flex items-start sm:items-center justify-center p-4">
+          <div className="min-h-screen flex items-center justify-center p-4">
           <div className="bg-background rounded-xl shadow-xl max-w-3xl w-full my-4">
             <div className="sticky top-0 bg-background border-b border-border px-5 py-3 flex items-center justify-between">
               <h2 className="font-display text-lg font-semibold">
@@ -319,25 +345,76 @@ export default function BlogClient({ initialArtigos, slug, cidades }: Props) {
               </div>
 
               <div>
-                <label className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">URL da capa (https://...)</label>
+                <div className="flex items-center justify-between gap-2 mb-1">
+                  <label className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">
+                    Capa
+                  </label>
+                  <button
+                    type="button"
+                    onClick={gerarImagem}
+                    disabled={gerandoImagem || !editing.titulo?.trim()}
+                    className="inline-flex items-center gap-1 rounded-md bg-primary/10 text-primary px-2.5 py-1 text-[11px] font-semibold hover:bg-primary/20 disabled:opacity-50"
+                  >
+                    <ImageIcon className="h-3 w-3" />
+                    {gerandoImagem ? 'Gerando...' : (editing.capaUrl ? 'Regerar imagem' : 'Gerar imagem com IA')}
+                  </button>
+                </div>
+                {editing.capaUrl && (
+                  // eslint-disable-next-line @next/next/no-img-element
+                  <img
+                    src={editing.capaUrl}
+                    alt="Preview da capa"
+                    className="mb-2 w-full h-44 object-cover rounded-md border border-input"
+                    onError={(e) => { (e.target as HTMLImageElement).style.opacity = '0.3'; }}
+                  />
+                )}
                 <input
                   value={editing.capaUrl ?? ''}
                   onChange={(e) => setEditing({ ...editing, capaUrl: e.target.value })}
-                  className="mt-1 w-full rounded-md border border-input bg-background px-3 py-2 text-sm"
-                  placeholder="https://..."
+                  className="w-full rounded-md border border-input bg-background px-3 py-2 text-xs font-mono"
+                  placeholder="https://... (ou clique em Gerar imagem)"
                 />
               </div>
 
               <div>
-                <label className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">
-                  Conteúdo (markdown — use ## pra subtítulo, ** pra negrito)
-                </label>
-                <textarea
-                  value={editing.conteudoMd ?? ''}
-                  onChange={(e) => setEditing({ ...editing, conteudoMd: e.target.value })}
-                  rows={14}
-                  className="mt-1 w-full rounded-md border border-input bg-background px-3 py-2 text-sm font-mono leading-relaxed"
-                />
+                <div className="flex items-center justify-between mb-1">
+                  <label className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">
+                    Conteúdo (markdown — use ## pra subtítulo, ** pra negrito)
+                  </label>
+                  <div className="flex gap-1 rounded-md bg-muted/40 p-0.5">
+                    <button
+                      type="button"
+                      onClick={() => setConteudoTab('editar')}
+                      className={`rounded px-2.5 py-1 text-[11px] font-semibold transition-colors ${
+                        conteudoTab === 'editar' ? 'bg-background text-foreground shadow-sm' : 'text-muted-foreground'
+                      }`}
+                    >
+                      Editar
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => setConteudoTab('preview')}
+                      className={`rounded px-2.5 py-1 text-[11px] font-semibold transition-colors ${
+                        conteudoTab === 'preview' ? 'bg-background text-foreground shadow-sm' : 'text-muted-foreground'
+                      }`}
+                    >
+                      Preview
+                    </button>
+                  </div>
+                </div>
+                {conteudoTab === 'editar' ? (
+                  <textarea
+                    value={editing.conteudoMd ?? ''}
+                    onChange={(e) => setEditing({ ...editing, conteudoMd: e.target.value })}
+                    rows={14}
+                    className="w-full rounded-md border border-input bg-background px-3 py-2 text-sm font-mono leading-relaxed"
+                  />
+                ) : (
+                  <div
+                    className="w-full min-h-[340px] rounded-md border border-input bg-card px-5 py-4 text-sm prose prose-stone max-w-none [&>h2]:mt-5 [&>h2]:mb-2 [&>h2]:text-lg [&>h2]:font-bold [&>h3]:mt-4 [&>h3]:mb-2 [&>h3]:text-base [&>h3]:font-semibold [&>p]:my-3 [&>p]:leading-relaxed [&>ul]:my-3"
+                    dangerouslySetInnerHTML={{ __html: renderMarkdown(editing.conteudoMd ?? '') || '<p class="text-muted-foreground italic">Conteúdo vazio — clique em Editar pra escrever.</p>' }}
+                  />
+                )}
               </div>
 
               <details className="rounded-md border border-input p-3">
