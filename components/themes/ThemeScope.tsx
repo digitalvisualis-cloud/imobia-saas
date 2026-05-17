@@ -14,6 +14,16 @@ function hexToRgb(hex: string): string {
   return `${(num >> 16) & 255} ${(num >> 8) & 255} ${num & 255}`;
 }
 
+/** Luminance perceptual 0..255. >150 = bg claro. */
+function lum(hex: string): number {
+  const h = hex.replace('#', '');
+  const v = h.length === 3 ? h.split('').map((c) => c + c).join('') : h;
+  const n = parseInt(v, 16);
+  if (Number.isNaN(n)) return 0;
+  const r = (n >> 16) & 255, g = (n >> 8) & 255, b = n & 255;
+  return 0.299 * r + 0.587 * g + 0.114 * b;
+}
+
 interface Props {
   config: Customization;
   children: ReactNode;
@@ -40,6 +50,10 @@ export function ThemeScope({ config, children, className }: Props) {
   const line = c.line ?? `rgb(${hexToRgb(c.foreground)} / 0.12)`;
   const primaryInk = c.primaryInk ?? '#ffffff';
   const secondaryInk = c.secondaryInk ?? '#ffffff';
+  // Ink: cor de headings/titulos. Auto-deriva do bg luminance pra
+  // garantir contraste alto, INDEPENDENTE do que o user escolheu pra
+  // foreground. Quando bg claro -> ink preto; bg escuro -> ink branco.
+  const ink = lum(c.background) > 150 ? '#0f1115' : '#ffffff';
 
   return (
     <div
@@ -63,6 +77,8 @@ export function ThemeScope({ config, children, className }: Props) {
         ['--t-card' as string]: card,
         ['--t-muted' as string]: muted,
         ['--t-line' as string]: line,
+        // Ink auto-derivado pra headings — sempre contrasta com bg
+        ['--t-ink' as string]: ink,
         // Fontes
         ['--t-font-heading' as string]: fontStack(config.fonts.heading),
         ['--t-font-body' as string]: fontStack(config.fonts.body),

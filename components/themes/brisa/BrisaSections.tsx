@@ -172,7 +172,7 @@ export function BrisaCategorias({ imoveis }: SectionProps) {
             />
             <div className="absolute inset-x-0 bottom-3 px-4 text-white">
               <div
-                style={{ fontFamily: 'var(--t-font-heading)' }}
+                style={{ fontFamily: 'var(--t-font-heading)', color: 'var(--t-ink)' }}
                 className="text-xl"
               >
                 {nome}
@@ -227,7 +227,7 @@ export function BrisaSobre({ tenant }: SectionProps) {
               Sobre nós
             </p>
             <h2
-              style={{ fontFamily: 'var(--t-font-heading)' }}
+              style={{ fontFamily: 'var(--t-font-heading)', color: 'var(--t-ink)' }}
               className="mt-2 text-3xl leading-[0.98] sm:text-4xl md:text-[42px]"
             >
               Imóveis com curadoria, atendimento sem pressa.
@@ -277,7 +277,7 @@ export function BrisaDepoimentos() {
               ))}
             </div>
             <p
-              style={{ fontFamily: 'var(--t-font-heading)' }}
+              style={{ fontFamily: 'var(--t-font-heading)', color: 'var(--t-ink)' }}
               className="mt-3 text-base leading-snug"
             >
               "{d.txt}"
@@ -330,7 +330,7 @@ export function BrisaFAQ() {
             >
               <div className="flex items-center justify-between gap-4">
                 <span
-                  style={{ fontFamily: 'var(--t-font-heading)' }}
+                  style={{ fontFamily: 'var(--t-font-heading)', color: 'var(--t-ink)' }}
                   className="text-base font-medium"
                 >
                   {f.q}
@@ -421,7 +421,7 @@ export function BrisaContato() {
           Newsletter
         </p>
         <h2
-          style={{ fontFamily: 'var(--t-font-heading)' }}
+          style={{ fontFamily: 'var(--t-font-heading)', color: 'var(--t-ink)' }}
           className="mt-2 text-2xl leading-tight sm:text-3xl md:text-4xl"
         >
           Receba imóveis novos antes de ir ao site

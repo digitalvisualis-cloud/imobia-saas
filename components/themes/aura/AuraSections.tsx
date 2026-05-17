@@ -239,7 +239,7 @@ export function AuraSobre({ tenant }: SectionProps) {
               Sobre nós
             </p>
             <h2
-              style={{ fontFamily: 'var(--t-font-heading)' }}
+              style={{ fontFamily: 'var(--t-font-heading)', color: 'var(--t-ink)' }}
               className="mt-2 text-3xl leading-[0.98] sm:text-4xl md:text-[42px]"
             >
               Precisão para comprar, vender e apresentar imóveis únicos.
@@ -390,7 +390,7 @@ export function AuraContato() {
           Newsletter
         </p>
         <h2
-          style={{ fontFamily: 'var(--t-font-heading)' }}
+          style={{ fontFamily: 'var(--t-font-heading)', color: 'var(--t-ink)' }}
           className="mt-2 text-2xl leading-tight sm:text-3xl md:text-4xl"
         >
           Estreias e bastidores, uma vez por mês

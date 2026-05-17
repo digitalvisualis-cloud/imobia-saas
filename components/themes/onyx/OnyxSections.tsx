@@ -370,7 +370,7 @@ export function OnyxDestaques({ tenant, imoveis }: SectionProps) {
     <section id="destaques" className="mx-auto max-w-[1500px] px-4 py-16 sm:px-6">
       <div className="mb-8 text-center">
         <h2
-          style={{ fontFamily: 'var(--t-font-heading)' }}
+          style={{ fontFamily: 'var(--t-font-heading)', color: 'var(--t-ink)' }}
           className="text-2xl font-semibold sm:text-3xl"
         >
           Veja nossos destaques de imóveis à venda
@@ -431,7 +431,7 @@ export function OnyxAnuncie({ tenant }: SectionProps) {
             Anuncie seu imóvel
           </p>
           <h2
-            style={{ fontFamily: 'var(--t-font-heading)' }}
+            style={{ fontFamily: 'var(--t-font-heading)', color: 'var(--t-ink)' }}
             className="mt-2 text-2xl font-semibold sm:text-3xl md:text-4xl"
           >
             Venda ou alugue rápido com a {tenant.marca?.nomeEmpresa ?? tenant.nome}
@@ -488,7 +488,7 @@ export function OnyxSobre({ tenant }: SectionProps) {
             Sobre nós
           </p>
           <h2
-            style={{ fontFamily: 'var(--t-font-heading)' }}
+            style={{ fontFamily: 'var(--t-font-heading)', color: 'var(--t-ink)' }}
             className="mt-3 text-2xl font-semibold sm:text-3xl md:text-4xl"
           >
             Excelência em imóveis de alto padrão
@@ -571,7 +571,7 @@ export function OnyxCTA({ tenant }: SectionProps) {
       <div className="mx-auto max-w-[1200px] px-6">
         <div className="mb-8 text-center">
           <h2
-            style={{ fontFamily: 'var(--t-font-heading)' }}
+            style={{ fontFamily: 'var(--t-font-heading)', color: 'var(--t-ink)' }}
             className="text-2xl font-semibold sm:text-3xl"
           >
             Conheça as soluções da {nomeEmpresa}
@@ -584,7 +584,7 @@ export function OnyxCTA({ tenant }: SectionProps) {
           <div className="rounded-md border border-gray-200 bg-gray-50 p-6">
             <p className="text-xs uppercase tracking-wider text-gray-500">Vamos alugar ou vender?</p>
             <h3
-              style={{ fontFamily: 'var(--t-font-heading)' }}
+              style={{ fontFamily: 'var(--t-font-heading)', color: 'var(--t-ink)' }}
               className="mt-2 text-xl font-semibold"
             >
               Anuncie seu imóvel!
@@ -604,7 +604,7 @@ export function OnyxCTA({ tenant }: SectionProps) {
           <div className="rounded-md border border-gray-200 bg-gray-50 p-6">
             <p className="text-xs uppercase tracking-wider text-gray-500">Não achou?</p>
             <h3
-              style={{ fontFamily: 'var(--t-font-heading)' }}
+              style={{ fontFamily: 'var(--t-font-heading)', color: 'var(--t-ink)' }}
               className="mt-2 text-xl font-semibold"
             >
               Buscamos seu imóvel!
