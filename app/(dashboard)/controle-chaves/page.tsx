@@ -1,26 +1,45 @@
-import { KeyRound } from 'lucide-react';
-import { PageHeader } from '@/components/ui/page-header';
-import { EmptyState } from '@/components/ui/empty-state';
+import { auth } from '@/auth';
+import { prisma } from '@/lib/prisma';
+import { redirect } from 'next/navigation';
+import ControleChavesClient from './ControleChavesClient';
 
 export const dynamic = 'force-dynamic';
 
 /**
- * /controle-chaves — placeholder. Vai cuidar de entrada/saida de chaves,
- * quem pegou/devolveu, etc. Implementacao em F2.
+ * /controle-chaves — listagem e gestao das chaves dos imoveis.
+ * Server-side: carrega retiradas + imoveis disponiveis (pra picker no
+ * modal "+ Nova retirada"). Cliente faz CRUD via /api/chaves.
  */
-export default function ControleChavesPage() {
+export default async function ControleChavesPage() {
+  const session = await auth();
+  if (!session?.user) redirect('/login');
+  const tenantId = (session.user as any).tenantId as string;
+
+  const [retiradas, imoveis] = await Promise.all([
+    prisma.chaveRetirada.findMany({
+      where: { tenantId },
+      include: { imovel: { select: { id: true, codigo: true, titulo: true, bairro: true, cidade: true } } },
+      orderBy: [{ status: 'asc' }, { retiradaEm: 'desc' }],
+      take: 200,
+    }),
+    prisma.imovel.findMany({
+      where: { tenantId },
+      select: { id: true, codigo: true, titulo: true, bairro: true, cidade: true },
+      orderBy: { codigo: 'asc' },
+    }),
+  ]);
+
   return (
-    <div className="fade-in">
-      <PageHeader
-        title="Controle de Chaves"
-        description="Em breve — controle de quem retirou e devolveu chave de cada imóvel"
-        icon={KeyRound}
-      />
-      <EmptyState
-        icon={KeyRound}
-        title="Funcionalidade em construção"
-        description="Logo logo aqui vai listar todas as chaves dos seus imóveis com histórico de quem pegou e devolveu, com lembretes de devolução."
-      />
-    </div>
+    <ControleChavesClient
+      initialRetiradas={retiradas.map((r) => ({
+        ...r,
+        retiradaEm: r.retiradaEm.toISOString(),
+        prazoDevolucao: r.prazoDevolucao?.toISOString() ?? null,
+        devolvidaEm: r.devolvidaEm?.toISOString() ?? null,
+        createdAt: r.createdAt.toISOString(),
+        updatedAt: r.updatedAt.toISOString(),
+      }))}
+      imoveis={imoveis}
+    />
   );
 }

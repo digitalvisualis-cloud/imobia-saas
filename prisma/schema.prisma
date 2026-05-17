@@ -37,6 +37,7 @@ model Tenant {
   configWhatsApp ConfigWhatsApp?
   newsletterInscricoes NewsletterInscricao[]
   artigosBlog ArtigoBlog[]
+  chaveRetiradas ChaveRetirada[]
 
   @@map("tenants")
 }
@@ -181,6 +182,7 @@ model Imovel {
   eventos      AgendaEvento[]
   contratos    Contrato[]
   conversas    Conversa[]
+  chaveRetiradas ChaveRetirada[]
 
   @@unique([tenantId, codigo])
   @@index([tenantId, status])
@@ -299,6 +301,46 @@ model ArtigoBlog {
   @@unique([tenantId, slug])
   @@index([tenantId, publicado, publicadoEm(sort: Desc)])
   @@map("artigos_blog")
+}
+
+model ChaveRetirada {
+  id                    String           @id @default(cuid())
+  tenantId              String
+  imovelId              String
+  pessoaNome            String
+  pessoaContato         String?
+  pessoaTipo            TipoPessoaChave  @default(OUTRO)
+  retiradaEm            DateTime         @default(now())
+  prazoDevolucao        DateTime?
+  devolvidaEm           DateTime?
+  status                StatusChave      @default(RETIRADA)
+  notas                 String?
+  /// Hook n8n: evita disparos duplicados quando cron rodar
+  eventoAtrasoEmitido   Boolean          @default(false)
+  createdAt             DateTime         @default(now())
+  updatedAt             DateTime         @updatedAt
+
+  tenant                Tenant           @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  imovel                Imovel           @relation(fields: [imovelId], references: [id], onDelete: Cascade)
+
+  @@index([tenantId, status])
+  @@index([tenantId, prazoDevolucao])
+  @@index([imovelId])
+  @@map("chave_retiradas")
+}
+
+enum StatusChave {
+  RETIRADA
+  DEVOLVIDA
+}
+
+enum TipoPessoaChave {
+  CORRETOR
+  VISITA
+  MANUTENCAO
+  INQUILINO
+  PROPRIETARIO
+  OUTRO
 }
 
 model NewsletterInscricao {
