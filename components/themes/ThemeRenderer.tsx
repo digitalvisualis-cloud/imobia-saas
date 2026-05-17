@@ -37,6 +37,7 @@ import {
   OnyxFAQ,
   OnyxCTA,
   OnyxContato,
+  OnyxAnuncie,
 } from './onyx/OnyxSections';
 
 interface Props {
@@ -93,7 +94,12 @@ export function ThemeRenderer({ theme, config, tenant, imoveis }: Props) {
               sobre: () => <OnyxSobre {...sectionProps} />,
               depoimentos: () => <OnyxDepoimentos />,
               faq: () => <OnyxFAQ />,
-              cta: () => <OnyxCTA {...sectionProps} />,
+              cta: () => (
+                <>
+                  <OnyxAnuncie {...sectionProps} />
+                  <OnyxCTA {...sectionProps} />
+                </>
+              ),
               contato: () => <OnyxContato tenant={tenant} />,
             }}
           />
@@ -118,7 +124,7 @@ export function ThemeRenderer({ theme, config, tenant, imoveis }: Props) {
             sobre: () => <BrisaSobre {...sectionProps} />,
             depoimentos: () => <BrisaDepoimentos />,
             faq: () => <BrisaFAQ />,
-            cta: () => <BrisaCTA />,
+            cta: () => <BrisaCTA tenant={tenant} />,
             contato: () => <BrisaContato />,
           }}
         />

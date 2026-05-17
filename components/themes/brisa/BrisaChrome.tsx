@@ -73,15 +73,12 @@ export function BrisaHeader({ config, tenant }: ChromeProps) {
           </div>
         </Link>
         <nav className="hidden items-center gap-7 text-sm md:flex">
-          {config.header.links.map((l, i) => (
-            <Link
-              key={i}
-              href={resolveTo(tenant.slug, l.to)}
-              className="opacity-70 hover:opacity-100"
-            >
-              {l.label}
-            </Link>
-          ))}
+          {/* Menu fixo: nao depende de config (evita link orfao apontando pra pagina inexistente) */}
+          <Link href={`/s/${tenant.slug}`} className="opacity-70 hover:opacity-100">Início</Link>
+          <Link href={`/s/${tenant.slug}?op=venda`} className="opacity-70 hover:opacity-100">Comprar</Link>
+          <Link href={`/s/${tenant.slug}?op=aluguel`} className="opacity-70 hover:opacity-100">Alugar</Link>
+          <Link href={`/s/${tenant.slug}#anuncie`} className="opacity-70 hover:opacity-100">Anuncie seu imóvel</Link>
+          <Link href={`/s/${tenant.slug}#sobre`} className="opacity-70 hover:opacity-100">Sobre</Link>
         </nav>
         <a
           href={config.header.ctaHref}

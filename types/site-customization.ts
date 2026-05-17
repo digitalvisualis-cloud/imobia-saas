@@ -101,6 +101,7 @@ const COMMON_HEADER: HeaderConfig = {
     { label: 'Início', to: '/' },
     { label: 'Comprar', to: '/?op=venda' },
     { label: 'Alugar', to: '/?op=aluguel' },
+    { label: 'Anuncie seu imóvel', to: '/#anuncie' },
     { label: 'Sobre', to: '/#sobre' },
   ],
   ctaLabel: 'Fale conosco',

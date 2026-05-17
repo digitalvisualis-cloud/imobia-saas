@@ -1,7 +1,8 @@
 'use client';
 
-import { useState } from 'react';
-import { ArrowRight, Search, MapPin } from 'lucide-react';
+import { useRef, useState } from 'react';
+import { ArrowRight, ChevronLeft, ChevronRight, Search, MapPin } from 'lucide-react';
+import { LeadForm } from '../LeadForm';
 import type { ImovelPublic, TenantPublic } from '@/app/_templates/types';
 import type { Customization } from '@/types/site-customization';
 import { OnyxCard } from './OnyxCard';
@@ -348,11 +349,25 @@ function ChipGroup({
 }
 
 /**
- * Destaques: 3 cards horizontais compactos. Grid responsivo.
+ * Destaques: carrossel horizontal com setas (igual sites de imobiliaria
+ * boutique). Centra o conteudo quando ha poucos itens. Scroll-snap pra
+ * o card ancorar limpo em cada movimento.
  */
 export function OnyxDestaques({ tenant, imoveis }: SectionProps) {
-  const lista = imoveis.slice(0, 6);
+  const lista = imoveis.slice(0, 12);
+  const trackRef = useRef<HTMLDivElement>(null);
+
   if (lista.length === 0) return null;
+
+  function scrollBy(dir: 1 | -1) {
+    const el = trackRef.current;
+    if (!el) return;
+    // largura do primeiro card + gap como passo
+    const card = el.querySelector<HTMLElement>('[data-onyx-card]');
+    const step = card ? card.offsetWidth + 16 : el.clientWidth * 0.8;
+    el.scrollBy({ left: dir * step, behavior: 'smooth' });
+  }
+
   return (
     <section id="destaques" className="mx-auto max-w-[1500px] px-4 py-16 sm:px-6">
       <div className="mb-8 text-center">
@@ -366,10 +381,75 @@ export function OnyxDestaques({ tenant, imoveis }: SectionProps) {
           Os melhores imóveis selecionados pra você
         </p>
       </div>
-      <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
-        {lista.map((imv) => (
-          <OnyxCard key={imv.id} imovel={imv} tenant={tenant} />
-        ))}
+
+      <div className="relative">
+        {/* Setas */}
+        <button
+          type="button"
+          onClick={() => scrollBy(-1)}
+          aria-label="Anterior"
+          className="absolute -left-2 top-1/2 z-10 hidden -translate-y-1/2 items-center justify-center rounded-full border border-gray-200 bg-white p-2 shadow-md hover:shadow-lg sm:flex"
+        >
+          <ChevronLeft className="h-5 w-5 text-gray-700" />
+        </button>
+        <button
+          type="button"
+          onClick={() => scrollBy(1)}
+          aria-label="Próximo"
+          className="absolute -right-2 top-1/2 z-10 hidden -translate-y-1/2 items-center justify-center rounded-full border border-gray-200 bg-white p-2 shadow-md hover:shadow-lg sm:flex"
+        >
+          <ChevronRight className="h-5 w-5 text-gray-700" />
+        </button>
+
+        <div
+          ref={trackRef}
+          className="flex snap-x snap-mandatory gap-4 overflow-x-auto scroll-smooth px-1 pb-4 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden justify-start sm:justify-center"
+        >
+          {lista.map((imv) => (
+            <div
+              key={imv.id}
+              data-onyx-card
+              className="w-[280px] shrink-0 snap-start sm:w-[320px] md:w-[340px]"
+            >
+              <OnyxCard imovel={imv} tenant={tenant} />
+            </div>
+          ))}
+        </div>
+      </div>
+    </section>
+  );
+}
+
+/**
+ * "Anuncie seu imovel" — faixa cinza-claro com form de captura.
+ * Ancora: #anuncie (link do menu aponta pra ca).
+ */
+export function OnyxAnuncie({ tenant }: SectionProps) {
+  return (
+    <section id="anuncie" className="bg-gray-50 py-16">
+      <div className="mx-auto grid max-w-[1100px] gap-10 px-6 md:grid-cols-2 md:items-center md:gap-14">
+        <div>
+          <p className="text-[11px] font-semibold uppercase tracking-[0.2em] text-gray-500">
+            Anuncie seu imóvel
+          </p>
+          <h2
+            style={{ fontFamily: 'var(--t-font-heading)' }}
+            className="mt-2 text-2xl font-semibold sm:text-3xl md:text-4xl"
+          >
+            Venda ou alugue rápido com a {tenant.marca?.nomeEmpresa ?? tenant.nome}
+          </h2>
+          <p className="mt-4 text-sm leading-relaxed text-gray-600">
+            Avaliação profissional, divulgação nos principais portais e atendimento
+            personalizado pra cada cliente. Conte com a gente do começo ao fim.
+          </p>
+        </div>
+        <div className="rounded-md border border-gray-200 bg-white p-5 shadow-sm">
+          <LeadForm
+            slug={tenant.slug}
+            defaultMessage="Olá, quero anunciar meu imóvel."
+            ctaLabel="Quero anunciar"
+          />
+        </div>
       </div>
     </section>
   );

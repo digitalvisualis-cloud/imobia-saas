@@ -10,14 +10,7 @@ import { AuraHeader, AuraFooter } from './aura/AuraChrome';
 import { OnyxHeader, OnyxFooter } from './onyx/OnyxChrome';
 import { CookieBanner } from './CookieBanner';
 import { formatPriceBRL, imageUrl } from './_shared';
-
-function formatPhoneBR(raw: string): string {
-  const d = raw.replace(/\D/g, '');
-  if (d.length === 11) return `(${d.slice(0, 2)}) ${d.slice(2, 7)}-${d.slice(7)}`;
-  if (d.length === 10) return `(${d.slice(0, 2)}) ${d.slice(2, 6)}-${d.slice(6)}`;
-  if (d.length === 13) return `+${d.slice(0, 2)} (${d.slice(2, 4)}) ${d.slice(4, 9)}-${d.slice(9)}`;
-  return raw;
-}
+import { LeadForm } from './LeadForm';
 
 interface Props {
   theme: ThemeId;
@@ -210,7 +203,6 @@ function ContactCard({
   const [copied, setCopied] = useState(false);
   const [copiedCode, setCopiedCode] = useState(false);
   const wpp = tenant.marca?.whatsapp ?? '';
-  const wppFormatted = wpp ? formatPhoneBR(wpp) : '';
   const nomeEmpresa = tenant.marca?.nomeEmpresa ?? tenant.nome ?? null;
   const logoUrl = tenant.marca?.logoUrl ?? null;
 
@@ -296,23 +288,10 @@ function ContactCard({
           <MessageCircle className="h-5 w-5" /> Tenho interesse
         </a>
 
-        {/* Numero do WhatsApp clicavel */}
-        {wpp && (
-          <a
-            href={wppHref}
-            target="_blank"
-            rel="noopener"
-            className="mt-3 flex w-full items-center justify-center gap-2 text-sm font-medium opacity-80 hover:opacity-100"
-          >
-            <MessageCircle className="h-4 w-4" />
-            <span className="font-mono">{wppFormatted}</span>
-          </a>
-        )}
-
         <button
           type="button"
           onClick={handleShare}
-          className="mt-4 flex w-full items-center justify-center gap-1.5 rounded-xl border py-2.5 text-xs font-medium transition-colors hover:bg-[rgb(var(--t-fg-rgb)/0.04)]"
+          className="mt-3 flex w-full items-center justify-center gap-1.5 rounded-xl border py-2.5 text-xs font-medium transition-colors hover:bg-[rgb(var(--t-fg-rgb)/0.04)]"
           style={{ borderColor: 'rgb(var(--t-fg-rgb) / 0.15)' }}
         >
           {copied ? (
@@ -325,6 +304,19 @@ function ContactCard({
             </>
           )}
         </button>
+
+        {/* Form de captura — chega como Lead novo no CRM com origem='site' */}
+        <div className="mt-5 border-t pt-5" style={{ borderColor: 'rgb(var(--t-fg-rgb) / 0.08)' }}>
+          <p className="mb-3 text-[10px] font-semibold uppercase tracking-wider opacity-60">
+            Ou envie uma mensagem
+          </p>
+          <LeadForm
+            slug={tenant.slug}
+            imovelId={imovel.id}
+            defaultMessage={`Olá, tenho interesse no imóvel ${imovel.codigo} — ${imovel.titulo}.`}
+            ctaLabel="Quero saber mais"
+          />
+        </div>
       </div>
 
       {/* Card da imobiliaria/corretor */}

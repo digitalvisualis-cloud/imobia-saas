@@ -6,6 +6,7 @@ import type { ImovelPublic, TenantPublic } from '@/app/_templates/types';
 import type { Customization } from '@/types/site-customization';
 import { AuraCard } from './AuraCard';
 import { heroImage, pickFeaturedImovel } from '../_shared';
+import { LeadForm } from '../LeadForm';
 
 interface SectionProps {
   tenant: TenantPublic;
@@ -392,27 +393,32 @@ export function AuraFAQ() {
 
 export function AuraCTA({ tenant }: SectionProps) {
   return (
-    <div className="mx-auto mt-16 max-w-[1500px] px-4 sm:mt-32 sm:px-8">
+    <div id="anuncie" className="mx-auto mt-16 max-w-[1500px] px-4 sm:mt-32 sm:px-8">
       <div
         className="relative overflow-hidden px-5 py-12 sm:px-8 sm:py-24 md:px-20 md:py-32"
         style={{ background: 'var(--t-primary)', color: 'var(--t-bg)' }}
       >
-        <p className="text-[10px] uppercase tracking-[0.3em] opacity-60 sm:text-[11px] sm:tracking-[0.35em]">
-          Anuncie com a {tenant.marca?.nomeEmpresa ?? tenant.nome}
-        </p>
-        <h2
-          style={{ fontFamily: 'var(--t-font-heading)' }}
-          className="mt-3 max-w-3xl text-3xl leading-[1.05] sm:mt-5 sm:text-4xl sm:leading-[1] md:text-6xl"
-        >
-          Sua propriedade merece{' '}
-          <span style={{ color: 'var(--t-secondary)' }}>uma narrativa.</span>
-        </h2>
-        <a
-          href="#contato"
-          className="mt-12 inline-flex items-center gap-4 border-b border-white/30 pb-1.5 text-sm uppercase tracking-[0.3em] hover:border-white"
-        >
-          Solicitar avaliação <ArrowRight className="h-4 w-4" />
-        </a>
+        <div className="grid gap-10 md:grid-cols-[1.2fr_1fr] md:items-center md:gap-16">
+          <div>
+            <p className="text-[10px] uppercase tracking-[0.3em] opacity-60 sm:text-[11px] sm:tracking-[0.35em]">
+              Anuncie com a {tenant.marca?.nomeEmpresa ?? tenant.nome}
+            </p>
+            <h2
+              style={{ fontFamily: 'var(--t-font-heading)' }}
+              className="mt-3 text-3xl leading-[1.05] sm:mt-5 sm:text-4xl sm:leading-[1] md:text-6xl"
+            >
+              Sua propriedade merece{' '}
+              <span style={{ color: 'var(--t-secondary)' }}>uma narrativa.</span>
+            </h2>
+          </div>
+          <div className="rounded-md bg-white/95 p-5 text-[var(--t-fg)] shadow-lg">
+            <LeadForm
+              slug={tenant.slug}
+              defaultMessage="Olá, quero anunciar meu imóvel."
+              ctaLabel="Solicitar avaliação"
+            />
+          </div>
+        </div>
       </div>
     </div>
   );

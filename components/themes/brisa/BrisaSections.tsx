@@ -7,6 +7,7 @@ import type { Customization } from '@/types/site-customization';
 import { BrisaCard } from './BrisaCard';
 import { BrisaSearchCard } from './BrisaSearchCard';
 import { heroImage } from '../_shared';
+import { LeadForm } from '../LeadForm';
 
 interface SectionProps {
   tenant: TenantPublic;
@@ -299,14 +300,14 @@ export function BrisaFAQ() {
   );
 }
 
-export function BrisaCTA() {
+export function BrisaCTA({ tenant }: { tenant?: TenantPublic }) {
   return (
-    <div className="mx-auto mt-16 max-w-7xl px-6 md:mt-24">
+    <div id="anuncie" className="mx-auto mt-16 max-w-7xl px-6 md:mt-24">
       <div
         className="relative overflow-hidden rounded-3xl px-8 py-14 md:px-16 md:py-20"
         style={{ background: 'var(--t-primary)', color: 'var(--t-bg)' }}
       >
-        <div className="grid gap-8 md:grid-cols-2 md:items-center">
+        <div className="grid gap-10 md:grid-cols-2 md:items-center">
           <div>
             <span className="text-xs font-semibold uppercase tracking-[0.25em] opacity-70">
               Anuncie
@@ -321,15 +322,25 @@ export function BrisaCTA() {
               Receba uma avaliação profissional em 48h e um plano de divulgação que vende mais rápido.
             </p>
           </div>
-          <div className="md:text-right">
-            <a
-              href="#contato"
-              className="inline-flex items-center gap-2 rounded-full px-7 py-4 text-sm font-semibold transition-opacity hover:opacity-90"
-              style={{ background: 'var(--t-secondary)', color: 'var(--t-fg)' }}
-            >
-              Quero avaliar meu imóvel <ChevronRight className="h-4 w-4" />
-            </a>
-          </div>
+          {tenant?.slug ? (
+            <div className="rounded-2xl bg-white/95 p-5 text-[var(--t-fg)] shadow-lg">
+              <LeadForm
+                slug={tenant.slug}
+                defaultMessage="Olá, quero uma avaliação gratuita do meu imóvel."
+                ctaLabel="Quero avaliar meu imóvel"
+              />
+            </div>
+          ) : (
+            <div className="md:text-right">
+              <a
+                href="#contato"
+                className="inline-flex items-center gap-2 rounded-full px-7 py-4 text-sm font-semibold transition-opacity hover:opacity-90"
+                style={{ background: 'var(--t-secondary)', color: 'var(--t-fg)' }}
+              >
+                Quero avaliar meu imóvel <ChevronRight className="h-4 w-4" />
+              </a>
+            </div>
+          )}
         </div>
       </div>
     </div>

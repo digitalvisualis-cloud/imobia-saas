@@ -64,15 +64,12 @@ export function AuraHeader({ config, tenant, transparent = true }: ChromeProps) 
           </div>
         </Link>
         <nav className={`hidden items-center gap-9 text-[12px] font-medium uppercase tracking-[0.2em] md:flex ${navColor}`}>
-          {config.header.links.map((l, i) => (
-            <Link
-              key={i}
-              href={resolveTo(tenant.slug, l.to)}
-              className="opacity-80 hover:opacity-100"
-            >
-              {l.label}
-            </Link>
-          ))}
+          {/* Menu fixo: nao depende de config (evita link orfao apontando pra pagina inexistente) */}
+          <Link href={`/s/${tenant.slug}`} className="opacity-80 hover:opacity-100">Início</Link>
+          <Link href={`/s/${tenant.slug}?op=venda`} className="opacity-80 hover:opacity-100">Comprar</Link>
+          <Link href={`/s/${tenant.slug}?op=aluguel`} className="opacity-80 hover:opacity-100">Alugar</Link>
+          <Link href={`/s/${tenant.slug}#anuncie`} className="opacity-80 hover:opacity-100">Anuncie</Link>
+          <Link href={`/s/${tenant.slug}#sobre`} className="opacity-80 hover:opacity-100">Sobre</Link>
         </nav>
         <a
           href={config.header.ctaHref}

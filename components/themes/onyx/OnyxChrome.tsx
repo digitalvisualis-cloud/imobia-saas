@@ -40,25 +40,25 @@ export function OnyxHeader({ config, tenant }: ChromeProps) {
     { label: 'Início', href: `/s/${slug}` },
     { label: 'Comprar', href: `/s/${slug}?op=venda` },
     { label: 'Alugar', href: `/s/${slug}?op=aluguel` },
+    { label: 'Anuncie seu imóvel', href: `/s/${slug}#anuncie` },
     { label: 'Sobre', href: `/s/${slug}#sobre` },
   ];
 
   return (
     <header className="sticky top-0 z-40 border-b border-white/10 bg-black/95 text-white backdrop-blur">
       <div className="mx-auto flex h-12 max-w-[1500px] items-center justify-between gap-6 px-4 sm:px-6">
-        {/* Logo */}
-        <Link href={`/s/${slug}`} className="flex items-center gap-2 shrink-0">
-          {logoUrl ? (
+        {/* Logo + brand name */}
+        <Link href={`/s/${slug}`} className="flex items-center gap-2.5 shrink-0">
+          {logoUrl && (
             // eslint-disable-next-line @next/next/no-img-element
-            <img src={logoUrl} alt={brandName} className="h-7 max-w-[140px] object-contain" />
-          ) : (
-            <span
-              className="text-sm font-bold tracking-wider"
-              style={{ fontFamily: 'var(--t-font-heading)' }}
-            >
-              {brandName.toUpperCase()}
-            </span>
+            <img src={logoUrl} alt={brandName} className="h-7 w-7 rounded-full object-cover" />
           )}
+          <span
+            className="text-sm font-bold tracking-wide truncate max-w-[180px]"
+            style={{ fontFamily: 'var(--t-font-heading)' }}
+          >
+            {brandName}
+          </span>
         </Link>
 
         {/* Nav central — escondido no mobile */}
