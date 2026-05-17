@@ -40,6 +40,7 @@ model Tenant {
   chaveRetiradas ChaveRetirada[]
   comissaoSplits ComissaoSplit[]
   repasses Repasse[]
+  cobrancas Cobranca[]
 
   @@map("tenants")
 }
@@ -672,6 +673,7 @@ model Contrato {
   lead            Lead?           @relation(fields: [leadId], references: [id], onDelete: SetNull)
   splits          ComissaoSplit[]
   repasses        Repasse[]
+  cobrancas       Cobranca[]
 
   @@index([tenantId, status])
   @@index([tenantId, dataInicio])
@@ -757,6 +759,7 @@ model Repasse {
 
   tenant                Tenant          @relation(fields: [tenantId], references: [id], onDelete: Cascade)
   contrato              Contrato        @relation(fields: [contratoId], references: [id], onDelete: Cascade)
+  cobrancas             Cobranca[]
 
   @@unique([contratoId, mesReferencia])
   @@index([tenantId, status])
@@ -768,6 +771,51 @@ enum StatusRepasse {
   PENDENTE      // aluguel ainda nao pago pelo inquilino
   A_REPASSAR    // inquilino pagou, falta repassar
   PAGO          // repasse concluido
+  CANCELADO
+}
+
+/// Cobranca em aberto — aluguel atrasado, multa, IPTU rateado,
+/// taxa avulsa. Pode estar ligada a um contrato e/ou repasse
+/// (origem) ou ser totalmente avulsa.
+model Cobranca {
+  id                    String          @id @default(cuid())
+  tenantId              String
+  contratoId            String?
+  repasseId             String?
+  devedorNome           String
+  devedorContato        String?
+  devedorCpfCnpj        String?
+  descricao             String          // ex: "Aluguel mai/26", "Multa atraso"
+  valorOriginal         Decimal         @db.Decimal(15, 2)
+  multaPct              Decimal?        @db.Decimal(5, 2)  // ex 2%
+  jurosDiariosPct       Decimal?        @db.Decimal(5, 2)  // ex 0.033%/dia
+  vencimento            DateTime
+  status                StatusCobranca  @default(ABERTO)
+  pagoEm                DateTime?
+  valorPago             Decimal?        @db.Decimal(15, 2)
+  formaPagamento        String?
+  /// Historico JSON de tentativas: [{data, canal, status, conteudo}]
+  historicoCobranca     Json            @default("[]")
+  observacao            String?
+  /// Hook n8n: evita disparo duplicado no mesmo dia
+  eventoCobrancaEmitido Boolean         @default(false)
+  ultimaCobrancaEm      DateTime?
+  createdAt             DateTime        @default(now())
+  updatedAt             DateTime        @updatedAt
+
+  tenant                Tenant          @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  contrato              Contrato?       @relation(fields: [contratoId], references: [id], onDelete: SetNull)
+  repasse               Repasse?        @relation(fields: [repasseId], references: [id], onDelete: SetNull)
+
+  @@index([tenantId, status])
+  @@index([tenantId, vencimento])
+  @@map("cobrancas")
+}
+
+enum StatusCobranca {
+  ABERTO       // pode estar no prazo ou atrasada — UI decide visual
+  PAGO
+  NEGOCIADO    // parcelado/acordo
   CANCELADO
 }
 
