@@ -4,10 +4,11 @@ import { useMemo, useState } from 'react';
 import Link from 'next/link';
 import {
   Briefcase, Phone, Mail, Calendar, MapPin, ChevronRight, MoreHorizontal,
-  CheckCircle2, Clock, AlertCircle, Globe, Users, MessageCircle, X,
+  CheckCircle2, Clock, AlertCircle, Globe, Users, MessageCircle,
 } from 'lucide-react';
 import { PageHeader } from '@/components/ui/page-header';
 import { EmptyState } from '@/components/ui/empty-state';
+import { Modal } from '@/components/ui/modal';
 import { toast } from '@/lib/toast';
 
 interface Captacao {
@@ -352,15 +353,26 @@ function NovaCaptacaoModal({
   const [notas, setNotas] = useState('');
 
   return (
-    <div className="fixed inset-0 z-50 bg-black/50 overflow-y-auto">
-      <div className="min-h-screen flex items-center justify-center p-4">
-      <div className="bg-background rounded-xl shadow-xl max-w-lg w-full my-4">
-        <div className="border-b border-border px-5 py-3 flex items-center justify-between">
-          <h2 className="font-display text-lg font-semibold">Nova captação</h2>
-          <button onClick={onClose} className="rounded p-1 hover:bg-muted" aria-label="Fechar">
-            <X className="h-4 w-4" />
+    <Modal
+      open
+      onClose={onClose}
+      title="Nova captação"
+      maxWidth="max-w-lg"
+      footer={
+        <>
+          <button onClick={onClose} className="rounded-md border border-input px-4 py-2 text-sm hover:bg-muted">Cancelar</button>
+          <button
+            onClick={() => {
+              if (!nome.trim()) return toast.error('Nome obrigatório');
+              onSalvar({ nome, whatsapp, email, origem, bairroDesejado, notas });
+            }}
+            className="rounded-md bg-primary px-4 py-2 text-sm font-semibold text-primary-foreground hover:opacity-90"
+          >
+            Criar captação
           </button>
-        </div>
+        </>
+      }
+    >
         <div className="p-5 space-y-3">
           <Field label="Nome do proprietário *">
             <input value={nome} onChange={(e) => setNome(e.target.value)} className="input-base" placeholder="Maria Silva" />
@@ -387,18 +399,6 @@ function NovaCaptacaoModal({
             <textarea value={notas} onChange={(e) => setNotas(e.target.value)} rows={4} className="input-base resize-none" placeholder="Casa 3 quartos, quer R$ 500k, tem pressa pra vender..." />
           </Field>
         </div>
-        <div className="border-t border-border px-5 py-3 flex justify-end gap-2">
-          <button onClick={onClose} className="rounded-md border border-input px-4 py-2 text-sm hover:bg-muted">Cancelar</button>
-          <button
-            onClick={() => {
-              if (!nome.trim()) return toast.error('Nome obrigatório');
-              onSalvar({ nome, whatsapp, email, origem, bairroDesejado, notas });
-            }}
-            className="rounded-md bg-primary px-4 py-2 text-sm font-semibold text-primary-foreground hover:opacity-90"
-          >
-            Criar captação
-          </button>
-        </div>
         <style jsx>{`
           .input-base {
             width: 100%;
@@ -409,9 +409,7 @@ function NovaCaptacaoModal({
             font-size: 0.875rem;
           }
         `}</style>
-      </div>
-      </div>
-    </div>
+    </Modal>
   );
 }
 
@@ -430,15 +428,30 @@ function EditCaptacaoModal({
   const [etapa, setEtapa] = useState(lead.etapa);
 
   return (
-    <div className="fixed inset-0 z-50 bg-black/50 overflow-y-auto">
-      <div className="min-h-screen flex items-center justify-center p-4">
-      <div className="bg-background rounded-xl shadow-xl max-w-lg w-full my-4">
-        <div className="border-b border-border px-5 py-3 flex items-center justify-between">
-          <h2 className="font-display text-lg font-semibold">{lead.nome}</h2>
-          <button onClick={onClose} className="rounded p-1 hover:bg-muted">
-            <X className="h-4 w-4" />
+    <Modal
+      open
+      onClose={onClose}
+      title={lead.nome}
+      maxWidth="max-w-lg"
+      footer={
+        <>
+          <button onClick={onClose} className="rounded-md border border-input px-4 py-2 text-sm hover:bg-muted">Cancelar</button>
+          <button
+            onClick={() =>
+              onSalvar({
+                notas: notas.trim() || null,
+                bairroDesejado: bairroDesejado.trim() || null,
+                orcamento: orcamento ? Number(orcamento) : null,
+                etapa,
+              })
+            }
+            className="rounded-md bg-primary px-4 py-2 text-sm font-semibold text-primary-foreground hover:opacity-90"
+          >
+            Salvar
           </button>
-        </div>
+        </>
+      }
+    >
         <div className="p-5 space-y-3">
           <p className="text-xs text-muted-foreground">
             Origem: {origemLabel(lead.origem)} · Criado {relativeTime(lead.createdAt)} atrás
@@ -460,22 +473,6 @@ function EditCaptacaoModal({
             <textarea value={notas} onChange={(e) => setNotas(e.target.value)} rows={6} className="input-base resize-none" />
           </Field>
         </div>
-        <div className="border-t border-border px-5 py-3 flex justify-end gap-2">
-          <button onClick={onClose} className="rounded-md border border-input px-4 py-2 text-sm hover:bg-muted">Cancelar</button>
-          <button
-            onClick={() =>
-              onSalvar({
-                notas: notas.trim() || null,
-                bairroDesejado: bairroDesejado.trim() || null,
-                orcamento: orcamento ? Number(orcamento) : null,
-                etapa,
-              })
-            }
-            className="rounded-md bg-primary px-4 py-2 text-sm font-semibold text-primary-foreground hover:opacity-90"
-          >
-            Salvar
-          </button>
-        </div>
         <style jsx>{`
           .input-base {
             width: 100%;
@@ -486,9 +483,7 @@ function EditCaptacaoModal({
             font-size: 0.875rem;
           }
         `}</style>
-      </div>
-      </div>
-    </div>
+    </Modal>
   );
 }
 

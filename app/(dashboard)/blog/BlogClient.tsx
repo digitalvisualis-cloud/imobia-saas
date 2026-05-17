@@ -1,9 +1,10 @@
 'use client';
 
 import { useState } from 'react';
-import { Plus, Edit3, Trash2, ExternalLink, Sparkles, X, Eye, EyeOff, FileText, ImageIcon } from 'lucide-react';
+import { Plus, Edit3, Trash2, ExternalLink, Sparkles, Eye, EyeOff, FileText, ImageIcon } from 'lucide-react';
 import { PageHeader } from '@/components/ui/page-header';
 import { EmptyState } from '@/components/ui/empty-state';
+import { Modal } from '@/components/ui/modal';
 import { toast } from '@/lib/toast';
 import { renderMarkdown } from '@/lib/markdown';
 
@@ -274,22 +275,31 @@ export default function BlogClient({ initialArtigos, slug, cidades }: Props) {
         </div>
       )}
 
-      {/* Modal editor — min-h-screen (100vh absoluto, nao min-h-full que
-          depende de parent height resolvido) + flex items-center pra
-          centralizar quando cabe + sem max-h interno pra crescer naturalmente. */}
-      {editing && (
-        <div className="fixed inset-0 z-50 bg-black/50 overflow-y-auto">
-          <div className="min-h-screen flex items-center justify-center p-4">
-          <div className="bg-background rounded-xl shadow-xl max-w-3xl w-full my-4">
-            <div className="sticky top-0 bg-background border-b border-border px-5 py-3 flex items-center justify-between">
-              <h2 className="font-display text-lg font-semibold">
-                {(editing as Artigo).id ? 'Editar artigo' : 'Novo artigo'}
-              </h2>
-              <button onClick={fechar} className="rounded p-1 hover:bg-muted" aria-label="Fechar">
-                <X className="h-4 w-4" />
+      {/* Editor modal via portal — escape de overflow no main */}
+      <Modal
+        open={!!editing}
+        onClose={fechar}
+        title={(editing as Artigo)?.id ? 'Editar artigo' : 'Novo artigo'}
+        maxWidth="max-w-3xl"
+        footer={
+          editing ? (
+            <>
+              <button onClick={fechar} className="rounded-md border border-input px-4 py-2 text-sm hover:bg-muted">
+                Cancelar
               </button>
-            </div>
-
+              <button
+                onClick={salvar}
+                disabled={saving}
+                className="rounded-md bg-primary px-4 py-2 text-sm font-semibold text-primary-foreground disabled:opacity-60"
+              >
+                {saving ? 'Salvando...' : 'Salvar'}
+              </button>
+            </>
+          ) : null
+        }
+      >
+        {editing && (
+          <>
             <div className="p-5 space-y-4">
               {/* IA helper */}
               <div className="rounded-lg border border-dashed border-primary/30 bg-primary/5 p-3">
@@ -476,23 +486,9 @@ export default function BlogClient({ initialArtigos, slug, cidades }: Props) {
                 Publicar agora (vai aparecer em /s/{slug}/blog)
               </label>
             </div>
-
-            <div className="sticky bottom-0 bg-background border-t border-border px-5 py-3 flex items-center justify-end gap-2">
-              <button onClick={fechar} className="rounded-md border border-input px-4 py-2 text-sm hover:bg-muted">
-                Cancelar
-              </button>
-              <button
-                onClick={salvar}
-                disabled={saving}
-                className="rounded-md bg-primary px-4 py-2 text-sm font-semibold text-primary-foreground disabled:opacity-60"
-              >
-                {saving ? 'Salvando...' : 'Salvar'}
-              </button>
-            </div>
-          </div>
-          </div>
-        </div>
-      )}
+          </>
+        )}
+      </Modal>
     </div>
   );
 }
