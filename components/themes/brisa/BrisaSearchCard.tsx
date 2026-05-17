@@ -96,7 +96,7 @@ export function BrisaSearchCard() {
       <div className="mt-4 space-y-2.5">
         <FieldInput
           icon={MapPin}
-          placeholder="Cidade, bairro ou empreendimento"
+          placeholder="Cidade"
           value={busca}
           onChange={setBusca}
         />

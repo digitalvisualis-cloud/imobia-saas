@@ -124,7 +124,7 @@ function AuraSearchBar() {
       onSubmit={handleSubmit}
       className="mt-14 flex flex-wrap items-stretch gap-px overflow-hidden rounded-sm bg-white/10 backdrop-blur"
     >
-      <SearchInput label="Localização" placeholder="Cidade ou bairro" value={busca} onChange={setBusca} />
+      <SearchInput label="Localização" placeholder="Cidade" value={busca} onChange={setBusca} />
       <SearchSelect label="Tipo" value={tipo} onChange={setTipo} options={AURA_TIPOS} />
       <SearchSelect label="Dormitórios" value={dorm} onChange={setDorm} options={AURA_DORMS} />
       <SearchSelect label="Faixa" value={faixa} onChange={setFaixa} options={AURA_FAIXAS} />

@@ -81,7 +81,6 @@ function OnyxSearchBar({ cidades }: { cidades: string[] }) {
   const [op, setOp] = useState<'venda' | 'aluguel'>('venda');
   const [tipo, setTipo] = useState('');
   const [cidade, setCidade] = useState('');
-  const [busca, setBusca] = useState('');
   const [quartos, setQuartos] = useState('');
   const [suites, setSuites] = useState('');
   const [banheiros, setBanheiros] = useState('');
@@ -101,7 +100,6 @@ function OnyxSearchBar({ cidades }: { cidades: string[] }) {
       params.set('op', op);
       if (tipo) params.set('tipo', tipo);
       if (cidade) params.set('cidade', cidade);
-      if (busca.trim()) params.set('q', busca.trim());
       if (quartos) params.set('quartos', quartos);
       if (suites) params.set('suites', suites);
       if (banheiros) params.set('banheiros', banheiros);
@@ -196,8 +194,8 @@ function OnyxSearchBar({ cidades }: { cidades: string[] }) {
         </div>
       ) : (
         <>
-          {/* Linha principal: tipo · cidade · bairro/empreend · buscar */}
-          <div className="grid gap-1.5 sm:grid-cols-[180px_180px_1fr_auto] sm:gap-2">
+          {/* Linha principal: tipo · cidade · buscar */}
+          <div className="grid gap-1.5 sm:grid-cols-[1fr_1fr_auto] sm:gap-2">
             <select
               value={tipo}
               onChange={(e) => setTipo(e.target.value)}
@@ -217,13 +215,6 @@ function OnyxSearchBar({ cidades }: { cidades: string[] }) {
                 <option key={c} value={c}>{c}</option>
               ))}
             </select>
-            <input
-              type="text"
-              value={busca}
-              onChange={(e) => setBusca(e.target.value)}
-              placeholder="Bairro ou empreendimento"
-              className="rounded-md border-0 bg-gray-50 px-3 py-2 text-sm text-gray-900 placeholder:text-gray-500 focus:bg-white focus:ring-1 focus:ring-gray-300 focus:outline-none"
-            />
             <button
               type="submit"
               className="inline-flex items-center justify-center gap-1.5 rounded-md px-6 py-2 text-sm font-bold text-black uppercase tracking-wider"
@@ -273,20 +264,27 @@ function OnyxSearchBar({ cidades }: { cidades: string[] }) {
         </>
       )}
 
-      {/* Toggles secundarios funcionais */}
-      <div className="mt-2 flex flex-wrap items-center justify-center gap-x-4 gap-y-1 border-t border-gray-100 pt-2 text-xs text-gray-700">
+      {/* Toggles secundarios — pill solido pra ficar legivel sobre foto do hero */}
+      <div className="mt-2 flex flex-wrap items-center justify-center gap-2">
         <button
           type="button"
           onClick={() => { setAberto((v) => !v); setModoCodigo(false); }}
-          className={`inline-flex items-center gap-1 hover:text-black ${aberto && !modoCodigo ? 'font-semibold text-black' : ''}`}
+          className={`inline-flex items-center gap-1 rounded-full px-3 py-1 text-xs font-semibold transition-colors ${
+            aberto && !modoCodigo
+              ? 'bg-gray-900 text-white'
+              : 'bg-gray-100 text-gray-800 hover:bg-gray-200'
+          }`}
         >
           {aberto && !modoCodigo ? '− Busca simples' : '+ Busca avançada'}
         </button>
-        <span className="opacity-30">·</span>
         <button
           type="button"
           onClick={() => { setModoCodigo((v) => !v); setAberto(false); }}
-          className={`inline-flex items-center gap-1 hover:text-black ${modoCodigo ? 'font-semibold text-black' : ''}`}
+          className={`inline-flex items-center gap-1 rounded-full px-3 py-1 text-xs font-semibold transition-colors ${
+            modoCodigo
+              ? 'bg-gray-900 text-white'
+              : 'bg-gray-100 text-gray-800 hover:bg-gray-200'
+          }`}
         >
           # Por código
         </button>
