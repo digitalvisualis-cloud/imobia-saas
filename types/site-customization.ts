@@ -121,13 +121,15 @@ const COMMON_HERO: HeroConfig = {
   imageUrl: '',
 };
 
+// Palettes derivadas do visual-lab aprovado:
+// IMOBIA_VISUAL_HANDOFF_CLAUDE/visual-lab/styles.css (linhas 512-647)
 export const DEFAULTS: Record<ThemeId, Customization> = {
   brisa: {
     colors: {
-      primary: '#2F6F4E',
-      secondary: '#E8C875',
-      background: '#FAF7F2',
-      foreground: '#1B2A22',
+      primary: '#187a57',       // forest green (theme-accent)
+      secondary: '#d9f0e3',     // soft mint (theme-band)
+      background: '#f7faf8',    // off-white quase-mint
+      foreground: '#143226',    // dark forest
     },
     fonts: { heading: 'Fraunces', body: 'Inter' },
     sections: DEFAULT_SECTIONS,
@@ -141,10 +143,10 @@ export const DEFAULTS: Record<ThemeId, Customization> = {
   },
   aura: {
     colors: {
-      primary: '#0F1115',
-      secondary: '#C8A97E',
-      background: '#F5F3EE',
-      foreground: '#0F1115',
+      primary: '#aa7c42',       // warm gold/brown
+      secondary: '#111318',     // deep dark (theme-band)
+      background: '#fbfbf8',    // bege off-white
+      foreground: '#101114',    // near black
     },
     fonts: { heading: 'DM Serif Display', body: 'Manrope' },
     sections: DEFAULT_SECTIONS,
@@ -158,10 +160,10 @@ export const DEFAULTS: Record<ThemeId, Customization> = {
   },
   onyx: {
     colors: {
-      primary: '#FCB828', // warm orange/gold — medido do ref Douglas Navarro
-      secondary: '#0A0A0A',
-      background: '#FFFFFF',
-      foreground: '#0A0A0A',
+      primary: '#d7ae5e',       // warm gold (lab) — antes era #FCB828
+      secondary: '#0f1115',     // band dark
+      background: '#ffffff',
+      foreground: '#0f1115',
     },
     fonts: { heading: 'Playfair Display', body: 'Inter' },
     sections: DEFAULT_SECTIONS,

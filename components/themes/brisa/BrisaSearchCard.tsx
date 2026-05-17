@@ -1,7 +1,7 @@
 'use client';
 
 import { useState } from 'react';
-import { Search, MapPin, Home as HomeIcon, DollarSign } from 'lucide-react';
+import { Search } from 'lucide-react';
 
 const TIPOS = [
   { value: '', label: 'Todos os tipos' },
@@ -10,186 +10,122 @@ const TIPOS = [
   { value: 'COBERTURA', label: 'Cobertura' },
   { value: 'STUDIO', label: 'Studio' },
   { value: 'TERRENO', label: 'Terreno' },
-  { value: 'SALA_COMERCIAL', label: 'Sala Comercial' },
+  { value: 'SALA_COMERCIAL', label: 'Sala' },
   { value: 'LOJA', label: 'Loja' },
-  { value: 'GALPAO', label: 'Galpão' },
-  { value: 'CHACARA', label: 'Chácara' },
-  { value: 'SITIO', label: 'Sítio' },
+];
+
+const QUARTOS = [
+  { value: '', label: 'Qualquer' },
+  { value: '1', label: '1+ quartos' },
+  { value: '2', label: '2+ quartos' },
+  { value: '3', label: '3+ quartos' },
+  { value: '4', label: '4+ quartos' },
 ];
 
 const FAIXAS = [
   { value: '', label: 'Qualquer preço' },
   { value: '0-300000', label: 'Até R$ 300 mil' },
   { value: '300000-500000', label: 'R$ 300 — 500 mil' },
-  { value: '500000-1000000', label: 'R$ 500 mil — 1 milhão' },
-  { value: '1000000-3000000', label: 'R$ 1 — 3 milhões' },
-  { value: '3000000-', label: 'Acima de R$ 3 milhões' },
+  { value: '500000-1000000', label: 'R$ 500 mil — 1 mi' },
+  { value: '1000000-3000000', label: 'R$ 1 — 3 mi' },
+  { value: '3000000-', label: 'Acima de R$ 3 mi' },
 ];
 
-const OPERACOES = ['Comprar', 'Alugar', 'Lançamentos'] as const;
-
+/**
+ * Search card baseado no visual-lab (.site-search):
+ * - bg branco + shadow grande
+ * - h3 + 2 selects (op/tipo) + input cidade + 2 selects (quartos/preco) + botao
+ * - inputs em bg-stone-50 borda fina
+ *
+ * Fica posicionado no hero pra dar peso visual de "comeca aqui" (estilo
+ * Booking/AirBnb-like que e a pegada Brisa).
+ */
 export function BrisaSearchCard() {
-  const [operacao, setOperacao] = useState<(typeof OPERACOES)[number]>('Comprar');
-  const [busca, setBusca] = useState('');
+  const [op, setOp] = useState<'Comprar' | 'Alugar'>('Comprar');
   const [tipo, setTipo] = useState('');
+  const [cidade, setCidade] = useState('');
+  const [quartos, setQuartos] = useState('');
   const [faixa, setFaixa] = useState('');
 
-  function handleSubmit(e: React.FormEvent) {
+  function submeter(e: React.FormEvent) {
     e.preventDefault();
     const params = new URLSearchParams();
-    if (operacao === 'Alugar') params.set('op', 'aluguel');
-    else if (operacao === 'Lançamentos') params.set('op', 'lancamento');
-    else params.set('op', 'venda');
-    if (busca) params.set('q', busca);
+    params.set('op', op === 'Alugar' ? 'aluguel' : 'venda');
     if (tipo) params.set('tipo', tipo);
+    if (cidade.trim()) params.set('cidade', cidade.trim());
+    if (quartos) params.set('quartos', quartos);
     if (faixa) params.set('faixa', faixa);
-    // Redireciona pra própria home com query string — listagem filtrada
-    // pode ser implementada depois; por enquanto preserva a busca.
     window.location.search = params.toString();
   }
 
   return (
     <form
-      onSubmit={handleSubmit}
-      className="w-full max-w-md rounded-2xl p-4 shadow-2xl backdrop-blur sm:p-6"
-      style={{ background: 'rgb(255 255 255 / 0.96)', color: 'var(--t-fg)' }}
+      onSubmit={submeter}
+      className="grid w-full max-w-sm gap-2 rounded-lg bg-white p-4 text-stone-900 shadow-[0_18px_48px_rgba(15,23,42,0.25)]"
     >
       <h3
         style={{ fontFamily: 'var(--t-font-heading)' }}
-        className="text-lg font-semibold leading-tight sm:text-2xl"
+        className="text-lg font-semibold leading-tight"
       >
         Encontre seu próximo imóvel
       </h3>
-      <p className="mt-1.5 text-xs opacity-70 sm:text-sm">
-        Busque por bairro, tipo e faixa de preço
-      </p>
 
-      <div className="mt-5 flex gap-1.5">
-        {OPERACOES.map((t) => {
-          const active = operacao === t;
-          return (
-            <button
-              key={t}
-              type="button"
-              onClick={() => setOperacao(t)}
-              className="rounded-full border px-4 py-1.5 text-xs font-medium transition-all"
-              style={
-                active
-                  ? {
-                      background: 'var(--t-primary)',
-                      color: 'var(--t-bg)',
-                      borderColor: 'var(--t-primary)',
-                    }
-                  : {
-                      background: 'transparent',
-                      color: 'var(--t-fg)',
-                      borderColor: 'rgb(var(--t-fg-rgb) / 0.2)',
-                    }
-              }
-            >
-              {t}
-            </button>
-          );
-        })}
+      <div className="grid grid-cols-2 gap-2">
+        <select
+          value={op}
+          onChange={(e) => setOp(e.target.value as 'Comprar' | 'Alugar')}
+          className="rounded-md border border-stone-200 bg-stone-50 px-3 py-2 text-sm"
+        >
+          <option>Comprar</option>
+          <option>Alugar</option>
+        </select>
+        <select
+          value={tipo}
+          onChange={(e) => setTipo(e.target.value)}
+          className="rounded-md border border-stone-200 bg-stone-50 px-3 py-2 text-sm"
+        >
+          {TIPOS.map((t) => (
+            <option key={t.value} value={t.value}>{t.label}</option>
+          ))}
+        </select>
       </div>
 
-      <div className="mt-4 space-y-2.5">
-        <FieldInput
-          icon={MapPin}
-          placeholder="Cidade"
-          value={busca}
-          onChange={setBusca}
-        />
-        <div className="grid grid-cols-2 gap-2.5">
-          <FieldSelect
-            icon={HomeIcon}
-            value={tipo}
-            onChange={setTipo}
-            options={TIPOS}
-          />
-          <FieldSelect
-            icon={DollarSign}
-            value={faixa}
-            onChange={setFaixa}
-            options={FAIXAS}
-          />
-        </div>
+      <input
+        type="text"
+        placeholder="Cidade ou bairro"
+        value={cidade}
+        onChange={(e) => setCidade(e.target.value)}
+        className="rounded-md border border-stone-200 bg-stone-50 px-3 py-2 text-sm placeholder:text-stone-400"
+      />
+
+      <div className="grid grid-cols-2 gap-2">
+        <select
+          value={quartos}
+          onChange={(e) => setQuartos(e.target.value)}
+          className="rounded-md border border-stone-200 bg-stone-50 px-3 py-2 text-sm"
+        >
+          {QUARTOS.map((q) => (
+            <option key={q.value} value={q.value}>{q.label}</option>
+          ))}
+        </select>
+        <select
+          value={faixa}
+          onChange={(e) => setFaixa(e.target.value)}
+          className="rounded-md border border-stone-200 bg-stone-50 px-3 py-2 text-sm"
+        >
+          {FAIXAS.map((f) => (
+            <option key={f.value} value={f.value}>{f.label}</option>
+          ))}
+        </select>
       </div>
 
       <button
         type="submit"
-        className="mt-5 flex w-full items-center justify-center gap-2 rounded-xl py-3.5 text-sm font-semibold shadow-md transition-opacity hover:opacity-90"
-        style={{ background: 'var(--t-primary)', color: 'var(--t-bg)' }}
+        className="inline-flex items-center justify-center gap-1.5 rounded-md py-2.5 text-sm font-bold text-white"
+        style={{ background: 'var(--t-primary)' }}
       >
         <Search className="h-4 w-4" /> Buscar imóveis
       </button>
-      <button
-        type="button"
-        className="mt-2 w-full text-center text-xs opacity-60 hover:opacity-100"
-      >
-        Buscar por código
-      </button>
     </form>
-  );
-}
-
-function FieldInput({
-  icon: Icon,
-  placeholder,
-  value,
-  onChange,
-}: {
-  icon: typeof Search;
-  placeholder: string;
-  value: string;
-  onChange: (v: string) => void;
-}) {
-  return (
-    <div
-      className="flex items-center gap-2 rounded-lg border px-3 py-2.5"
-      style={{ borderColor: 'rgb(var(--t-fg-rgb) / 0.12)' }}
-    >
-      <Icon className="h-4 w-4 opacity-50" />
-      <input
-        type="text"
-        value={value}
-        onChange={(e) => onChange(e.target.value)}
-        placeholder={placeholder}
-        className="flex-1 bg-transparent text-sm outline-none placeholder:opacity-50"
-      />
-    </div>
-  );
-}
-
-function FieldSelect({
-  icon: Icon,
-  value,
-  onChange,
-  options,
-}: {
-  icon: typeof Search;
-  value: string;
-  onChange: (v: string) => void;
-  options: { value: string; label: string }[];
-}) {
-  return (
-    <div
-      className="flex items-center gap-2 rounded-lg border px-3 py-2.5"
-      style={{ borderColor: 'rgb(var(--t-fg-rgb) / 0.12)' }}
-    >
-      <Icon className="h-4 w-4 opacity-50" />
-      <select
-        value={value}
-        onChange={(e) => onChange(e.target.value)}
-        className="flex-1 cursor-pointer bg-transparent text-sm outline-none"
-        style={{ color: 'var(--t-fg)' }}
-      >
-        {options.map((opt) => (
-          <option key={opt.value} value={opt.value} style={{ color: '#000' }}>
-            {opt.label}
-          </option>
-        ))}
-      </select>
-    </div>
   );
 }

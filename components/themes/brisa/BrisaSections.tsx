@@ -1,7 +1,7 @@
 'use client';
 
 import { useState } from 'react';
-import { Award, Users, Home as HomeIcon, ChevronRight, Star, Plus, Minus } from 'lucide-react';
+import { ChevronRight, Star, Plus, Minus } from 'lucide-react';
 import type { ImovelPublic, TenantPublic } from '@/app/_templates/types';
 import type { Customization } from '@/types/site-customization';
 import { BrisaCard } from './BrisaCard';
@@ -16,101 +16,109 @@ interface SectionProps {
 }
 
 const HERO_FALLBACK =
-  'https://images.unsplash.com/photo-1600585154340-be6161a56a0c?auto=format&fit=crop&w=2000&q=80';
+  'https://images.unsplash.com/photo-1600585154340-be6161a56a0c?auto=format&fit=crop&w=2000&q=86';
 
+/**
+ * Brisa Hero — baseado no visual-lab:
+ * - foto grande com rounded e margens laterais
+ * - overlay gradient diagonal pra texto legivel sem matar a foto
+ * - copy serif a esquerda + search card a direita (desktop)
+ * - eyebrow accent em primary
+ */
 export function BrisaHero({ tenant, imoveis, config }: SectionProps) {
-  // Prioridade: imagem custom do editor → foto do primeiro imovel → fallback Unsplash
   const heroImg =
     config?.hero?.imageUrl?.trim() ||
     (imoveis.length > 0 ? heroImage(imoveis[0]) : HERO_FALLBACK);
   const slogan =
-    tenant.marca?.slogan ?? 'Onde sua próxima\nhistória começa.';
+    tenant.marca?.slogan ?? 'Imóveis que combinam\ncom a sua próxima fase.';
   const descricao =
     tenant.marca?.descricao ??
-    'Curadoria de casas e apartamentos com atendimento humano, do primeiro filtro à entrega das chaves.';
+    'Curadoria de imóveis residenciais e comerciais com atendimento humano, fotos bem apresentadas e negociação acompanhada do começo ao fim.';
 
   return (
-    <div className="relative overflow-hidden">
-      <div className="relative mx-auto max-w-7xl px-4 pt-4 sm:px-6 sm:pt-6">
-        <div className="relative overflow-hidden rounded-2xl sm:rounded-3xl">
-          <img src={heroImg} alt="" className="h-[440px] w-full object-cover sm:h-[520px] lg:h-[580px]" />
+    <div className="mx-auto max-w-7xl px-4 pt-6 sm:px-8 sm:pt-8">
+      <div className="relative overflow-hidden rounded-xl">
+        {/* eslint-disable-next-line @next/next/no-img-element */}
+        <img
+          src={heroImg}
+          alt=""
+          className="h-[440px] w-full object-cover sm:h-[520px] lg:h-[570px]"
+        />
+        {/* Overlay diagonal — escuro a esquerda, leve no centro, escuro a direita */}
+        <div
+          className="absolute inset-0"
+          style={{
+            background:
+              'linear-gradient(90deg, rgba(8,27,22,0.72), rgba(8,27,22,0.18) 58%, rgba(8,27,22,0.45))',
+          }}
+        />
+        <div className="absolute inset-0 grid items-center gap-10 px-6 py-8 sm:px-10 sm:py-12 lg:grid-cols-[1fr_390px] lg:gap-10 lg:px-14">
           <div
-            className="absolute inset-0"
             style={{
-              // Gradiente mais forte embaixo (75%) pra texto legivel em qualquer foto.
-              background:
-                'linear-gradient(180deg, rgba(0,0,0,0.45) 0%, rgba(0,0,0,0.25) 40%, rgba(0,0,0,0.75) 100%)',
+              color: tenant.marca?.corTextoHero || '#FFFFFF',
+              textShadow: '0 2px 12px rgba(0,0,0,0.55)',
             }}
-          />
-          {/* Mobile/tablet: H1 centralizado em cima, search card abaixo. Desktop (lg+): grid 2-col. */}
-          <div className="absolute inset-0 flex flex-col justify-end px-5 pb-6 sm:px-8 sm:pb-8 lg:flex-row lg:items-center lg:px-14 lg:pb-0">
-            <div className="grid w-full grid-cols-1 items-center gap-8 lg:grid-cols-2">
-              <div
-                style={{
-                  // Cor configuravel pelo user (Configuracoes -> Marca -> Cor texto hero).
-                  // Default branco. text-shadow garante leitura em foto clara.
-                  color: tenant.marca?.corTextoHero || '#FFFFFF',
-                  textShadow: '0 2px 12px rgba(0,0,0,0.55)',
-                }}
-              >
-                <span className="inline-block rounded-full bg-white/15 px-3 py-1 text-[11px] font-medium uppercase tracking-wider backdrop-blur">
-                  Imóveis selecionados
-                </span>
-                <h1
-                  style={{ fontFamily: 'var(--t-font-heading)' }}
-                  className="mt-3 whitespace-pre-line text-3xl font-semibold leading-[1.05] sm:text-4xl lg:text-5xl"
-                >
-                  {slogan}
-                </h1>
-                <p className="mt-3 max-w-md text-sm opacity-95 sm:text-base">{descricao}</p>
-              </div>
-              <div className="flex justify-center lg:justify-end">
-                <BrisaSearchCard />
-              </div>
-            </div>
+            className="max-w-xl"
+          >
+            <p
+              className="text-[11px] font-bold uppercase tracking-[0.15em]"
+              style={{ color: 'var(--t-primary)' }}
+            >
+              Curadoria local
+            </p>
+            <h1
+              style={{ fontFamily: 'var(--t-font-heading)' }}
+              className="mt-3 whitespace-pre-line text-3xl font-semibold leading-[0.96] sm:text-4xl lg:text-5xl"
+            >
+              {slogan}
+            </h1>
+            <p className="mt-3 max-w-md text-sm leading-relaxed opacity-90 sm:text-base">
+              {descricao}
+            </p>
+          </div>
+          <div className="flex justify-center lg:justify-end">
+            <BrisaSearchCard />
           </div>
         </div>
       </div>
+
       <BarraConfianca total={imoveis.length} />
     </div>
   );
 }
 
+/** Trust row — 4 chips com info de confianca */
 function BarraConfianca({ total }: { total: number }) {
   const items = [
-    { icon: HomeIcon, label: `${total > 0 ? `+${total} imóveis` : 'Imóveis'} na carteira` },
-    { icon: Users, label: 'Atendimento personalizado' },
-    { icon: Award, label: 'Curadoria especializada' },
-    { icon: Star, label: 'Suporte humano' },
+    total > 0 ? `+${total} imóveis na carteira` : 'Imóveis selecionados',
+    'Atendimento por especialista',
+    'Curadoria fotográfica',
+    'Resposta pelo WhatsApp',
   ];
   return (
-    <div className="mx-auto mt-6 max-w-7xl px-6">
-      <div className="grid grid-cols-2 gap-3 rounded-xl bg-white p-4 ring-1 ring-stone-200/80 shadow-sm md:grid-cols-4">
-        {items.map((it) => (
-          <div key={it.label} className="flex items-center gap-2.5 px-1">
-            <div
-              className="flex h-8 w-8 items-center justify-center rounded-full"
-              style={{
-                background: 'rgb(var(--t-primary-rgb) / 0.12)',
-                color: 'var(--t-primary)',
-              }}
-            >
-              <it.icon className="h-3.5 w-3.5" />
-            </div>
-            <span className="text-xs font-medium text-stone-700">{it.label}</span>
-          </div>
-        ))}
-      </div>
+    <div className="mt-6 grid grid-cols-2 gap-2 md:grid-cols-4">
+      {items.map((label) => (
+        <div
+          key={label}
+          className="rounded-md border bg-white px-3 py-3 text-center text-[11px] font-bold uppercase tracking-wider"
+          style={{
+            borderColor: 'rgb(var(--t-fg-rgb) / 0.1)',
+            color: 'rgb(var(--t-fg-rgb) / 0.55)',
+          }}
+        >
+          {label}
+        </div>
+      ))}
     </div>
   );
 }
 
+/** Destaques — section head + grid 3 cols de cards */
 export function BrisaDestaques({ tenant, imoveis }: SectionProps) {
   if (imoveis.length === 0) return null;
   return (
-    <div className="mx-auto mt-12 max-w-7xl px-6 md:mt-16">
-      <SectionHeader
-        sub="Vitrine"
+    <section className="mx-auto mt-14 max-w-7xl px-4 sm:px-8">
+      <SectionHead
         titulo="Imóveis em destaque"
         cta="Ver todos"
         ctaTo={`/s/${tenant.slug}`}
@@ -120,35 +128,35 @@ export function BrisaDestaques({ tenant, imoveis }: SectionProps) {
           <BrisaCard key={i.id} imovel={i} slug={tenant.slug} />
         ))}
       </div>
-    </div>
+    </section>
   );
 }
 
+/** Categorias / Regioes — grid 3 cols com foto + label embaixo */
 export function BrisaCategorias({ imoveis }: SectionProps) {
-  // agrupa por bairro
   const counts = new Map<string, number>();
   imoveis.forEach((i) => {
     if (i.bairro) counts.set(i.bairro, (counts.get(i.bairro) ?? 0) + 1);
   });
-  const top = [...counts.entries()].sort((a, b) => b[1] - a[1]).slice(0, 4);
+  const top = [...counts.entries()].sort((a, b) => b[1] - a[1]).slice(0, 3);
   if (top.length === 0) return null;
 
   const fallbackImgs = [
-    'https://images.unsplash.com/photo-1568605114967-8130f3a36994?auto=format&fit=crop&w=900&q=80',
-    'https://images.unsplash.com/photo-1582407947304-fd86f028f716?auto=format&fit=crop&w=900&q=80',
-    'https://images.unsplash.com/photo-1494526585095-c41746248156?auto=format&fit=crop&w=900&q=80',
-    'https://images.unsplash.com/photo-1600596542815-ffad4c1539a9?auto=format&fit=crop&w=900&q=80',
+    'https://images.unsplash.com/photo-1600607687939-ce8a6c25118c?auto=format&fit=crop&w=1200&q=84',
+    'https://images.unsplash.com/photo-1545324418-cc1a3fa10c00?auto=format&fit=crop&w=1200&q=84',
+    'https://images.unsplash.com/photo-1600047509807-ba8f99d2cdde?auto=format&fit=crop&w=1200&q=84',
   ];
 
   return (
-    <div className="mx-auto mt-12 max-w-7xl px-6 md:mt-16">
-      <SectionHeader sub="Bairros" titulo="Explore por região" />
-      <div className="mt-6 grid gap-4 sm:grid-cols-2 md:grid-cols-4">
+    <section className="mx-auto mt-14 max-w-7xl px-4 sm:px-8">
+      <SectionHead titulo="Explore por região" />
+      <div className="mt-6 grid gap-3 sm:grid-cols-3">
         {top.map(([nome, count], idx) => (
           <a
             key={nome}
-            className="group relative block aspect-[4/3] overflow-hidden rounded-xl"
+            className="group relative block h-40 overflow-hidden rounded-lg"
           >
+            {/* eslint-disable-next-line @next/next/no-img-element */}
             <img
               src={fallbackImgs[idx % fallbackImgs.length]}
               alt={nome}
@@ -158,25 +166,28 @@ export function BrisaCategorias({ imoveis }: SectionProps) {
               className="absolute inset-0"
               style={{
                 background:
-                  'linear-gradient(180deg, transparent 40%, rgba(0,0,0,0.7) 100%)',
+                  'linear-gradient(180deg, transparent 28%, rgba(0,0,0,0.74))',
               }}
             />
-            <div className="absolute inset-x-0 bottom-0 p-5 text-white">
+            <div className="absolute inset-x-0 bottom-3 px-4 text-white">
               <div
                 style={{ fontFamily: 'var(--t-font-heading)' }}
-                className="text-2xl font-semibold"
+                className="text-xl"
               >
                 {nome}
               </div>
-              <div className="mt-1 text-xs opacity-80">{count} imóveis</div>
+              <div className="text-xs opacity-85">
+                {count} imóve{count > 1 ? 'is' : 'l'}
+              </div>
             </div>
           </a>
         ))}
       </div>
-    </div>
+    </section>
   );
 }
 
+/** Sobre — editorial row: 2 fotos staggered + copy */
 export function BrisaSobre({ tenant }: SectionProps) {
   const nome = tenant.marca?.nomeEmpresa ?? tenant.nome;
   const desc =
@@ -184,52 +195,72 @@ export function BrisaSobre({ tenant }: SectionProps) {
     `Há anos a ${nome} conecta famílias a lares pensados em cada detalhe. Trabalhamos com poucos imóveis por corretor, garantindo conhecimento profundo de cada negociação.`;
 
   return (
-    <div id="sobre" className="mx-auto mt-12 max-w-7xl scroll-mt-24 px-6 md:mt-16">
-      <div className="grid gap-10 md:grid-cols-2 md:items-center">
-        <div className="grid grid-cols-2 gap-4">
+    <section
+      id="sobre"
+      className="mx-auto mt-14 max-w-7xl scroll-mt-24 px-4 sm:px-8"
+    >
+      <div className="grid items-center gap-10 md:grid-cols-2">
+        <div className="grid grid-cols-2 gap-3">
+          {/* eslint-disable-next-line @next/next/no-img-element */}
           <img
-            src="https://images.unsplash.com/photo-1582407947304-fd86f028f716?auto=format&fit=crop&w=700&q=80"
-            className="aspect-[4/5] w-full rounded-2xl object-cover"
+            src="https://images.unsplash.com/photo-1600210492486-724fe5c67fb0?auto=format&fit=crop&w=900&q=86"
             alt=""
+            className="h-64 w-full rounded-lg object-cover"
           />
+          {/* eslint-disable-next-line @next/next/no-img-element */}
           <img
-            src="https://images.unsplash.com/photo-1600585154340-be6161a56a0c?auto=format&fit=crop&w=700&q=80"
-            className="mt-10 aspect-[4/5] w-full rounded-2xl object-cover"
+            src="https://images.unsplash.com/photo-1600566753151-384129cf4e3e?auto=format&fit=crop&w=900&q=86"
             alt=""
+            className="mt-10 h-64 w-full rounded-lg object-cover"
           />
         </div>
         <div>
-          <span className="text-xs font-semibold uppercase tracking-[0.25em] opacity-60">
+          <p
+            className="text-[11px] font-bold uppercase tracking-[0.15em]"
+            style={{ color: 'var(--t-primary)' }}
+          >
             Sobre nós
-          </span>
+          </p>
           <h2
             style={{ fontFamily: 'var(--t-font-heading)' }}
-            className="mt-3 text-3xl font-semibold leading-[1.1] sm:text-4xl md:text-5xl"
+            className="mt-2 text-3xl leading-[0.98] sm:text-4xl md:text-[42px]"
           >
             Imóveis com curadoria, atendimento sem pressa.
           </h2>
-          <p className="mt-5 text-base opacity-75">{desc}</p>
+          <p className="mt-4 max-w-md text-sm leading-relaxed opacity-75 sm:text-base">
+            {desc}
+          </p>
         </div>
       </div>
-    </div>
+    </section>
   );
 }
 
 const DEPS = [
-  { nome: 'Larissa M.', txt: 'Acharam o apê dos meus sonhos em 3 visitas. Atendimento de outro nível.' },
-  { nome: 'Rafael e Júlia', txt: 'Vendemos nossa casa em 22 dias pelo valor que pedimos. Recomendo demais.' },
-  { nome: 'Camila S.', txt: 'Sentimos cuidado em cada etapa. Entenderam o que a gente queria.' },
+  {
+    nome: 'Larissa M.',
+    txt: 'Acharam o apê dos meus sonhos em 3 visitas. Atendimento de outro nível.',
+  },
+  {
+    nome: 'Rafael e Júlia',
+    txt: 'Vendemos nossa casa em 22 dias pelo valor que pedimos. Recomendo demais.',
+  },
+  {
+    nome: 'Camila S.',
+    txt: 'Sentimos cuidado em cada etapa. Entenderam o que a gente queria.',
+  },
 ];
 
 export function BrisaDepoimentos() {
   return (
-    <div className="mx-auto mt-12 max-w-7xl px-6 md:mt-16">
-      <SectionHeader sub="Depoimentos" titulo="Quem comprou com a gente" />
+    <section className="mx-auto mt-14 max-w-7xl px-4 sm:px-8">
+      <SectionHead titulo="Quem comprou com a gente" />
       <div className="mt-6 grid gap-4 md:grid-cols-3">
         {DEPS.map((d) => (
           <div
             key={d.nome}
-            className="rounded-xl bg-white p-5 ring-1 ring-stone-200/60 shadow-sm"
+            className="rounded-lg border bg-white p-5"
+            style={{ borderColor: 'rgb(var(--t-fg-rgb) / 0.1)' }}
           >
             <div className="flex gap-0.5" style={{ color: 'var(--t-primary)' }}>
               {Array.from({ length: 5 }).map((_, i) => (
@@ -238,31 +269,42 @@ export function BrisaDepoimentos() {
             </div>
             <p
               style={{ fontFamily: 'var(--t-font-heading)' }}
-              className="mt-3 text-base leading-snug text-stone-900"
+              className="mt-3 text-base leading-snug"
             >
               "{d.txt}"
             </p>
-            <div className="mt-3 text-xs text-stone-500">— {d.nome}</div>
+            <div className="mt-3 text-xs" style={{ color: 'rgb(var(--t-fg-rgb) / 0.6)' }}>
+              — {d.nome}
+            </div>
           </div>
         ))}
       </div>
-    </div>
+    </section>
   );
 }
 
 const FAQS = [
-  { q: 'Como funciona a primeira visita?', a: 'Agendamos pelo WhatsApp e um corretor te acompanha pessoalmente, sem compromisso.' },
-  { q: 'Vocês ajudam com financiamento?', a: 'Sim, temos parceria com os principais bancos e fazemos toda simulação para você.' },
-  { q: 'Posso anunciar meu imóvel com vocês?', a: 'Sim. Fazemos avaliação gratuita e plano de divulgação personalizado.' },
+  {
+    q: 'Como funciona a primeira visita?',
+    a: 'Agendamos pelo WhatsApp e um corretor te acompanha pessoalmente, sem compromisso.',
+  },
+  {
+    q: 'Vocês ajudam com financiamento?',
+    a: 'Sim, temos parceria com os principais bancos e fazemos toda simulação para você.',
+  },
+  {
+    q: 'Posso anunciar meu imóvel com vocês?',
+    a: 'Sim. Fazemos avaliação gratuita e plano de divulgação personalizado.',
+  },
 ];
 
 export function BrisaFAQ() {
   const [open, setOpen] = useState(0);
   return (
-    <div className="mx-auto mt-16 max-w-4xl px-6 md:mt-24">
-      <SectionHeader sub="Dúvidas" titulo="Perguntas frequentes" center />
+    <section className="mx-auto mt-14 max-w-3xl px-4 sm:px-8">
+      <SectionHead titulo="Perguntas frequentes" center />
       <div
-        className="mt-10 divide-y rounded-2xl border"
+        className="mt-6 divide-y overflow-hidden rounded-lg border bg-white"
         style={{ borderColor: 'rgb(var(--t-fg-rgb) / 0.1)' }}
       >
         {FAQS.map((f, i) => {
@@ -272,7 +314,7 @@ export function BrisaFAQ() {
               key={f.q}
               type="button"
               onClick={() => setOpen(isOpen ? -1 : i)}
-              className="block w-full px-6 py-5 text-left"
+              className="block w-full px-5 py-4 text-left"
             >
               <div className="flex items-center justify-between gap-4">
                 <span
@@ -287,91 +329,109 @@ export function BrisaFAQ() {
                   <Plus className="h-4 w-4 opacity-60" />
                 )}
               </div>
-              {isOpen && <p className="mt-3 text-sm opacity-70">{f.a}</p>}
+              {isOpen && (
+                <p className="mt-2 text-sm opacity-70">{f.a}</p>
+              )}
             </button>
           );
         })}
       </div>
-    </div>
+    </section>
   );
 }
 
+/**
+ * CTA "Anuncie seu imovel" — Lead band do lab:
+ * - bg na cor band (secondary do tema = soft mint pra brisa)
+ * - 2 cols: copy + form em card branco
+ * - NEUTRO: usamos secondary (cor band travada) em vez de --t-primary
+ *   pra nao bagunca quando user trocar cor primaria
+ */
 export function BrisaCTA({ tenant }: { tenant?: TenantPublic }) {
   return (
-    <div id="anuncie" className="mx-auto mt-12 max-w-7xl px-6 md:mt-16">
-      {/* Bloco neutro escuro fixo — independente da cor primaria do user */}
-      <div className="relative overflow-hidden rounded-2xl bg-stone-900 text-white px-8 py-12 md:px-14 md:py-16">
-        <div className="grid gap-8 md:grid-cols-2 md:items-center">
-          <div>
-            <span
-              className="text-[11px] font-semibold uppercase tracking-[0.2em]"
-              style={{ color: 'var(--t-primary)' }}
-            >
-              Anuncie seu imóvel
-            </span>
-            <h2
-              style={{ fontFamily: 'var(--t-font-heading)' }}
-              className="mt-2 text-2xl font-semibold leading-[1.15] sm:text-3xl md:text-4xl"
-            >
-              Avaliação gratuita em 48h
-            </h2>
-            <p className="mt-3 max-w-md text-sm text-white/70">
-              Plano de divulgação personalizado e atendimento humano do começo ao fim.
-            </p>
-          </div>
-          {tenant?.slug && (
-            <div className="rounded-xl bg-white p-4 text-stone-900 shadow-lg">
-              <LeadForm
-                slug={tenant.slug}
-                tipoLead="VENDEDOR"
-                defaultMessage="Olá, quero uma avaliação gratuita do meu imóvel."
-                ctaLabel="Quero avaliar"
-              />
-            </div>
-          )}
+    <section id="anuncie" className="mx-auto mt-14 max-w-7xl px-4 sm:px-8">
+      <div
+        className="grid items-center gap-6 rounded-xl p-6 sm:p-10 md:grid-cols-[0.9fr_1.1fr]"
+        style={{ background: 'var(--t-secondary)' }}
+      >
+        <div>
+          <p
+            className="text-[11px] font-bold uppercase tracking-[0.15em]"
+            style={{ color: 'var(--t-primary)' }}
+          >
+            Anuncie
+          </p>
+          <h2
+            style={{ fontFamily: 'var(--t-font-heading)' }}
+            className="mt-2 text-2xl leading-tight sm:text-3xl md:text-4xl"
+          >
+            Venda seu imóvel com avaliação gratuita.
+          </h2>
+          <p className="mt-3 max-w-md text-sm leading-relaxed opacity-75 sm:text-base">
+            Receba uma avaliação profissional em 48h e um plano de divulgação
+            com fotos, site e posts prontos.
+          </p>
         </div>
+        {tenant?.slug && (
+          <div
+            className="rounded-lg bg-white p-4 shadow-lg sm:p-5"
+            style={{ color: 'var(--t-fg)' }}
+          >
+            <LeadForm
+              slug={tenant.slug}
+              tipoLead="VENDEDOR"
+              defaultMessage="Olá, quero uma avaliação gratuita do meu imóvel."
+              ctaLabel="Quero avaliar meu imóvel"
+            />
+          </div>
+        )}
       </div>
-    </div>
+    </section>
   );
 }
 
 export function BrisaContato() {
   return (
-    <div className="mx-auto mt-16 max-w-3xl px-6 text-center md:mt-24">
-      <SectionHeader
-        sub="Newsletter"
-        titulo="Receba imóveis novos antes de ir ao site"
-        center
-      />
+    <section className="mx-auto mt-14 max-w-3xl px-4 text-center sm:px-8">
+      <p
+        className="text-[11px] font-bold uppercase tracking-[0.15em]"
+        style={{ color: 'var(--t-primary)' }}
+      >
+        Newsletter
+      </p>
+      <h2
+        style={{ fontFamily: 'var(--t-font-heading)' }}
+        className="mt-2 text-2xl leading-tight sm:text-3xl md:text-4xl"
+      >
+        Receba imóveis novos antes de ir ao site
+      </h2>
       <form
-        className="mx-auto mt-8 flex max-w-lg flex-col gap-3 sm:flex-row"
+        className="mx-auto mt-6 flex max-w-md flex-col gap-2 sm:flex-row"
         onSubmit={(e) => e.preventDefault()}
       >
         <input
           placeholder="seu@email.com"
-          className="flex-1 rounded-full border bg-transparent px-5 py-3.5 text-sm outline-none"
-          style={{ borderColor: 'rgb(var(--t-fg-rgb) / 0.2)' }}
+          className="flex-1 rounded-md border border-stone-200 bg-white px-4 py-2.5 text-sm"
         />
         <button
           type="submit"
-          className="rounded-full px-7 py-3.5 text-sm font-semibold"
-          style={{ background: 'var(--t-primary)', color: 'var(--t-bg)' }}
+          className="rounded-md px-5 py-2.5 text-sm font-bold text-white"
+          style={{ background: 'var(--t-primary)' }}
         >
           Inscrever
         </button>
       </form>
-    </div>
+    </section>
   );
 }
 
-function SectionHeader({
-  sub,
+/** Reusable section head — eyebrow opcional + titulo + cta direita */
+function SectionHead({
   titulo,
   cta,
   ctaTo,
   center,
 }: {
-  sub: string;
   titulo: string;
   cta?: string;
   ctaTo?: string;
@@ -383,24 +443,16 @@ function SectionHeader({
         center ? 'flex-col items-center text-center' : ''
       }`}
     >
-      <div>
-        <span
-          className="text-[11px] font-semibold uppercase tracking-[0.2em]"
-          style={{ color: 'var(--t-primary)' }}
-        >
-          {sub}
-        </span>
-        <h2
-          style={{ fontFamily: 'var(--t-font-heading)' }}
-          className="mt-1.5 text-2xl font-semibold leading-[1.15] sm:text-3xl md:text-4xl"
-        >
-          {titulo}
-        </h2>
-      </div>
+      <h2
+        style={{ fontFamily: 'var(--t-font-heading)' }}
+        className="text-2xl leading-none sm:text-3xl md:text-[35px]"
+      >
+        {titulo}
+      </h2>
       {cta && ctaTo && (
         <a
           href={ctaTo}
-          className="hidden items-center gap-1 text-sm font-medium opacity-80 hover:opacity-100 md:inline-flex"
+          className="hidden items-center gap-1 text-sm font-bold md:inline-flex"
           style={{ color: 'var(--t-primary)' }}
         >
           {cta} <ChevronRight className="h-4 w-4" />

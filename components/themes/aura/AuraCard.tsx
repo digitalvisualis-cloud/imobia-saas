@@ -5,52 +5,75 @@ import { formatPriceBRL, imageUrl, imovelHref } from '../_shared';
 interface Props {
   imovel: ImovelPublic;
   slug: string;
-  large?: boolean;
 }
 
-export function AuraCard({ imovel, slug, large = false }: Props) {
+/**
+ * Aura Card — mesma estrutura do BrisaCard mas com refinamento editorial:
+ * - tipografia serif no titulo
+ * - badge transparente menos colorido (.uppercase tracking)
+ * - photo 16:10 + body 14px
+ *
+ * Compartilha o contrato visual do lab. Diferenca pra Brisa: o accent
+ * (--t-primary) eh gold em vez de green; chrome mais sofisticado.
+ */
+export function AuraCard({ imovel, slug }: Props) {
+  const operacao = imovel.operacao.toLowerCase();
+  const specs: string[] = [];
+  if (imovel.areaM2 != null) specs.push(`${imovel.areaM2} m²`);
+  if (imovel.quartos > 0) specs.push(`${imovel.quartos} quartos`);
+  if (imovel.banheiros > 0) specs.push(`${imovel.banheiros} banh.`);
+
   return (
-    <Link href={imovelHref(slug, imovel.codigo)} className="group block">
-      <div
-        className={`relative overflow-hidden ${large ? 'aspect-[16/10]' : 'aspect-[4/3]'}`}
-      >
+    <Link
+      href={imovelHref(slug, imovel.codigo)}
+      className="group block overflow-hidden rounded-lg border bg-white transition-shadow hover:shadow-md"
+      style={{ borderColor: 'rgb(var(--t-fg-rgb) / 0.1)' }}
+    >
+      <div className="relative aspect-[16/10] overflow-hidden bg-stone-100">
         <img
           src={imageUrl(imovel.capaUrl ?? imovel.imagens[0])}
           alt={imovel.titulo}
           loading="lazy"
-          className="h-full w-full object-cover transition-transform duration-[1200ms] ease-out group-hover:scale-[1.04]"
+          className="h-full w-full object-cover transition-transform duration-[1200ms] ease-out group-hover:scale-[1.05]"
         />
-        <div className="absolute right-3 top-3 rounded-sm bg-white/90 px-2.5 py-0.5 text-[10px] font-medium uppercase tracking-[0.2em] text-black backdrop-blur">
-          {imovel.tipo.toLowerCase()}
-        </div>
+        <span
+          className="absolute left-2.5 top-2.5 rounded-sm bg-white/95 px-2 py-0.5 text-[10px] font-bold uppercase tracking-[0.15em] text-stone-900 backdrop-blur"
+        >
+          {operacao}
+        </span>
+        <span className="absolute right-2.5 top-2.5 rounded-md bg-black/65 px-2 py-0.5 font-mono text-[10px] text-white">
+          {imovel.codigo}
+        </span>
       </div>
-      <div className="mt-4 flex items-start justify-between gap-4">
-        <div className="flex-1 min-w-0">
-          <p className="text-[10px] uppercase tracking-[0.3em] opacity-60">
-            {imovel.bairro ?? '—'} {imovel.cidade && `· ${imovel.cidade}`}
-          </p>
-          <h3
-            style={{ fontFamily: 'var(--t-font-heading)' }}
-            className="mt-1.5 text-base leading-[1.2] sm:text-lg line-clamp-1"
-          >
-            {imovel.titulo}
-          </h3>
-          <p className="mt-1.5 text-xs opacity-65">
-            {imovel.areaM2 != null && `${imovel.areaM2} m²`}
-            {imovel.quartos > 0 && ` · ${imovel.quartos} dorm`}
-            {imovel.vagas > 0 && ` · ${imovel.vagas} vaga${imovel.vagas > 1 ? 's' : ''}`}
-          </p>
-        </div>
-        <div className="shrink-0 text-right">
+      <div className="p-3.5">
+        <p
+          className="text-[10px] font-bold uppercase tracking-wider"
+          style={{ color: 'rgb(var(--t-fg-rgb) / 0.55)' }}
+        >
+          {imovel.bairro ?? '—'}
+          {imovel.cidade && ` · ${imovel.cidade}`}
+        </p>
+        <h4
+          style={{ fontFamily: 'var(--t-font-heading)' }}
+          className="mt-1.5 line-clamp-2 text-base leading-tight"
+        >
+          {imovel.titulo}
+        </h4>
+        {specs.length > 0 && (
           <div
-            style={{ fontFamily: 'var(--t-font-heading)', color: 'var(--t-secondary)' }}
-            className="text-base sm:text-lg"
+            className="mt-2 flex gap-2 text-xs"
+            style={{ color: 'rgb(var(--t-fg-rgb) / 0.55)' }}
           >
-            {formatPriceBRL(imovel.preco, imovel.operacao)}
+            {specs.map((s) => (
+              <span key={s}>{s}</span>
+            ))}
           </div>
-          <div className="mt-0.5 text-[9px] uppercase tracking-[0.2em] opacity-50 font-mono">
-            {imovel.codigo}
-          </div>
+        )}
+        <div
+          className="mt-3 text-lg font-extrabold"
+          style={{ color: 'var(--t-primary)' }}
+        >
+          {formatPriceBRL(imovel.preco, imovel.operacao)}
         </div>
       </div>
     </Link>
