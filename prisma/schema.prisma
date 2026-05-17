@@ -38,6 +38,7 @@ model Tenant {
   newsletterInscricoes NewsletterInscricao[]
   artigosBlog ArtigoBlog[]
   chaveRetiradas ChaveRetirada[]
+  comissaoSplits ComissaoSplit[]
 
   @@map("tenants")
 }
@@ -662,6 +663,7 @@ model Contrato {
   tenant          Tenant          @relation(fields: [tenantId], references: [id], onDelete: Cascade)
   imovel          Imovel?         @relation(fields: [imovelId], references: [id], onDelete: SetNull)
   lead            Lead?           @relation(fields: [leadId], references: [id], onDelete: SetNull)
+  splits          ComissaoSplit[]
 
   @@index([tenantId, status])
   @@index([tenantId, dataInicio])
@@ -674,6 +676,49 @@ enum TipoContrato {
   ALUGUEL
   ADMINISTRACAO
   CAPTACAO
+}
+
+/// Split de comissao por contrato: corretor que vendeu, captador,
+/// imobiliaria, parceiros. Pode ser % ou valor fixo. Mantido como
+/// sublinha separada do Contrato pra pipeline financeiro do F7.
+model ComissaoSplit {
+  id                    String          @id @default(cuid())
+  tenantId              String
+  contratoId            String
+  beneficiario          String          // nome do corretor/captador/empresa
+  beneficiarioContato   String?         // wpp/email pra cobranca/aviso
+  papel                 PapelComissao   @default(VENDEDOR)
+  percentual            Decimal?        @db.Decimal(5, 2)  // % do valor da comissao do contrato
+  valorFixo             Decimal?        @db.Decimal(15, 2) // OU valor fixo (mutuamente exclusivo)
+  status                StatusComissao  @default(PENDENTE)
+  pagoEm                DateTime?
+  observacao            String?
+  /// Hook n8n: evita disparar lembrete de pagamento duplicado
+  eventoCobrancaEmitido Boolean         @default(false)
+  createdAt             DateTime        @default(now())
+  updatedAt             DateTime        @updatedAt
+
+  tenant                Tenant          @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  contrato              Contrato        @relation(fields: [contratoId], references: [id], onDelete: Cascade)
+
+  @@index([tenantId, status])
+  @@index([contratoId])
+  @@index([tenantId, pagoEm])
+  @@map("comissao_splits")
+}
+
+enum PapelComissao {
+  VENDEDOR
+  CAPTADOR
+  IMOBILIARIA
+  PARCEIRO
+  OUTRO
+}
+
+enum StatusComissao {
+  PENDENTE
+  PAGO
+  CANCELADO
 }
 
 enum StatusContrato {

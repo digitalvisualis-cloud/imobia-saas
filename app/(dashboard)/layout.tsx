@@ -29,6 +29,7 @@ import {
   Briefcase,
   Mail,
   FileText,
+  Receipt,
   type LucideIcon,
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
@@ -129,6 +130,7 @@ export default function DashboardLayout({
         { name: 'Alertas (e-mail)', href: '/newsletter', icon: Mail },
         { name: 'Controle de Chaves', href: '/controle-chaves', icon: KeyRound },
         { name: 'Contratos', href: '/contratos', icon: FileText },
+        { name: 'Comissões', href: '/comissoes', icon: Receipt },
         { name: 'Financeiro', href: '/financeiro', icon: Wallet },
       ],
     },
