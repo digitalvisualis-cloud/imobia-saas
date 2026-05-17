@@ -84,23 +84,20 @@ function BarraConfianca({ total }: { total: number }) {
     { icon: Star, label: 'Suporte humano' },
   ];
   return (
-    <div className="mx-auto mt-8 max-w-7xl px-6">
-      <div
-        className="grid grid-cols-2 gap-3 rounded-2xl border p-4 md:grid-cols-4"
-        style={{ borderColor: 'rgb(var(--t-fg-rgb) / 0.1)' }}
-      >
+    <div className="mx-auto mt-6 max-w-7xl px-6">
+      <div className="grid grid-cols-2 gap-3 rounded-xl bg-white p-4 ring-1 ring-stone-200/80 shadow-sm md:grid-cols-4">
         {items.map((it) => (
-          <div key={it.label} className="flex items-center gap-3 px-2">
+          <div key={it.label} className="flex items-center gap-2.5 px-1">
             <div
-              className="flex h-9 w-9 items-center justify-center rounded-full"
+              className="flex h-8 w-8 items-center justify-center rounded-full"
               style={{
-                background: 'rgb(var(--t-primary-rgb) / 0.1)',
+                background: 'rgb(var(--t-primary-rgb) / 0.12)',
                 color: 'var(--t-primary)',
               }}
             >
-              <it.icon className="h-4 w-4" />
+              <it.icon className="h-3.5 w-3.5" />
             </div>
-            <span className="text-sm font-medium opacity-85">{it.label}</span>
+            <span className="text-xs font-medium text-stone-700">{it.label}</span>
           </div>
         ))}
       </div>
@@ -228,25 +225,24 @@ export function BrisaDepoimentos() {
   return (
     <div className="mx-auto mt-12 max-w-7xl px-6 md:mt-16">
       <SectionHeader sub="Depoimentos" titulo="Quem comprou com a gente" />
-      <div className="mt-10 grid gap-6 md:grid-cols-3">
+      <div className="mt-6 grid gap-4 md:grid-cols-3">
         {DEPS.map((d) => (
           <div
             key={d.nome}
-            className="rounded-2xl p-6"
-            style={{ background: 'rgb(var(--t-primary-rgb) / 0.06)' }}
+            className="rounded-xl bg-white p-5 ring-1 ring-stone-200/60 shadow-sm"
           >
-            <div className="flex gap-1" style={{ color: 'var(--t-secondary)' }}>
+            <div className="flex gap-0.5" style={{ color: 'var(--t-primary)' }}>
               {Array.from({ length: 5 }).map((_, i) => (
-                <Star key={i} className="h-4 w-4 fill-current" />
+                <Star key={i} className="h-3.5 w-3.5 fill-current" />
               ))}
             </div>
             <p
               style={{ fontFamily: 'var(--t-font-heading)' }}
-              className="mt-4 text-lg leading-snug"
+              className="mt-3 text-base leading-snug text-stone-900"
             >
               "{d.txt}"
             </p>
-            <div className="mt-5 text-sm opacity-70">— {d.nome}</div>
+            <div className="mt-3 text-xs text-stone-500">— {d.nome}</div>
           </div>
         ))}
       </div>
@@ -303,43 +299,34 @@ export function BrisaFAQ() {
 export function BrisaCTA({ tenant }: { tenant?: TenantPublic }) {
   return (
     <div id="anuncie" className="mx-auto mt-12 max-w-7xl px-6 md:mt-16">
-      <div
-        className="relative overflow-hidden rounded-3xl px-8 py-14 md:px-16 md:py-20"
-        style={{ background: 'var(--t-primary)', color: 'var(--t-bg)' }}
-      >
-        <div className="grid gap-10 md:grid-cols-2 md:items-center">
+      {/* Bloco neutro escuro fixo — independente da cor primaria do user */}
+      <div className="relative overflow-hidden rounded-2xl bg-stone-900 text-white px-8 py-12 md:px-14 md:py-16">
+        <div className="grid gap-8 md:grid-cols-2 md:items-center">
           <div>
-            <span className="text-xs font-semibold uppercase tracking-[0.25em] opacity-70">
-              Anuncie
+            <span
+              className="text-[11px] font-semibold uppercase tracking-[0.2em]"
+              style={{ color: 'var(--t-primary)' }}
+            >
+              Anuncie seu imóvel
             </span>
             <h2
               style={{ fontFamily: 'var(--t-font-heading)' }}
-              className="mt-3 text-3xl font-semibold leading-[1.1] sm:text-4xl md:text-5xl"
+              className="mt-2 text-2xl font-semibold leading-[1.15] sm:text-3xl md:text-4xl"
             >
-              Venda seu imóvel com avaliação gratuita.
+              Avaliação gratuita em 48h
             </h2>
-            <p className="mt-4 max-w-md opacity-80">
-              Receba uma avaliação profissional em 48h e um plano de divulgação que vende mais rápido.
+            <p className="mt-3 max-w-md text-sm text-white/70">
+              Plano de divulgação personalizado e atendimento humano do começo ao fim.
             </p>
           </div>
-          {tenant?.slug ? (
-            <div className="rounded-2xl bg-white/95 p-5 text-[var(--t-fg)] shadow-lg">
+          {tenant?.slug && (
+            <div className="rounded-xl bg-white p-4 text-stone-900 shadow-lg">
               <LeadForm
                 slug={tenant.slug}
                 tipoLead="VENDEDOR"
                 defaultMessage="Olá, quero uma avaliação gratuita do meu imóvel."
-                ctaLabel="Quero avaliar meu imóvel"
+                ctaLabel="Quero avaliar"
               />
-            </div>
-          ) : (
-            <div className="md:text-right">
-              <a
-                href="#contato"
-                className="inline-flex items-center gap-2 rounded-full px-7 py-4 text-sm font-semibold transition-opacity hover:opacity-90"
-                style={{ background: 'var(--t-secondary)', color: 'var(--t-fg)' }}
-              >
-                Quero avaliar meu imóvel <ChevronRight className="h-4 w-4" />
-              </a>
             </div>
           )}
         </div>
@@ -397,12 +384,15 @@ function SectionHeader({
       }`}
     >
       <div>
-        <span className="text-xs font-semibold uppercase tracking-[0.25em] opacity-60">
+        <span
+          className="text-[11px] font-semibold uppercase tracking-[0.2em]"
+          style={{ color: 'var(--t-primary)' }}
+        >
           {sub}
         </span>
         <h2
           style={{ fontFamily: 'var(--t-font-heading)' }}
-          className="mt-2 text-3xl font-semibold leading-[1.1] sm:text-4xl md:text-5xl"
+          className="mt-1.5 text-2xl font-semibold leading-[1.15] sm:text-3xl md:text-4xl"
         >
           {titulo}
         </h2>

@@ -392,13 +392,13 @@ export function AuraFAQ() {
 export function AuraCTA({ tenant }: SectionProps) {
   return (
     <div id="anuncie" className="mx-auto mt-12 max-w-[1400px] px-4 sm:mt-20 sm:px-8">
-      <div
-        className="relative overflow-hidden px-5 py-10 sm:px-8 sm:py-16 md:px-14 md:py-20"
-        style={{ background: 'var(--t-primary)', color: 'var(--t-bg)' }}
-      >
+      {/* Bloco SEMPRE neutro escuro — nao depende da cor primaria do user
+          pra evitar contraste ruim quando ele escolhe cor clara. Accent
+          em --t-secondary (cor que vira pra escolha do user automatico). */}
+      <div className="relative overflow-hidden bg-neutral-900 text-white px-5 py-10 sm:px-8 sm:py-16 md:px-14 md:py-20">
         <div className="grid gap-10 md:grid-cols-[1.2fr_1fr] md:items-center md:gap-16">
           <div>
-            <p className="text-[10px] uppercase tracking-[0.3em] opacity-60 sm:text-[11px] sm:tracking-[0.35em]">
+            <p className="text-[10px] uppercase tracking-[0.3em] text-white/60 sm:text-[11px] sm:tracking-[0.35em]">
               Anuncie com a {tenant.marca?.nomeEmpresa ?? tenant.nome}
             </p>
             <h2
@@ -406,10 +406,10 @@ export function AuraCTA({ tenant }: SectionProps) {
               className="mt-3 text-3xl leading-[1.05] sm:mt-4 sm:text-4xl sm:leading-[1.05] md:text-5xl"
             >
               Sua propriedade merece{' '}
-              <span style={{ color: 'var(--t-secondary)' }}>uma narrativa.</span>
+              <span style={{ color: 'var(--t-primary)' }}>uma narrativa.</span>
             </h2>
           </div>
-          <div className="rounded-md bg-white/95 p-5 text-[var(--t-fg)] shadow-lg">
+          <div className="rounded-md bg-white p-5 text-stone-900 shadow-lg">
             <LeadForm
               slug={tenant.slug}
               tipoLead="VENDEDOR"
