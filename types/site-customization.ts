@@ -61,10 +61,24 @@ export interface SeoConfig {
 
 export interface Customization {
   colors: {
+    /** Cor accent — usada em eyebrows, preços, botões, links. User customiza. */
     primary: string;
+    /** Cor band — bg de CTAs grandes (Aura: dark, Brisa: mint, Onyx: dark). */
     secondary: string;
+    /** Bg da página inteira. */
     background: string;
+    /** Cor do texto principal contra bg. */
     foreground: string;
+    /** Bg de cards (contraste com page bg). Fallback: branco. Travado por tema. */
+    card?: string;
+    /** Texto secundário (specs, eyebrows). Fallback: 60% fg. Travado por tema. */
+    muted?: string;
+    /** Cor de borders e divisores. Fallback: 12% fg. Travado por tema. */
+    line?: string;
+    /** Cor do texto sobre o bg da cor primary (botões). Default: white. */
+    primaryInk?: string;
+    /** Cor do texto sobre o bg da cor secondary (CTA bands). Default depende do tema. */
+    secondaryInk?: string;
   };
   fonts: FontPair;
   sections: SectionConfig[];
@@ -126,10 +140,16 @@ const COMMON_HERO: HeroConfig = {
 export const DEFAULTS: Record<ThemeId, Customization> = {
   brisa: {
     colors: {
-      primary: '#187a57',       // forest green (theme-accent)
-      secondary: '#d9f0e3',     // soft mint (theme-band)
-      background: '#f7faf8',    // off-white quase-mint
-      foreground: '#143226',    // dark forest
+      // Valores diretos do visual-lab styles.css (.brisa-theme)
+      primary: '#187a57',       // accent
+      secondary: '#d9f0e3',     // band (mint claro)
+      background: '#f7faf8',
+      foreground: '#143226',
+      card: '#ffffff',
+      muted: '#63756d',
+      line: '#dfe9e4',
+      primaryInk: '#ffffff',
+      secondaryInk: '#123326',
     },
     fonts: { heading: 'Fraunces', body: 'Inter' },
     sections: DEFAULT_SECTIONS,
@@ -143,10 +163,16 @@ export const DEFAULTS: Record<ThemeId, Customization> = {
   },
   aura: {
     colors: {
-      primary: '#aa7c42',       // warm gold/brown
-      secondary: '#111318',     // deep dark (theme-band)
-      background: '#fbfbf8',    // bege off-white
-      foreground: '#101114',    // near black
+      // Valores diretos do visual-lab styles.css (.aura-theme)
+      primary: '#aa7c42',
+      secondary: '#111318',
+      background: '#fbfbf8',
+      foreground: '#101114',
+      card: '#fbfbf8',
+      muted: '#6d7077',
+      line: '#deded8',
+      primaryInk: '#ffffff',
+      secondaryInk: '#ffffff',
     },
     fonts: { heading: 'DM Serif Display', body: 'Manrope' },
     sections: DEFAULT_SECTIONS,
@@ -160,10 +186,16 @@ export const DEFAULTS: Record<ThemeId, Customization> = {
   },
   onyx: {
     colors: {
-      primary: '#d7ae5e',       // warm gold (lab) — antes era #FCB828
-      secondary: '#0f1115',     // band dark
+      // Valores diretos do visual-lab styles.css (.onyx-theme)
+      primary: '#d7ae5e',
+      secondary: '#0f1115',
       background: '#ffffff',
       foreground: '#0f1115',
+      card: '#ffffff',
+      muted: '#68707a',
+      line: '#e1e5ea',
+      primaryInk: '#111111',
+      secondaryInk: '#ffffff',
     },
     fonts: { heading: 'Playfair Display', body: 'Inter' },
     sections: DEFAULT_SECTIONS,

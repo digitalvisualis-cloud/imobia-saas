@@ -18,13 +18,7 @@ interface SectionProps {
 const HERO_FALLBACK =
   'https://images.unsplash.com/photo-1600585154340-be6161a56a0c?auto=format&fit=crop&w=2000&q=86';
 
-/**
- * Brisa Hero — baseado no visual-lab:
- * - foto grande com rounded e margens laterais
- * - overlay gradient diagonal pra texto legivel sem matar a foto
- * - copy serif a esquerda + search card a direita (desktop)
- * - eyebrow accent em primary
- */
+/** Hero — foto + overlay diagonal + copy esq + search card dir */
 export function BrisaHero({ tenant, imoveis, config }: SectionProps) {
   const heroImg =
     config?.hero?.imageUrl?.trim() ||
@@ -33,7 +27,7 @@ export function BrisaHero({ tenant, imoveis, config }: SectionProps) {
     tenant.marca?.slogan ?? 'Imóveis que combinam\ncom a sua próxima fase.';
   const descricao =
     tenant.marca?.descricao ??
-    'Curadoria de imóveis residenciais e comerciais com atendimento humano, fotos bem apresentadas e negociação acompanhada do começo ao fim.';
+    'Curadoria de imóveis com atendimento humano, fotos bem apresentadas e negociação acompanhada do começo ao fim.';
 
   return (
     <div className="mx-auto max-w-7xl px-4 pt-6 sm:px-8 sm:pt-8">
@@ -44,7 +38,6 @@ export function BrisaHero({ tenant, imoveis, config }: SectionProps) {
           alt=""
           className="h-[440px] w-full object-cover sm:h-[520px] lg:h-[570px]"
         />
-        {/* Overlay diagonal — escuro a esquerda, leve no centro, escuro a direita */}
         <div
           className="absolute inset-0"
           style={{
@@ -87,7 +80,6 @@ export function BrisaHero({ tenant, imoveis, config }: SectionProps) {
   );
 }
 
-/** Trust row — 4 chips com info de confianca */
 function BarraConfianca({ total }: { total: number }) {
   const items = [
     total > 0 ? `+${total} imóveis na carteira` : 'Imóveis selecionados',
@@ -100,10 +92,11 @@ function BarraConfianca({ total }: { total: number }) {
       {items.map((label) => (
         <div
           key={label}
-          className="rounded-md border bg-white px-3 py-3 text-center text-[11px] font-bold uppercase tracking-wider"
+          className="rounded-md border px-3 py-3 text-center text-[11px] font-bold uppercase tracking-wider"
           style={{
-            borderColor: 'rgb(var(--t-fg-rgb) / 0.1)',
-            color: 'rgb(var(--t-fg-rgb) / 0.55)',
+            background: 'var(--t-card)',
+            borderColor: 'var(--t-line)',
+            color: 'var(--t-muted)',
           }}
         >
           {label}
@@ -113,26 +106,34 @@ function BarraConfianca({ total }: { total: number }) {
   );
 }
 
-/** Destaques — section head + grid 3 cols de cards */
+/**
+ * Destaques — bloco com fundo CARD (contraste com page bg).
+ * Padding generoso + border = bloco bem demarcado.
+ */
 export function BrisaDestaques({ tenant, imoveis }: SectionProps) {
   if (imoveis.length === 0) return null;
   return (
-    <section className="mx-auto mt-14 max-w-7xl px-4 sm:px-8">
-      <SectionHead
-        titulo="Imóveis em destaque"
-        cta="Ver todos"
-        ctaTo={`/s/${tenant.slug}`}
-      />
-      <div className="mt-6 grid gap-4 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
-        {imoveis.slice(0, 8).map((i) => (
-          <BrisaCard key={i.id} imovel={i} slug={tenant.slug} />
-        ))}
+    <section className="mx-auto mt-12 max-w-7xl px-4 sm:px-8">
+      <div
+        className="rounded-2xl border p-6 sm:p-10"
+        style={{ background: 'var(--t-card)', borderColor: 'var(--t-line)' }}
+      >
+        <SectionHead
+          titulo="Imóveis em destaque"
+          cta="Ver todos"
+          ctaTo={`/s/${tenant.slug}`}
+        />
+        <div className="mt-6 grid gap-4 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
+          {imoveis.slice(0, 8).map((i) => (
+            <BrisaCard key={i.id} imovel={i} slug={tenant.slug} />
+          ))}
+        </div>
       </div>
     </section>
   );
 }
 
-/** Categorias / Regioes — grid 3 cols com foto + label embaixo */
+/** Categorias — bloco transparente (page bg) com fotos full-bleed */
 export function BrisaCategorias({ imoveis }: SectionProps) {
   const counts = new Map<string, number>();
   imoveis.forEach((i) => {
@@ -148,13 +149,13 @@ export function BrisaCategorias({ imoveis }: SectionProps) {
   ];
 
   return (
-    <section className="mx-auto mt-14 max-w-7xl px-4 sm:px-8">
+    <section className="mx-auto mt-12 max-w-7xl px-4 sm:px-8">
       <SectionHead titulo="Explore por região" />
       <div className="mt-6 grid gap-3 sm:grid-cols-3">
         {top.map(([nome, count], idx) => (
           <a
             key={nome}
-            className="group relative block h-40 overflow-hidden rounded-lg"
+            className="group relative block h-44 overflow-hidden rounded-lg"
           >
             {/* eslint-disable-next-line @next/next/no-img-element */}
             <img
@@ -187,7 +188,7 @@ export function BrisaCategorias({ imoveis }: SectionProps) {
   );
 }
 
-/** Sobre — editorial row: 2 fotos staggered + copy */
+/** Sobre — bloco CARD destacado, editorial-row 2 fotos staggered + copy */
 export function BrisaSobre({ tenant }: SectionProps) {
   const nome = tenant.marca?.nomeEmpresa ?? tenant.nome;
   const desc =
@@ -197,39 +198,47 @@ export function BrisaSobre({ tenant }: SectionProps) {
   return (
     <section
       id="sobre"
-      className="mx-auto mt-14 max-w-7xl scroll-mt-24 px-4 sm:px-8"
+      className="mx-auto mt-12 max-w-7xl scroll-mt-24 px-4 sm:px-8"
     >
-      <div className="grid items-center gap-10 md:grid-cols-2">
-        <div className="grid grid-cols-2 gap-3">
-          {/* eslint-disable-next-line @next/next/no-img-element */}
-          <img
-            src="https://images.unsplash.com/photo-1600210492486-724fe5c67fb0?auto=format&fit=crop&w=900&q=86"
-            alt=""
-            className="h-64 w-full rounded-lg object-cover"
-          />
-          {/* eslint-disable-next-line @next/next/no-img-element */}
-          <img
-            src="https://images.unsplash.com/photo-1600566753151-384129cf4e3e?auto=format&fit=crop&w=900&q=86"
-            alt=""
-            className="mt-10 h-64 w-full rounded-lg object-cover"
-          />
-        </div>
-        <div>
-          <p
-            className="text-[11px] font-bold uppercase tracking-[0.15em]"
-            style={{ color: 'var(--t-primary)' }}
-          >
-            Sobre nós
-          </p>
-          <h2
-            style={{ fontFamily: 'var(--t-font-heading)' }}
-            className="mt-2 text-3xl leading-[0.98] sm:text-4xl md:text-[42px]"
-          >
-            Imóveis com curadoria, atendimento sem pressa.
-          </h2>
-          <p className="mt-4 max-w-md text-sm leading-relaxed opacity-75 sm:text-base">
-            {desc}
-          </p>
+      <div
+        className="rounded-2xl border p-6 sm:p-10"
+        style={{ background: 'var(--t-card)', borderColor: 'var(--t-line)' }}
+      >
+        <div className="grid items-center gap-10 md:grid-cols-2">
+          <div className="grid grid-cols-2 gap-3">
+            {/* eslint-disable-next-line @next/next/no-img-element */}
+            <img
+              src="https://images.unsplash.com/photo-1600210492486-724fe5c67fb0?auto=format&fit=crop&w=900&q=86"
+              alt=""
+              className="h-64 w-full rounded-lg object-cover"
+            />
+            {/* eslint-disable-next-line @next/next/no-img-element */}
+            <img
+              src="https://images.unsplash.com/photo-1600566753151-384129cf4e3e?auto=format&fit=crop&w=900&q=86"
+              alt=""
+              className="mt-10 h-64 w-full rounded-lg object-cover"
+            />
+          </div>
+          <div>
+            <p
+              className="text-[11px] font-bold uppercase tracking-[0.15em]"
+              style={{ color: 'var(--t-primary)' }}
+            >
+              Sobre nós
+            </p>
+            <h2
+              style={{ fontFamily: 'var(--t-font-heading)' }}
+              className="mt-2 text-3xl leading-[0.98] sm:text-4xl md:text-[42px]"
+            >
+              Imóveis com curadoria, atendimento sem pressa.
+            </h2>
+            <p
+              className="mt-4 max-w-md text-sm leading-relaxed sm:text-base"
+              style={{ color: 'var(--t-muted)' }}
+            >
+              {desc}
+            </p>
+          </div>
         </div>
       </div>
     </section>
@@ -253,14 +262,14 @@ const DEPS = [
 
 export function BrisaDepoimentos() {
   return (
-    <section className="mx-auto mt-14 max-w-7xl px-4 sm:px-8">
+    <section className="mx-auto mt-12 max-w-7xl px-4 sm:px-8">
       <SectionHead titulo="Quem comprou com a gente" />
       <div className="mt-6 grid gap-4 md:grid-cols-3">
         {DEPS.map((d) => (
           <div
             key={d.nome}
-            className="rounded-lg border bg-white p-5"
-            style={{ borderColor: 'rgb(var(--t-fg-rgb) / 0.1)' }}
+            className="rounded-lg border p-5"
+            style={{ background: 'var(--t-card)', borderColor: 'var(--t-line)' }}
           >
             <div className="flex gap-0.5" style={{ color: 'var(--t-primary)' }}>
               {Array.from({ length: 5 }).map((_, i) => (
@@ -273,7 +282,10 @@ export function BrisaDepoimentos() {
             >
               "{d.txt}"
             </p>
-            <div className="mt-3 text-xs" style={{ color: 'rgb(var(--t-fg-rgb) / 0.6)' }}>
+            <div
+              className="mt-3 text-xs"
+              style={{ color: 'var(--t-muted)' }}
+            >
               — {d.nome}
             </div>
           </div>
@@ -301,11 +313,11 @@ const FAQS = [
 export function BrisaFAQ() {
   const [open, setOpen] = useState(0);
   return (
-    <section className="mx-auto mt-14 max-w-3xl px-4 sm:px-8">
+    <section className="mx-auto mt-12 max-w-3xl px-4 sm:px-8">
       <SectionHead titulo="Perguntas frequentes" center />
       <div
-        className="mt-6 divide-y overflow-hidden rounded-lg border bg-white"
-        style={{ borderColor: 'rgb(var(--t-fg-rgb) / 0.1)' }}
+        className="mt-6 divide-y overflow-hidden rounded-lg border"
+        style={{ background: 'var(--t-card)', borderColor: 'var(--t-line)' }}
       >
         {FAQS.map((f, i) => {
           const isOpen = open === i;
@@ -330,7 +342,12 @@ export function BrisaFAQ() {
                 )}
               </div>
               {isOpen && (
-                <p className="mt-2 text-sm opacity-70">{f.a}</p>
+                <p
+                  className="mt-2 text-sm"
+                  style={{ color: 'var(--t-muted)' }}
+                >
+                  {f.a}
+                </p>
               )}
             </button>
           );
@@ -341,18 +358,18 @@ export function BrisaFAQ() {
 }
 
 /**
- * CTA "Anuncie seu imovel" — Lead band do lab:
- * - bg na cor band (secondary do tema = soft mint pra brisa)
- * - 2 cols: copy + form em card branco
- * - NEUTRO: usamos secondary (cor band travada) em vez de --t-primary
- *   pra nao bagunca quando user trocar cor primaria
+ * CTA Anuncie — bloco com bg em --t-secondary (cor band, travada por tema).
+ * Form em card branco com sombra.
  */
 export function BrisaCTA({ tenant }: { tenant?: TenantPublic }) {
   return (
-    <section id="anuncie" className="mx-auto mt-14 max-w-7xl px-4 sm:px-8">
+    <section id="anuncie" className="mx-auto mt-12 max-w-7xl px-4 sm:px-8">
       <div
-        className="grid items-center gap-6 rounded-xl p-6 sm:p-10 md:grid-cols-[0.9fr_1.1fr]"
-        style={{ background: 'var(--t-secondary)' }}
+        className="grid items-center gap-6 rounded-2xl p-6 sm:p-10 md:grid-cols-[0.9fr_1.1fr]"
+        style={{
+          background: 'var(--t-secondary)',
+          color: 'var(--t-secondary-ink)',
+        }}
       >
         <div>
           <p
@@ -367,15 +384,15 @@ export function BrisaCTA({ tenant }: { tenant?: TenantPublic }) {
           >
             Venda seu imóvel com avaliação gratuita.
           </h2>
-          <p className="mt-3 max-w-md text-sm leading-relaxed opacity-75 sm:text-base">
+          <p className="mt-3 max-w-md text-sm leading-relaxed opacity-80 sm:text-base">
             Receba uma avaliação profissional em 48h e um plano de divulgação
             com fotos, site e posts prontos.
           </p>
         </div>
         {tenant?.slug && (
           <div
-            className="rounded-lg bg-white p-4 shadow-lg sm:p-5"
-            style={{ color: 'var(--t-fg)' }}
+            className="rounded-lg p-4 shadow-lg sm:p-5"
+            style={{ background: 'var(--t-card)', color: 'var(--t-fg)' }}
           >
             <LeadForm
               slug={tenant.slug}
@@ -392,40 +409,48 @@ export function BrisaCTA({ tenant }: { tenant?: TenantPublic }) {
 
 export function BrisaContato() {
   return (
-    <section className="mx-auto mt-14 max-w-3xl px-4 text-center sm:px-8">
-      <p
-        className="text-[11px] font-bold uppercase tracking-[0.15em]"
-        style={{ color: 'var(--t-primary)' }}
+    <section className="mx-auto mt-12 max-w-3xl px-4 text-center sm:px-8">
+      <div
+        className="rounded-2xl border p-8 sm:p-10"
+        style={{ background: 'var(--t-card)', borderColor: 'var(--t-line)' }}
       >
-        Newsletter
-      </p>
-      <h2
-        style={{ fontFamily: 'var(--t-font-heading)' }}
-        className="mt-2 text-2xl leading-tight sm:text-3xl md:text-4xl"
-      >
-        Receba imóveis novos antes de ir ao site
-      </h2>
-      <form
-        className="mx-auto mt-6 flex max-w-md flex-col gap-2 sm:flex-row"
-        onSubmit={(e) => e.preventDefault()}
-      >
-        <input
-          placeholder="seu@email.com"
-          className="flex-1 rounded-md border border-stone-200 bg-white px-4 py-2.5 text-sm"
-        />
-        <button
-          type="submit"
-          className="rounded-md px-5 py-2.5 text-sm font-bold text-white"
-          style={{ background: 'var(--t-primary)' }}
+        <p
+          className="text-[11px] font-bold uppercase tracking-[0.15em]"
+          style={{ color: 'var(--t-primary)' }}
         >
-          Inscrever
-        </button>
-      </form>
+          Newsletter
+        </p>
+        <h2
+          style={{ fontFamily: 'var(--t-font-heading)' }}
+          className="mt-2 text-2xl leading-tight sm:text-3xl md:text-4xl"
+        >
+          Receba imóveis novos antes de ir ao site
+        </h2>
+        <form
+          className="mx-auto mt-6 flex max-w-md flex-col gap-2 sm:flex-row"
+          onSubmit={(e) => e.preventDefault()}
+        >
+          <input
+            placeholder="seu@email.com"
+            className="flex-1 rounded-md border px-4 py-2.5 text-sm"
+            style={{ borderColor: 'var(--t-line)', background: 'var(--t-bg)' }}
+          />
+          <button
+            type="submit"
+            className="rounded-md px-5 py-2.5 text-sm font-bold"
+            style={{
+              background: 'var(--t-primary)',
+              color: 'var(--t-primary-ink)',
+            }}
+          >
+            Inscrever
+          </button>
+        </form>
+      </div>
     </section>
   );
 }
 
-/** Reusable section head — eyebrow opcional + titulo + cta direita */
 function SectionHead({
   titulo,
   cta,

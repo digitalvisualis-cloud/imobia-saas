@@ -32,20 +32,38 @@ interface Props {
  *   --t-font-heading, --t-font-body
  */
 export function ThemeScope({ config, children, className }: Props) {
+  // Vars derivadas dos defaults do tema (lab) — quando user nao customizou
+  // estes campos, usa fallback baseado em fg/bg pra nao quebrar.
+  const c = config.colors;
+  const card = c.card ?? '#ffffff';
+  const muted = c.muted ?? `rgb(${hexToRgb(c.foreground)} / 0.6)`;
+  const line = c.line ?? `rgb(${hexToRgb(c.foreground)} / 0.12)`;
+  const primaryInk = c.primaryInk ?? '#ffffff';
+  const secondaryInk = c.secondaryInk ?? '#ffffff';
+
   return (
     <div
       className={className ?? 'min-h-screen w-full'}
       style={{
-        backgroundColor: config.colors.background,
-        color: config.colors.foreground,
+        backgroundColor: c.background,
+        color: c.foreground,
         fontFamily: fontStack(config.fonts.body),
-        ['--t-primary' as string]: config.colors.primary,
-        ['--t-primary-rgb' as string]: hexToRgb(config.colors.primary),
-        ['--t-secondary' as string]: config.colors.secondary,
-        ['--t-secondary-rgb' as string]: hexToRgb(config.colors.secondary),
-        ['--t-bg' as string]: config.colors.background,
-        ['--t-fg' as string]: config.colors.foreground,
-        ['--t-fg-rgb' as string]: hexToRgb(config.colors.foreground),
+        // Cor accent (user customiza)
+        ['--t-primary' as string]: c.primary,
+        ['--t-primary-rgb' as string]: hexToRgb(c.primary),
+        ['--t-primary-ink' as string]: primaryInk,
+        // Cor band CTA (travada por tema)
+        ['--t-secondary' as string]: c.secondary,
+        ['--t-secondary-rgb' as string]: hexToRgb(c.secondary),
+        ['--t-secondary-ink' as string]: secondaryInk,
+        // Tokens neutros (travados por tema, garantem contraste)
+        ['--t-bg' as string]: c.background,
+        ['--t-fg' as string]: c.foreground,
+        ['--t-fg-rgb' as string]: hexToRgb(c.foreground),
+        ['--t-card' as string]: card,
+        ['--t-muted' as string]: muted,
+        ['--t-line' as string]: line,
+        // Fontes
         ['--t-font-heading' as string]: fontStack(config.fonts.heading),
         ['--t-font-body' as string]: fontStack(config.fonts.body),
       }}

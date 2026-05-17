@@ -7,15 +7,6 @@ interface Props {
   slug: string;
 }
 
-/**
- * Aura Card — mesma estrutura do BrisaCard mas com refinamento editorial:
- * - tipografia serif no titulo
- * - badge transparente menos colorido (.uppercase tracking)
- * - photo 16:10 + body 14px
- *
- * Compartilha o contrato visual do lab. Diferenca pra Brisa: o accent
- * (--t-primary) eh gold em vez de green; chrome mais sofisticado.
- */
 export function AuraCard({ imovel, slug }: Props) {
   const operacao = imovel.operacao.toLowerCase();
   const specs: string[] = [];
@@ -26,10 +17,10 @@ export function AuraCard({ imovel, slug }: Props) {
   return (
     <Link
       href={imovelHref(slug, imovel.codigo)}
-      className="group block overflow-hidden rounded-lg border bg-white transition-shadow hover:shadow-md"
-      style={{ borderColor: 'rgb(var(--t-fg-rgb) / 0.1)' }}
+      className="group block overflow-hidden rounded-lg border transition-shadow hover:shadow-md"
+      style={{ background: 'var(--t-card)', borderColor: 'var(--t-line)' }}
     >
-      <div className="relative aspect-[16/10] overflow-hidden bg-stone-100">
+      <div className="relative aspect-[16/10] overflow-hidden">
         <img
           src={imageUrl(imovel.capaUrl ?? imovel.imagens[0])}
           alt={imovel.titulo}
@@ -48,7 +39,7 @@ export function AuraCard({ imovel, slug }: Props) {
       <div className="p-3.5">
         <p
           className="text-[10px] font-bold uppercase tracking-wider"
-          style={{ color: 'rgb(var(--t-fg-rgb) / 0.55)' }}
+          style={{ color: 'var(--t-muted)' }}
         >
           {imovel.bairro ?? '—'}
           {imovel.cidade && ` · ${imovel.cidade}`}
@@ -62,7 +53,7 @@ export function AuraCard({ imovel, slug }: Props) {
         {specs.length > 0 && (
           <div
             className="mt-2 flex gap-2 text-xs"
-            style={{ color: 'rgb(var(--t-fg-rgb) / 0.55)' }}
+            style={{ color: 'var(--t-muted)' }}
           >
             {specs.map((s) => (
               <span key={s}>{s}</span>

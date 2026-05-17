@@ -17,14 +17,7 @@ interface SectionProps {
 const HERO_FALLBACK =
   'https://images.unsplash.com/photo-1600607687939-ce8a6c25118c?auto=format&fit=crop&w=2000&q=86';
 
-/**
- * Aura Hero — baseado no visual-lab (.aura-theme .site-hero):
- * - foto full bleed altura 720px (responsivo 520/620/720)
- * - gradient escuro top + bottom, claro no meio (texto legivel em foto qualquer)
- * - hero-editorial absolute bottom-48px com grid 1fr 520px
- * - h2 serif 76px (responsivo 36/52/68)
- * - search card translucido bg-white/12 backdrop-blur
- */
+/** Hero — foto full bleed + gradient + editorial bottom */
 export function AuraHero({ tenant, imoveis, config }: SectionProps) {
   const featured = pickFeaturedImovel(imoveis);
   const heroImg =
@@ -78,12 +71,6 @@ export function AuraHero({ tenant, imoveis, config }: SectionProps) {
   );
 }
 
-/**
- * Search card translucido sobre hero (estilo Aura lab):
- * - bg branca 12% + backdrop blur 18px
- * - inputs translucidos com borda fina
- * - botao accent (--t-primary)
- */
 function AuraSearchCard() {
   const [op, setOp] = useState<'Comprar' | 'Alugar'>('Comprar');
   const [tipo, setTipo] = useState('');
@@ -111,7 +98,6 @@ function AuraSearchCard() {
       <h3 className="text-[11px] font-bold uppercase tracking-[0.3em] text-white/90">
         Agende uma curadoria
       </h3>
-
       <div className="grid grid-cols-2 gap-2">
         <select
           value={op}
@@ -129,7 +115,6 @@ function AuraSearchCard() {
           <option value="TERRENO">Terreno</option>
         </select>
       </div>
-
       <input
         type="text"
         value={cidade}
@@ -137,7 +122,6 @@ function AuraSearchCard() {
         placeholder="Cidade ou bairro"
         className={inputCls}
       />
-
       <select value={faixa} onChange={(e) => setFaixa(e.target.value)} className={inputCls}>
         <option value="">Preço</option>
         <option value="0-1000000">Até R$ 1Mi</option>
@@ -145,11 +129,13 @@ function AuraSearchCard() {
         <option value="3000000-10000000">R$ 3 — 10Mi</option>
         <option value="10000000-">Acima de R$ 10Mi</option>
       </select>
-
       <button
         type="submit"
-        className="mt-1 inline-flex items-center justify-center gap-1.5 rounded-md py-2.5 text-sm font-bold text-white"
-        style={{ background: 'var(--t-primary)' }}
+        className="mt-1 inline-flex items-center justify-center gap-1.5 rounded-md py-2.5 text-sm font-bold"
+        style={{
+          background: 'var(--t-primary)',
+          color: 'var(--t-primary-ink)',
+        }}
       >
         <Search className="h-4 w-4" /> Ver seleção
       </button>
@@ -157,22 +143,25 @@ function AuraSearchCard() {
   );
 }
 
-/** Destaques — grid de cards estilo Aura */
 export function AuraDestaques({ tenant, imoveis }: SectionProps) {
   if (imoveis.length === 0) return null;
   return (
-    <section className="mx-auto mt-14 max-w-7xl px-4 sm:px-8">
-      <SectionHead titulo="Residências escolhidas a dedo" cta="Ver todos" ctaTo={`/s/${tenant.slug}`} />
-      <div className="mt-6 grid gap-4 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
-        {imoveis.slice(0, 8).map((i) => (
-          <AuraCard key={i.id} imovel={i} slug={tenant.slug} />
-        ))}
+    <section className="mx-auto mt-12 max-w-7xl px-4 sm:px-8">
+      <div
+        className="rounded-2xl border p-6 sm:p-10"
+        style={{ background: 'var(--t-card)', borderColor: 'var(--t-line)' }}
+      >
+        <SectionHead titulo="Residências escolhidas a dedo" cta="Ver todos" ctaTo={`/s/${tenant.slug}`} />
+        <div className="mt-6 grid gap-4 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
+          {imoveis.slice(0, 8).map((i) => (
+            <AuraCard key={i.id} imovel={i} slug={tenant.slug} />
+          ))}
+        </div>
       </div>
     </section>
   );
 }
 
-/** Regioes — 3 cards horizontais com foto + label embaixo */
 export function AuraCategorias({ imoveis }: SectionProps) {
   const counts = new Map<string, number>();
   imoveis.forEach((i) => {
@@ -188,11 +177,11 @@ export function AuraCategorias({ imoveis }: SectionProps) {
   ];
 
   return (
-    <section className="mx-auto mt-14 max-w-7xl px-4 sm:px-8">
+    <section className="mx-auto mt-12 max-w-7xl px-4 sm:px-8">
       <SectionHead titulo="Endereços com procura qualificada" />
       <div className="mt-6 grid gap-3 sm:grid-cols-3">
         {top.map(([nome, count], idx) => (
-          <a key={nome} className="group relative block h-40 overflow-hidden rounded-lg">
+          <a key={nome} className="group relative block h-44 overflow-hidden rounded-lg">
             {/* eslint-disable-next-line @next/next/no-img-element */}
             <img
               src={fallback[idx % fallback.length]}
@@ -216,42 +205,52 @@ export function AuraCategorias({ imoveis }: SectionProps) {
   );
 }
 
-/** Sobre — editorial row: 2 fotos staggered + copy */
 export function AuraSobre({ tenant }: SectionProps) {
   const nome = tenant.marca?.nomeEmpresa ?? tenant.nome;
   const desc =
     tenant.marca?.descricao ??
     `Há anos a ${nome} apresenta imóveis com critério. Precisão para comprar, vender e apresentar imóveis únicos.`;
   return (
-    <section id="sobre" className="mx-auto mt-14 max-w-7xl scroll-mt-24 px-4 sm:px-8">
-      <div className="grid items-center gap-10 md:grid-cols-2">
-        <div className="grid grid-cols-2 gap-3">
-          {/* eslint-disable-next-line @next/next/no-img-element */}
-          <img
-            src="https://images.unsplash.com/photo-1600210492486-724fe5c67fb0?auto=format&fit=crop&w=900&q=86"
-            alt=""
-            className="h-64 w-full rounded-lg object-cover"
-          />
-          {/* eslint-disable-next-line @next/next/no-img-element */}
-          <img
-            src="https://images.unsplash.com/photo-1600566753151-384129cf4e3e?auto=format&fit=crop&w=900&q=86"
-            alt=""
-            className="mt-10 h-64 w-full rounded-lg object-cover"
-          />
-        </div>
-        <div>
-          <p className="text-[11px] font-bold uppercase tracking-[0.15em]" style={{ color: 'var(--t-primary)' }}>
-            Sobre nós
-          </p>
-          <h2
-            style={{ fontFamily: 'var(--t-font-heading)' }}
-            className="mt-2 text-3xl leading-[0.98] sm:text-4xl md:text-[42px]"
-          >
-            Precisão para comprar, vender e apresentar imóveis únicos.
-          </h2>
-          <p className="mt-4 max-w-md text-sm leading-relaxed opacity-75 sm:text-base">
-            {desc}
-          </p>
+    <section id="sobre" className="mx-auto mt-12 max-w-7xl scroll-mt-24 px-4 sm:px-8">
+      <div
+        className="rounded-2xl border p-6 sm:p-10"
+        style={{ background: 'var(--t-card)', borderColor: 'var(--t-line)' }}
+      >
+        <div className="grid items-center gap-10 md:grid-cols-2">
+          <div className="grid grid-cols-2 gap-3">
+            {/* eslint-disable-next-line @next/next/no-img-element */}
+            <img
+              src="https://images.unsplash.com/photo-1600210492486-724fe5c67fb0?auto=format&fit=crop&w=900&q=86"
+              alt=""
+              className="h-64 w-full rounded-lg object-cover"
+            />
+            {/* eslint-disable-next-line @next/next/no-img-element */}
+            <img
+              src="https://images.unsplash.com/photo-1600566753151-384129cf4e3e?auto=format&fit=crop&w=900&q=86"
+              alt=""
+              className="mt-10 h-64 w-full rounded-lg object-cover"
+            />
+          </div>
+          <div>
+            <p
+              className="text-[11px] font-bold uppercase tracking-[0.15em]"
+              style={{ color: 'var(--t-primary)' }}
+            >
+              Sobre nós
+            </p>
+            <h2
+              style={{ fontFamily: 'var(--t-font-heading)' }}
+              className="mt-2 text-3xl leading-[0.98] sm:text-4xl md:text-[42px]"
+            >
+              Precisão para comprar, vender e apresentar imóveis únicos.
+            </h2>
+            <p
+              className="mt-4 max-w-md text-sm leading-relaxed sm:text-base"
+              style={{ color: 'var(--t-muted)' }}
+            >
+              {desc}
+            </p>
+          </div>
         </div>
       </div>
     </section>
@@ -265,22 +264,22 @@ export function AuraDepoimentos() {
     { nome: 'C. Bertolini', txt: 'Discrição e precisão. Foi assim do começo ao fim.' },
   ];
   return (
-    <section className="mx-auto mt-14 max-w-7xl px-4 sm:px-8">
+    <section className="mx-auto mt-12 max-w-7xl px-4 sm:px-8">
       <SectionHead titulo="Quem confiou na coleção" />
       <div className="mt-6 grid gap-4 md:grid-cols-3">
         {deps.map((d) => (
           <div
             key={d.nome}
-            className="rounded-lg border bg-white p-5"
-            style={{ borderColor: 'rgb(var(--t-fg-rgb) / 0.1)' }}
+            className="rounded-lg border p-5"
+            style={{ background: 'var(--t-card)', borderColor: 'var(--t-line)' }}
           >
-            <p
-              style={{ fontFamily: 'var(--t-font-heading)' }}
-              className="text-base leading-snug"
-            >
+            <p style={{ fontFamily: 'var(--t-font-heading)' }} className="text-base leading-snug">
               "{d.txt}"
             </p>
-            <div className="mt-3 text-[11px] font-bold uppercase tracking-wider" style={{ color: 'rgb(var(--t-fg-rgb) / 0.6)' }}>
+            <div
+              className="mt-3 text-[11px] font-bold uppercase tracking-wider"
+              style={{ color: 'var(--t-muted)' }}
+            >
               — {d.nome}
             </div>
           </div>
@@ -299,11 +298,11 @@ const FAQS = [
 export function AuraFAQ() {
   const [open, setOpen] = useState(0);
   return (
-    <section className="mx-auto mt-14 max-w-3xl px-4 sm:px-8">
+    <section className="mx-auto mt-12 max-w-3xl px-4 sm:px-8">
       <SectionHead titulo="Perguntas frequentes" center />
       <div
-        className="mt-6 divide-y overflow-hidden rounded-lg border bg-white"
-        style={{ borderColor: 'rgb(var(--t-fg-rgb) / 0.1)' }}
+        className="mt-6 divide-y overflow-hidden rounded-lg border"
+        style={{ background: 'var(--t-card)', borderColor: 'var(--t-line)' }}
       >
         {FAQS.map((f, i) => {
           const isOpen = open === i;
@@ -320,7 +319,11 @@ export function AuraFAQ() {
                 </span>
                 {isOpen ? <Minus className="h-4 w-4 opacity-60" /> : <Plus className="h-4 w-4 opacity-60" />}
               </div>
-              {isOpen && <p className="mt-2 text-sm opacity-70">{f.a}</p>}
+              {isOpen && (
+                <p className="mt-2 text-sm" style={{ color: 'var(--t-muted)' }}>
+                  {f.a}
+                </p>
+              )}
             </button>
           );
         })}
@@ -329,19 +332,15 @@ export function AuraFAQ() {
   );
 }
 
-/**
- * CTA "Anuncie" — Lead band do lab estilo Aura:
- * - bg na cor band (secondary do tema = deep dark)
- * - texto branco + form em card branco
- * - usamos secondary (cor band travada) em vez de --t-primary
- *   pra nao bagunca quando user trocar cor primaria
- */
 export function AuraCTA({ tenant }: SectionProps) {
   return (
-    <section id="anuncie" className="mx-auto mt-14 max-w-7xl px-4 sm:px-8">
+    <section id="anuncie" className="mx-auto mt-12 max-w-7xl px-4 sm:px-8">
       <div
-        className="grid items-center gap-6 rounded-xl p-6 text-white sm:p-10 md:grid-cols-[0.9fr_1.1fr]"
-        style={{ background: 'var(--t-secondary)' }}
+        className="grid items-center gap-6 rounded-2xl p-6 sm:p-10 md:grid-cols-[0.9fr_1.1fr]"
+        style={{
+          background: 'var(--t-secondary)',
+          color: 'var(--t-secondary-ink)',
+        }}
       >
         <div>
           <p
@@ -356,12 +355,15 @@ export function AuraCTA({ tenant }: SectionProps) {
           >
             Seu imóvel pode entrar na próxima coleção.
           </h2>
-          <p className="mt-3 max-w-md text-sm leading-relaxed text-white/76 sm:text-base">
+          <p className="mt-3 max-w-md text-sm leading-relaxed opacity-80 sm:text-base">
             Receba uma avaliação profissional e plano de divulgação com fotos,
             site e posts prontos.
           </p>
         </div>
-        <div className="rounded-lg bg-white p-4 text-stone-900 shadow-lg sm:p-5">
+        <div
+          className="rounded-lg p-4 shadow-lg sm:p-5"
+          style={{ background: 'var(--t-card)', color: 'var(--t-fg)' }}
+        >
           <LeadForm
             slug={tenant.slug}
             tipoLead="VENDEDOR"
@@ -376,36 +378,41 @@ export function AuraCTA({ tenant }: SectionProps) {
 
 export function AuraContato() {
   return (
-    <section className="mx-auto mt-14 max-w-3xl px-4 text-center sm:px-8">
-      <p
-        className="text-[11px] font-bold uppercase tracking-[0.3em]"
-        style={{ color: 'var(--t-primary)' }}
+    <section className="mx-auto mt-12 max-w-3xl px-4 text-center sm:px-8">
+      <div
+        className="rounded-2xl border p-8 sm:p-10"
+        style={{ background: 'var(--t-card)', borderColor: 'var(--t-line)' }}
       >
-        Newsletter
-      </p>
-      <h2
-        style={{ fontFamily: 'var(--t-font-heading)' }}
-        className="mt-2 text-2xl leading-tight sm:text-3xl md:text-4xl"
-      >
-        Estreias e bastidores, uma vez por mês
-      </h2>
-      <form
-        className="mx-auto mt-6 flex max-w-md border-b py-3 text-sm"
-        style={{ borderColor: 'rgb(var(--t-fg-rgb) / 0.4)' }}
-        onSubmit={(e) => e.preventDefault()}
-      >
-        <input
-          placeholder="seu@email.com"
-          className="flex-1 bg-transparent text-base outline-none placeholder:opacity-40"
-        />
-        <button
-          type="submit"
+        <p
           className="text-[11px] font-bold uppercase tracking-[0.3em]"
           style={{ color: 'var(--t-primary)' }}
         >
-          Inscrever →
-        </button>
-      </form>
+          Newsletter
+        </p>
+        <h2
+          style={{ fontFamily: 'var(--t-font-heading)' }}
+          className="mt-2 text-2xl leading-tight sm:text-3xl md:text-4xl"
+        >
+          Estreias e bastidores, uma vez por mês
+        </h2>
+        <form
+          className="mx-auto mt-6 flex max-w-md border-b py-3 text-sm"
+          style={{ borderColor: 'var(--t-line)' }}
+          onSubmit={(e) => e.preventDefault()}
+        >
+          <input
+            placeholder="seu@email.com"
+            className="flex-1 bg-transparent text-base outline-none placeholder:opacity-40"
+          />
+          <button
+            type="submit"
+            className="text-[11px] font-bold uppercase tracking-[0.3em]"
+            style={{ color: 'var(--t-primary)' }}
+          >
+            Inscrever →
+          </button>
+        </form>
+      </div>
     </section>
   );
 }

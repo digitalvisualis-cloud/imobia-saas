@@ -7,12 +7,6 @@ interface Props {
   slug: string;
 }
 
-/**
- * Card baseado no visual-lab (.site-card):
- * - photo 16:10 com badge "venda/aluguel" canto sup-esq
- * - body: eyebrow bairro/cidade · titulo · specs muted · preco em accent
- * - bordo + radius compactos (8px)
- */
 export function BrisaCard({ imovel, slug }: Props) {
   const operacao = imovel.operacao.toLowerCase();
   const specs: string[] = [];
@@ -23,10 +17,10 @@ export function BrisaCard({ imovel, slug }: Props) {
   return (
     <Link
       href={imovelHref(slug, imovel.codigo)}
-      className="group block overflow-hidden rounded-lg border bg-white transition-shadow hover:shadow-md"
-      style={{ borderColor: 'rgb(var(--t-fg-rgb) / 0.1)' }}
+      className="group block overflow-hidden rounded-lg border transition-shadow hover:shadow-md"
+      style={{ background: 'var(--t-card)', borderColor: 'var(--t-line)' }}
     >
-      <div className="relative aspect-[16/10] overflow-hidden bg-stone-100">
+      <div className="relative aspect-[16/10] overflow-hidden">
         <img
           src={imageUrl(imovel.capaUrl ?? imovel.imagens[0])}
           alt={imovel.titulo}
@@ -34,8 +28,8 @@ export function BrisaCard({ imovel, slug }: Props) {
           className="h-full w-full object-cover transition-transform duration-700 group-hover:scale-105"
         />
         <span
-          className="absolute left-2.5 top-2.5 rounded-full px-2.5 py-1 text-[10px] font-bold uppercase tracking-wider text-white"
-          style={{ background: 'var(--t-primary)' }}
+          className="absolute left-2.5 top-2.5 rounded-full px-2.5 py-1 text-[10px] font-bold uppercase tracking-wider"
+          style={{ background: 'var(--t-primary)', color: 'var(--t-primary-ink)' }}
         >
           {operacao}
         </span>
@@ -46,7 +40,7 @@ export function BrisaCard({ imovel, slug }: Props) {
       <div className="p-3.5">
         <p
           className="text-[10px] font-bold uppercase tracking-wider"
-          style={{ color: 'rgb(var(--t-fg-rgb) / 0.55)' }}
+          style={{ color: 'var(--t-muted)' }}
         >
           {imovel.bairro ?? '—'}
           {imovel.cidade && ` · ${imovel.cidade}`}
@@ -60,7 +54,7 @@ export function BrisaCard({ imovel, slug }: Props) {
         {specs.length > 0 && (
           <div
             className="mt-2 flex gap-2 text-xs"
-            style={{ color: 'rgb(var(--t-fg-rgb) / 0.55)' }}
+            style={{ color: 'var(--t-muted)' }}
           >
             {specs.map((s) => (
               <span key={s}>{s}</span>
