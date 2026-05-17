@@ -326,6 +326,7 @@ export function BrisaCTA({ tenant }: { tenant?: TenantPublic }) {
             <div className="rounded-2xl bg-white/95 p-5 text-[var(--t-fg)] shadow-lg">
               <LeadForm
                 slug={tenant.slug}
+                tipoLead="VENDEDOR"
                 defaultMessage="Olá, quero uma avaliação gratuita do meu imóvel."
                 ctaLabel="Quero avaliar meu imóvel"
               />

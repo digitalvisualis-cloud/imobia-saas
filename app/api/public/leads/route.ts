@@ -24,6 +24,13 @@ export async function POST(req: NextRequest) {
     const email = String(body.email ?? '').trim() || null;
     const mensagem = String(body.mensagem ?? '').trim() || null;
     const imovelId = body.imovelId ? String(body.imovelId).trim() : null;
+    // tipoLead controla pra qual aba/kanban o lead vai (Comprador, Vendedor, etc).
+    // Default COMPRADOR pra retrocompat com chamadas antigas.
+    const tipoLeadRaw = String(body.tipoLead ?? 'COMPRADOR').toUpperCase();
+    const validTipos = ['COMPRADOR', 'LOCATARIO', 'VENDEDOR', 'LOCADOR'] as const;
+    const tipoLead = (validTipos as readonly string[]).includes(tipoLeadRaw)
+      ? (tipoLeadRaw as (typeof validTipos)[number])
+      : 'COMPRADOR';
 
     if (!slug || !nome || (!whatsapp && !email)) {
       return NextResponse.json(
@@ -58,6 +65,7 @@ export async function POST(req: NextRequest) {
         email,
         notas: mensagem,
         imovelId: validImovelId,
+        tipoLead,
         origem: 'site',
         etapa: 'NOVO',
       },

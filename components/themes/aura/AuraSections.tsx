@@ -414,6 +414,7 @@ export function AuraCTA({ tenant }: SectionProps) {
           <div className="rounded-md bg-white/95 p-5 text-[var(--t-fg)] shadow-lg">
             <LeadForm
               slug={tenant.slug}
+              tipoLead="VENDEDOR"
               defaultMessage="Olá, quero anunciar meu imóvel."
               ctaLabel="Solicitar avaliação"
             />

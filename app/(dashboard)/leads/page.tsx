@@ -1,5 +1,6 @@
 'use client';
 import { useState, useEffect } from 'react';
+import { useSearchParams } from 'next/navigation';
 import toast from 'react-hot-toast';
 import styles from './leads.module.css';
 
@@ -12,9 +13,13 @@ type Lead = {
   interesse: string | null;
   orcamento: number | null;
   notas: string | null;
+  tipoLead?: string;
+  origem?: string | null;
   imovel?: { titulo: string; codigo: string } | null;
   createdAt: string;
 };
+
+type TipoTab = 'COMPRADOR' | 'VENDEDOR';
 
 const STAGES = [
   { id: 'NOVO', label: 'Novo Lead', color: '#3b82f6' },
@@ -41,9 +46,12 @@ function timeAgo(dateStr: string) {
 }
 
 export default function LeadsPage() {
+  const searchParams = useSearchParams();
+  const initialTab: TipoTab = searchParams.get('tab') === 'vendedor' ? 'VENDEDOR' : 'COMPRADOR';
   const [leads, setLeads] = useState<Lead[]>([]);
   const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState('');
+  const [tipoTab, setTipoTab] = useState<TipoTab>(initialTab);
   const [dragging, setDragging] = useState<string | null>(null);
   const [showModal, setShowModal] = useState(false);
   const [selected, setSelected] = useState<Lead | null>(null);
@@ -92,10 +100,22 @@ export default function LeadsPage() {
     ? imovelOptions.find((i) => i.id === form.imovelId)
     : null;
 
-  const filtered = leads.filter(l =>
-    l.nome.toLowerCase().includes(search.toLowerCase()) ||
-    (l.imovel?.titulo ?? '').toLowerCase().includes(search.toLowerCase())
+  // Conta por tipo pra mostrar nas tabs
+  const counts = leads.reduce(
+    (acc, l) => {
+      const t = (l.tipoLead ?? 'COMPRADOR') as TipoTab;
+      acc[t] = (acc[t] ?? 0) + 1;
+      return acc;
+    },
+    { COMPRADOR: 0, VENDEDOR: 0 } as Record<TipoTab, number>,
   );
+
+  const filtered = leads
+    .filter((l) => (l.tipoLead ?? 'COMPRADOR') === tipoTab)
+    .filter((l) =>
+      l.nome.toLowerCase().includes(search.toLowerCase()) ||
+      (l.imovel?.titulo ?? '').toLowerCase().includes(search.toLowerCase()),
+    );
 
   function onDragStart(id: string) { setDragging(id); }
   async function onDrop(stage: string) {
@@ -124,6 +144,7 @@ export default function LeadsPage() {
           interesse: form.interesse,
           orcamento: form.orcamento ? Number(form.orcamento) : null,
           imovelId: form.imovelId || null,
+          tipoLead: tipoTab, // novo lead manual entra na aba atualmente visualizada
         }),
       });
       const lead = await res.json();
@@ -143,9 +164,9 @@ export default function LeadsPage() {
 
   return (
     <div className="fade-in">
-      <div className="flex items-center justify-between mb-6" style={{ flexWrap: 'wrap', gap: 12 }}>
+      <div className="flex items-center justify-between mb-4" style={{ flexWrap: 'wrap', gap: 12 }}>
         <div>
-          <h1>Pipeline de Leads</h1>
+          <h1>Pipeline de Negócios</h1>
           <p className="text-muted">Gerencie seu funil de vendas com drag & drop</p>
         </div>
         <div className="flex gap-2">
@@ -156,6 +177,26 @@ export default function LeadsPage() {
           />
           <button className="btn btn-primary" onClick={() => { setSelected(null); setShowModal(true); }}>+ Novo Lead</button>
         </div>
+      </div>
+
+      {/* Tabs: Compradores (default) vs Captacao (vendedores) */}
+      <div className="mb-5 flex gap-1 rounded-lg bg-muted/40 p-1 w-fit">
+        <button
+          onClick={() => setTipoTab('COMPRADOR')}
+          className={`rounded-md px-4 py-1.5 text-sm font-semibold transition-colors ${
+            tipoTab === 'COMPRADOR' ? 'bg-background text-foreground shadow-sm' : 'text-muted-foreground hover:text-foreground'
+          }`}
+        >
+          🏠 Compradores <span className="ml-1 opacity-60">({counts.COMPRADOR})</span>
+        </button>
+        <button
+          onClick={() => setTipoTab('VENDEDOR')}
+          className={`rounded-md px-4 py-1.5 text-sm font-semibold transition-colors ${
+            tipoTab === 'VENDEDOR' ? 'bg-background text-foreground shadow-sm' : 'text-muted-foreground hover:text-foreground'
+          }`}
+        >
+          📝 Captação <span className="ml-1 opacity-60">({counts.VENDEDOR})</span>
+        </button>
       </div>
 
       {/* METRICS */}

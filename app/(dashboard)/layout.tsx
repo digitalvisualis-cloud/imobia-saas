@@ -26,6 +26,8 @@ import {
   X,
   ExternalLink,
   LogOut,
+  Briefcase,
+  Mail,
   type LucideIcon,
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
@@ -87,7 +89,7 @@ export default function DashboardLayout({
     {
       label: 'CRM',
       items: [
-        { name: 'Negócios', href: '/leads', icon: TrendingUp },
+        { name: 'Funil de Vendas', href: '/leads', icon: TrendingUp },
         { name: 'Leads (chatbot)', href: '/leads-inbox', icon: MessageSquare },
         { name: 'Agenda', href: '/agenda', icon: Calendar },
       ],
@@ -119,8 +121,11 @@ export default function DashboardLayout({
       ],
     },
     {
-      label: 'Financeiro',
+      label: 'Negócios',
       items: [
+        { name: 'Captação', href: '/captacao', icon: Briefcase },
+        { name: 'Alertas (e-mail)', href: '/newsletter', icon: Mail },
+        { name: 'Controle de Chaves', href: '/controle-chaves', icon: KeyRound },
         { name: 'Financeiro', href: '/financeiro', icon: Wallet },
       ],
     },

@@ -444,6 +444,7 @@ export function OnyxAnuncie({ tenant }: SectionProps) {
         <div className="rounded-md border border-gray-200 bg-white p-5 shadow-sm">
           <LeadForm
             slug={tenant.slug}
+            tipoLead="VENDEDOR"
             defaultMessage="Olá, quero anunciar meu imóvel."
             ctaLabel="Quero anunciar"
           />
@@ -631,63 +632,95 @@ export function OnyxDepoimentos() { return null; }
 export function OnyxFAQ() { return null; }
 
 /**
- * Newsletter — faixa preta com email signup que dispara WhatsApp pro
- * corretor com a mensagem "Quero receber novidades". Evita backend extra
- * e ja entrega o lead direto pro funil principal (WA).
+ * Alertas de novos imoveis — faixa preta com email signup. Diferente do
+ * LeadForm: cai numa lista propria (NewsletterInscricao), nao polui o
+ * Kanban de Negocios. Quando corretor cadastra imovel novo, dispara
+ * email pros inscritos que batem com cidade/tipo/operacao/preco.
  */
 export function OnyxContato({ tenant }: { tenant?: TenantPublic }) {
-  const whatsapp = tenant?.marca?.whatsapp?.replace(/\D/g, '') ?? '';
-
-  function submeter(e: React.FormEvent<HTMLFormElement>) {
-    e.preventDefault();
-    const form = e.currentTarget;
-    const email = (form.elements.namedItem('email') as HTMLInputElement)?.value?.trim();
-    if (!email) return;
-    const msg = encodeURIComponent(
-      `Olá! Gostaria de receber novidades sobre imóveis. Meu e-mail: ${email}`,
-    );
-    if (whatsapp) {
-      window.open(`https://wa.me/${whatsapp}?text=${msg}`, '_blank');
-    } else {
-      window.location.href = `mailto:${tenant?.marca?.email ?? ''}?subject=Quero receber novidades&body=${msg}`;
-    }
-    form.reset();
-  }
-
   return (
     <section className="bg-black text-white py-14">
       <div className="mx-auto max-w-[1100px] px-6 grid gap-6 md:grid-cols-2 md:items-center">
         <div>
           <p className="text-[11px] font-semibold uppercase tracking-[0.2em]" style={{ color: 'var(--t-primary)' }}>
-            Newsletter
+            Alertas de imóveis novos
           </p>
           <h2
             style={{ fontFamily: 'var(--t-font-heading)' }}
             className="mt-2 text-2xl font-semibold sm:text-3xl"
           >
-            Receba novidades de imóveis em primeira mão
+            Receba imóveis em primeira mão
           </h2>
           <p className="mt-2 text-sm text-white/60">
-            Lançamentos, oportunidades e dicas direto no seu e-mail.
+            Avisamos por email assim que cadastrarmos um imóvel que combina com você.
           </p>
         </div>
-        <form onSubmit={submeter} className="flex flex-col gap-2 sm:flex-row">
-          <input
-            name="email"
-            type="email"
-            required
-            placeholder="seu@email.com"
-            className="flex-1 rounded-md border-0 bg-white/10 px-4 py-2.5 text-sm text-white placeholder-white/40 focus:bg-white/15 focus:outline-none focus:ring-1 focus:ring-white/30"
-          />
-          <button
-            type="submit"
-            className="rounded-md px-5 py-2.5 text-sm font-semibold text-black hover:opacity-90"
-            style={{ background: 'var(--t-primary)' }}
-          >
-            Quero receber
-          </button>
-        </form>
+        {tenant?.slug && <NewsletterForm slug={tenant.slug} />}
       </div>
     </section>
+  );
+}
+
+function NewsletterForm({ slug }: { slug: string }) {
+  const [email, setEmail] = useState('');
+  const [enviando, setEnviando] = useState(false);
+  const [ok, setOk] = useState(false);
+  const [erro, setErro] = useState<string | null>(null);
+
+  async function submeter(e: React.FormEvent) {
+    e.preventDefault();
+    setErro(null);
+    if (!email.trim()) return;
+    setEnviando(true);
+    try {
+      const res = await fetch('/api/public/newsletter', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ slug, email: email.trim() }),
+      });
+      if (!res.ok) {
+        const j = await res.json().catch(() => ({}));
+        throw new Error(j.error ?? 'Erro ao inscrever.');
+      }
+      setOk(true);
+      setEmail('');
+    } catch (err: any) {
+      setErro(err.message ?? 'Erro ao inscrever.');
+    } finally {
+      setEnviando(false);
+    }
+  }
+
+  if (ok) {
+    return (
+      <div className="rounded-md bg-white/10 p-4 text-sm text-white">
+        <p className="font-semibold">✓ Inscrição confirmada!</p>
+        <p className="text-white/70">
+          Avisaremos quando tivermos novidades pra você.
+        </p>
+      </div>
+    );
+  }
+
+  return (
+    <form onSubmit={submeter} className="flex flex-col gap-2 sm:flex-row">
+      <input
+        type="email"
+        required
+        placeholder="seu@email.com"
+        value={email}
+        onChange={(e) => setEmail(e.target.value)}
+        className="flex-1 rounded-md border-0 bg-white/10 px-4 py-2.5 text-sm text-white placeholder-white/40 focus:bg-white/15 focus:outline-none focus:ring-1 focus:ring-white/30"
+      />
+      <button
+        type="submit"
+        disabled={enviando}
+        className="rounded-md px-5 py-2.5 text-sm font-semibold text-black hover:opacity-90 disabled:opacity-60"
+        style={{ background: 'var(--t-primary)' }}
+      >
+        {enviando ? 'Inscrevendo...' : 'Quero receber'}
+      </button>
+      {erro && <p className="text-xs text-red-300">{erro}</p>}
+    </form>
   );
 }

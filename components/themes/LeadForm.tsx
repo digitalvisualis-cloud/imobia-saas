@@ -15,6 +15,10 @@ interface LeadFormProps {
   variant?: 'light' | 'dark';
   /** Texto do botao (default "Enviar") */
   ctaLabel?: string;
+  /** Tipo de lead — define o funil/Kanban onde vai aparecer.
+   *  COMPRADOR (default) = quer comprar/alugar; VENDEDOR = quer anunciar imovel.
+   */
+  tipoLead?: 'COMPRADOR' | 'LOCATARIO' | 'VENDEDOR' | 'LOCADOR';
 }
 
 /**
@@ -28,6 +32,7 @@ export function LeadForm({
   defaultMessage,
   variant = 'light',
   ctaLabel = 'Enviar',
+  tipoLead = 'COMPRADOR',
 }: LeadFormProps) {
   const [nome, setNome] = useState('');
   const [whatsapp, setWhatsapp] = useState('');
@@ -66,6 +71,7 @@ export function LeadForm({
           email: email.trim() || undefined,
           mensagem: mensagem.trim() || undefined,
           imovelId,
+          tipoLead,
         }),
       });
       if (!res.ok) {
