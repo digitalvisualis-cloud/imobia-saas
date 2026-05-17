@@ -33,6 +33,16 @@ export function LeadForm({
   const [whatsapp, setWhatsapp] = useState('');
   const [email, setEmail] = useState('');
   const [mensagem, setMensagem] = useState(defaultMessage ?? '');
+
+  /** Formata BR enquanto digita: (DD) NNNNN-NNNN ou (DD) NNNN-NNNN. */
+  function onWhatsappChange(raw: string) {
+    const d = raw.replace(/\D/g, '').slice(0, 11);
+    if (d.length === 0) return setWhatsapp('');
+    if (d.length <= 2) return setWhatsapp(`(${d}`);
+    if (d.length <= 6) return setWhatsapp(`(${d.slice(0, 2)}) ${d.slice(2)}`);
+    if (d.length <= 10) return setWhatsapp(`(${d.slice(0, 2)}) ${d.slice(2, 6)}-${d.slice(6)}`);
+    setWhatsapp(`(${d.slice(0, 2)}) ${d.slice(2, 7)}-${d.slice(7)}`);
+  }
   const [enviando, setEnviando] = useState(false);
   const [ok, setOk] = useState(false);
   const [erro, setErro] = useState<string | null>(null);
@@ -78,14 +88,16 @@ export function LeadForm({
   if (ok) {
     return (
       <div
-        className={`flex items-center gap-3 rounded-md p-4 text-sm ${
+        className={`flex items-start gap-3 rounded-md p-4 text-sm ${
           isDark ? 'bg-white/10 text-white' : 'border border-green-200 bg-green-50 text-green-800'
         }`}
       >
-        <Check className="h-5 w-5 shrink-0" />
+        <Check className="h-5 w-5 shrink-0 mt-0.5" />
         <div>
           <p className="font-semibold">Mensagem enviada!</p>
-          <p className="opacity-80">Entraremos em contato em breve.</p>
+          <p className="opacity-80">
+            Entraremos em contato em breve via WhatsApp ou e-mail.
+          </p>
         </div>
       </div>
     );
@@ -104,9 +116,10 @@ export function LeadForm({
       <div className="grid gap-2 sm:grid-cols-2">
         <input
           type="tel"
-          placeholder="WhatsApp"
+          inputMode="numeric"
+          placeholder="(11) 99999-9999"
           value={whatsapp}
-          onChange={(e) => setWhatsapp(e.target.value)}
+          onChange={(e) => onWhatsappChange(e.target.value)}
           className={inputCls}
         />
         <input

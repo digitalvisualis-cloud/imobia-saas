@@ -147,7 +147,7 @@ function OnyxSearchBar({ cidades }: { cidades: string[] }) {
   return (
     <form
       onSubmit={submeter}
-      className={`mt-8 w-full rounded-lg bg-white/97 p-3 shadow-2xl backdrop-blur ${aberto && !modoCodigo ? 'max-w-5xl' : 'max-w-3xl'}`}
+      className={`mt-8 w-full rounded-lg bg-white p-3 shadow-2xl ${aberto && !modoCodigo ? 'max-w-5xl' : 'max-w-3xl'}`}
     >
       {/* Tabs VENDA / ALUGUEL */}
       <div className="mb-2 flex gap-1 rounded-md bg-gray-100 p-1">
@@ -221,8 +221,8 @@ function OnyxSearchBar({ cidades }: { cidades: string[] }) {
               type="text"
               value={busca}
               onChange={(e) => setBusca(e.target.value)}
-              placeholder="BAIRRO OU EMPREENDIMENTO"
-              className="rounded-md border-0 bg-gray-50 px-3 py-2 text-sm focus:bg-white focus:ring-1 focus:ring-gray-300 focus:outline-none placeholder:uppercase placeholder:tracking-wide placeholder:font-semibold placeholder:text-gray-400"
+              placeholder="Bairro ou empreendimento"
+              className="rounded-md border-0 bg-gray-50 px-3 py-2 text-sm text-gray-900 placeholder:text-gray-500 focus:bg-white focus:ring-1 focus:ring-gray-300 focus:outline-none"
             />
             <button
               type="submit"
@@ -274,19 +274,19 @@ function OnyxSearchBar({ cidades }: { cidades: string[] }) {
       )}
 
       {/* Toggles secundarios funcionais */}
-      <div className="mt-2 flex flex-wrap items-center justify-center gap-x-4 gap-y-1 text-[11px] text-gray-500">
+      <div className="mt-2 flex flex-wrap items-center justify-center gap-x-4 gap-y-1 border-t border-gray-100 pt-2 text-xs text-gray-700">
         <button
           type="button"
           onClick={() => { setAberto((v) => !v); setModoCodigo(false); }}
-          className={`inline-flex items-center gap-1 hover:text-gray-900 ${aberto && !modoCodigo ? 'text-gray-900 font-semibold' : ''}`}
+          className={`inline-flex items-center gap-1 hover:text-black ${aberto && !modoCodigo ? 'font-semibold text-black' : ''}`}
         >
-          {aberto && !modoCodigo ? '∧ Simples' : '+ Busca avançada'}
+          {aberto && !modoCodigo ? '− Busca simples' : '+ Busca avançada'}
         </button>
         <span className="opacity-30">·</span>
         <button
           type="button"
           onClick={() => { setModoCodigo((v) => !v); setAberto(false); }}
-          className={`inline-flex items-center gap-1 hover:text-gray-900 ${modoCodigo ? 'text-gray-900 font-semibold' : ''}`}
+          className={`inline-flex items-center gap-1 hover:text-black ${modoCodigo ? 'font-semibold text-black' : ''}`}
         >
           # Por código
         </button>
