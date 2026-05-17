@@ -25,6 +25,31 @@ interface PostShellProps extends PostTemplateProps {
   variant: PostVariant;
 }
 
+function headlineForVariant(
+  variant: PostVariant,
+  fullTitle: string,
+  city: string,
+  formato: PostTemplateProps['formato'],
+) {
+  const story = formato === 'STORY';
+  switch (variant) {
+    case 'p7':
+      return 'Entrada zero';
+    case 'p8':
+      return 'Sonho da casa própria';
+    case 'p9':
+      return 'Perfect House For Living';
+    case 'p10':
+      return 'Exclusive Dream Homes';
+    case 'p17':
+      return 'Entrada facilitada';
+    case 'p18':
+      return city ? `Casa própria em ${city}` : 'Casa própria';
+    default:
+      return shortTitle(fullTitle, story ? 'ultra' : 'short');
+  }
+}
+
 /**
  * Componente base que renderiza o HTML do visual-lab (slots: post-bg,
  * soft-fade, top-logo, location, headline, price-box, spec-strip,
@@ -42,21 +67,11 @@ interface PostShellProps extends PostTemplateProps {
 export function PostShell({ imovel, marca, formato, variant }: PostShellProps) {
   const dim = FORMATO_DIMENSOES[formato];
   const formatClass = FORMATO_CLASS[formato];
-  const isStory = formato === 'STORY';
-  const isSquare = formato === 'POST_QUADRADO';
 
-  // Titulo: completo no vertical, curto no square, ultra-curto no story
-  const titleFull = imovel.titulo;
-  const title = isStory
-    ? shortTitle(titleFull, 'ultra')
-    : isSquare
-      ? shortTitle(titleFull, 'short')
-      : titleFull;
+  // Esses templates dependem de manchetes curtas. Se usar o titulo completo
+  // do imovel, o preview pequeno volta a atropelar.
+  const title = headlineForVariant(variant, imovel.titulo, imovel.cidade, formato);
 
-  const tipoLabel = imovel.tipo
-    .split('_')
-    .map((w) => w.charAt(0) + w.slice(1).toLowerCase())
-    .join(' ');
   const location = [imovel.bairro, imovel.cidade].filter(Boolean).join(' · ');
   const opLabel = operacaoLabel(imovel.operacao);
   const preco = formatPrecoCompleto(imovel.preco);

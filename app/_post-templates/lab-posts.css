@@ -2021,3 +2021,39 @@
 .format-story .p20 .footer-brand {
   bottom: 0;
 }
+
+/* Runtime bridge: the visual lab was composed on 360px-wide artboards.
+   The app renders/export templates at 1080px. Keep the lab geometry intact
+   and scale the whole artboard, otherwise every imported post loses the
+   proportions that were approved in preview. */
+.imobia-lab-post-root {
+  position: relative;
+  overflow: hidden;
+  background: #111827;
+  --lab-artboard-width: 360px;
+  --lab-artboard-height: 450px;
+  --lab-artboard-scale: 3;
+}
+
+.imobia-lab-post-root.format-square {
+  --lab-artboard-height: 360px;
+}
+
+.imobia-lab-post-root.format-story {
+  --lab-artboard-height: 640px;
+}
+
+.imobia-lab-post-root.format-carousel,
+.imobia-lab-post-root.format-vertical {
+  --lab-artboard-height: 450px;
+}
+
+.imobia-lab-post-root .post-artboard {
+  width: var(--lab-artboard-width) !important;
+  height: var(--lab-artboard-height) !important;
+  max-width: none !important;
+  aspect-ratio: auto !important;
+  margin: 0;
+  transform: scale(var(--lab-artboard-scale));
+  transform-origin: top left;
+}
