@@ -1,12 +1,47 @@
+import { auth } from '@/auth';
+import { prisma } from '@/lib/prisma';
 import { redirect } from 'next/navigation';
+import CaptacaoClient from './CaptacaoClient';
+
+export const dynamic = 'force-dynamic';
 
 /**
- * /captacao — atalho pra /leads ja com a aba "Captação" (vendedores) selecionada.
+ * /captacao — captacao de imoveis (lado proprietario). Diferente do Funil
+ * de Vendas (compradores), aqui o foco eh:
+ *   - de onde o proprietario veio (site, indicacao, prospeccao, portal)
+ *   - dados do imovel a captar (endereco, tipo, preco pretendido)
+ *   - proxima acao (agendar avaliacao, refazer contato, fechar contrato)
  *
- * Mantemos como rota propria por causa do menu lateral (Negócios > Captação),
- * mas reusa o Kanban de Negócios sob o capô. Na F2 isso pode virar um Kanban
- * proprio com etapas de captacao (Avaliacao → Avaliado → Contrato → Listado).
+ * Reusa o model Lead com tipoLead='VENDEDOR' mas a UI eh otimizada pro
+ * fluxo de captacao — nao reusa o Kanban de compradores.
  */
-export default function CaptacaoPage() {
-  redirect('/leads?tab=vendedor');
+export default async function CaptacaoPage() {
+  const session = await auth();
+  if (!session?.user) redirect('/login');
+  const tenantId = (session.user as any).tenantId as string;
+
+  const leads = await prisma.lead.findMany({
+    where: { tenantId, tipoLead: 'VENDEDOR' },
+    orderBy: { createdAt: 'desc' },
+    take: 200,
+  });
+
+  return (
+    <CaptacaoClient
+      initialLeads={leads.map((l) => ({
+        id: l.id,
+        nome: l.nome,
+        whatsapp: l.whatsapp,
+        email: l.email,
+        etapa: l.etapa,
+        origem: l.origem,
+        interesse: l.interesse,
+        bairroDesejado: l.bairroDesejado,
+        orcamento: l.orcamento ? Number(l.orcamento) : null,
+        notas: l.notas,
+        createdAt: l.createdAt.toISOString(),
+        updatedAt: l.updatedAt.toISOString(),
+      }))}
+    />
+  );
 }

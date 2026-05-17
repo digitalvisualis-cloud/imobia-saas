@@ -39,36 +39,64 @@ export async function POST(req: NextRequest) {
   }
   const openai = new OpenAI({ apiKey });
 
-  const prompt = `Voce e um redator especialista em SEO imobiliario brasileiro. Gere um artigo de blog em portugues do Brasil sobre o topico abaixo. O artigo deve:
-- Ter ate 800 palavras, tom natural e direto (sem "embarcar numa viagem", sem clicheis de IA)
-- Ter densidade de palavras-chave de cauda longa relevantes pro nicho imobiliario${cidadeAlvo ? ` em ${cidadeAlvo}` : ''}
-- Incluir subtitulos com ## (H2) pra estruturar
-- Citar dados praticos quando fizer sentido (sem inventar numeros precisos)
-- Terminar com um CTA suave pra contatar a imobiliaria${empresa ? ` (${empresa})` : ''}
-- Ser editavel — nao usar bold/italico em excesso
+  const prompt = `Voce e um jornalista freelancer de cadernos imobiliarios da Folha/Estadao. Voce esta escrevendo uma materia investigativa de blog pra uma imobiliaria local, NAO um post de IA. Escreva o artigo abaixo seguindo essas regras inegociaveis:
+
+REGRAS DE ESTILO (CRITICO):
+- Frases curtas misturadas com frases longas. Ritmo de jornalismo.
+- Use dados concretos quando fizer sentido (taxa Selic atual, dados do Secovi/Fipe, % de valorizacao tipica) — invente numeros realistas se nao souber, mas evite numeros aleatorios.
+- Cite fontes ou referencias quando couber: "segundo o Secovi-SP", "dados do Sindicato da Habitacao".
+- ZERO clicheis de IA. Lista de frases BANIDAS:
+  · "no mundo dinamico do mercado imobiliario"
+  · "vale a pena considerar"
+  · "uma jornada de oportunidades"
+  · "imaginar a possibilidade de"
+  · "em um cenario cada vez mais"
+  · "concluindo, podemos afirmar que"
+  · "em suma" / "em resumo"
+- Pode comecar com uma anedota, dado surpreendente ou pergunta provocadora. NUNCA comece com "Voce ja parou pra pensar" ou similar.
+- Use ## pra subtitulos. Nao mais de 4 secoes.
+- Conclusao curta (2-3 frases), nao recapitula tudo.
+- CTA final natural — uma frase indicando que a${empresa ? ` ${empresa}` : ' imobiliaria'} pode ajudar com aquele caso especifico. Sem "entre em contato hoje mesmo" generico.
+- Use voz ativa. Evite "pode-se afirmar", "deve-se considerar". Prefira "muita gente faz", "vale lembrar".
+- 600-800 palavras.
+
+OBJETIVO SEO:
+- Densidade de palavras-chave de cauda longa relacionada ao nicho imobiliario${cidadeAlvo ? ` em ${cidadeAlvo}` : ''}
+- Mencionar nomes de bairros conhecidos se topico for sobre cidade especifica
 
 Topico: "${topico}"${cidadeAlvo ? `\nCidade alvo: ${cidadeAlvo}` : ''}
 
 Retorne JSON com:
-- titulo (string, ate 70 caracteres, com chamado SEO)
-- resumo (string, ate 160 caracteres, vira meta description tambem)
-- conteudoMd (string, o corpo em markdown completo, com H2/H3)
-- metaTitle (string, ate 60 caracteres)
-- metaDescription (string, ate 160 caracteres)
-- tags (array de ate 5 strings)`;
+- titulo (string, ate 70 chars — pode ser provocativo, nao precisa repetir o topico literalmente)
+- resumo (string, ate 160 chars — chamada que da vontade de ler)
+- conteudoMd (string, corpo em markdown)
+- metaTitle (string, ate 60 chars — SEO friendly)
+- metaDescription (string, ate 160 chars)
+- tags (array ate 5 strings)
+- imagePrompt (string EM INGLES, ate 200 chars — descreve a foto ideal pra ilustrar o artigo. Estilo: "professional real estate photography, [scene], natural lighting, magazine quality")`;
 
   try {
     const response = await openai.chat.completions.create({
       model: 'gpt-4o-mini',
       messages: [
-        { role: 'system', content: 'Voce e um redator SEO imobiliario brasileiro. Sempre responde em JSON valido.' },
+        {
+          role: 'system',
+          content:
+            'Voce e jornalista freelancer brasileiro de cadernos imobiliarios. Escreve com voz humana, ritmo de jornal. Sempre responde em JSON valido.',
+        },
         { role: 'user', content: prompt },
       ],
       response_format: { type: 'json_object' },
-      temperature: 0.7,
+      temperature: 0.9, // mais alto pra estilo menos previsivel
     });
     const raw = response.choices[0]?.message?.content ?? '{}';
     const parsed = JSON.parse(raw);
+
+    // Gera capa via Pollinations (gratis, sem API key, sem quota).
+    // URL eh direta — basta encode o prompt. PNG retornado pelo URL.
+    const imagePrompt = String(parsed.imagePrompt ?? `professional real estate photography ${topico}, natural lighting, magazine quality`).slice(0, 200);
+    const capaUrl = `https://image.pollinations.ai/prompt/${encodeURIComponent(imagePrompt)}?width=1200&height=800&nologo=true`;
+
     return NextResponse.json({
       titulo: String(parsed.titulo ?? '').slice(0, 200),
       resumo: String(parsed.resumo ?? '').slice(0, 300),
@@ -76,6 +104,7 @@ Retorne JSON com:
       metaTitle: String(parsed.metaTitle ?? '').slice(0, 70),
       metaDescription: String(parsed.metaDescription ?? '').slice(0, 200),
       tags: Array.isArray(parsed.tags) ? parsed.tags.slice(0, 5).map(String) : [],
+      capaUrl,
     });
   } catch (e: any) {
     console.error('[blog/gerar-ia]', e);

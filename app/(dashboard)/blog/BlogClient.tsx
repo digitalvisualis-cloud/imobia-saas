@@ -146,6 +146,8 @@ export default function BlogClient({ initialArtigos, slug, cidades }: Props) {
         metaTitle: ia.metaTitle,
         metaDescription: ia.metaDescription,
         tags: ia.tags,
+        // Capa so eh setada se usuario ainda nao escolheu uma manualmente
+        capaUrl: (prev?.capaUrl?.trim() ? prev.capaUrl : ia.capaUrl) ?? '',
       }));
       toast.success('Rascunho gerado — revise antes de publicar');
       setIaTopico('');
@@ -244,10 +246,10 @@ export default function BlogClient({ initialArtigos, slug, cidades }: Props) {
         </div>
       )}
 
-      {/* Modal editor */}
+      {/* Modal editor — items-center pra centralizar vertical; overflow-y-auto interno scrolla se cresce */}
       {editing && (
-        <div className="fixed inset-0 z-50 bg-black/50 flex items-start justify-center p-4 overflow-y-auto">
-          <div className="bg-background rounded-xl shadow-xl max-w-3xl w-full my-8 max-h-[90vh] overflow-y-auto">
+        <div className="fixed inset-0 z-50 bg-black/50 flex items-center justify-center p-4">
+          <div className="bg-background rounded-xl shadow-xl max-w-3xl w-full max-h-[90vh] overflow-y-auto">
             <div className="sticky top-0 bg-background border-b border-border px-5 py-3 flex items-center justify-between">
               <h2 className="font-display text-lg font-semibold">
                 {(editing as Artigo).id ? 'Editar artigo' : 'Novo artigo'}
