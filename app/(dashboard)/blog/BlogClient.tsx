@@ -175,8 +175,10 @@ export default function BlogClient({ initialArtigos, slug, cidades }: Props) {
         // Capa so eh setada se usuario ainda nao escolheu uma manualmente
         capaUrl: (prev?.capaUrl?.trim() ? prev.capaUrl : ia.capaUrl) ?? '',
       }));
-      toast.success('Rascunho gerado — revise antes de publicar');
+      toast.success('Rascunho gerado — abra o preview pra revisar');
       setIaTopico('');
+      // Auto-troca pro preview pra usuario ver o resultado imediato
+      setConteudoTab('preview');
     } catch (e: any) {
       toast.error(e.message ?? 'Erro ao gerar');
     } finally {
@@ -410,9 +412,12 @@ export default function BlogClient({ initialArtigos, slug, cidades }: Props) {
                     className="w-full rounded-md border border-input bg-background px-3 py-2 text-sm font-mono leading-relaxed"
                   />
                 ) : (
-                  <div
-                    className="w-full min-h-[340px] rounded-md border border-input bg-card px-5 py-4 text-sm prose prose-stone max-w-none [&>h2]:mt-5 [&>h2]:mb-2 [&>h2]:text-lg [&>h2]:font-bold [&>h3]:mt-4 [&>h3]:mb-2 [&>h3]:text-base [&>h3]:font-semibold [&>p]:my-3 [&>p]:leading-relaxed [&>ul]:my-3"
-                    dangerouslySetInnerHTML={{ __html: renderMarkdown(editing.conteudoMd ?? '') || '<p class="text-muted-foreground italic">Conteúdo vazio — clique em Editar pra escrever.</p>' }}
+                  <BlogPreview
+                    titulo={editing.titulo ?? ''}
+                    resumo={editing.resumo ?? ''}
+                    capaUrl={editing.capaUrl ?? ''}
+                    autor={editing.autor ?? ''}
+                    conteudoMd={editing.conteudoMd ?? ''}
                   />
                 )}
               </div>
@@ -488,6 +493,90 @@ export default function BlogClient({ initialArtigos, slug, cidades }: Props) {
           </div>
         </div>
       )}
+    </div>
+  );
+}
+
+/**
+ * BlogPreview — replica do layout da pagina publica /s/[slug]/blog/[slug]
+ * em escala menor. Mostra capa + eyebrow data + h1 grande + resumo lead
+ * + autor + corpo renderizado com prose styles. Tudo client-side, custo
+ * zero, atualiza ao vivo enquanto edita.
+ */
+function BlogPreview({
+  titulo,
+  resumo,
+  capaUrl,
+  autor,
+  conteudoMd,
+}: {
+  titulo: string;
+  resumo: string;
+  capaUrl: string;
+  autor: string;
+  conteudoMd: string;
+}) {
+  const dataAtual = new Date().toLocaleDateString('pt-BR', { day: '2-digit', month: 'long', year: 'numeric' });
+  const html = renderMarkdown(conteudoMd);
+
+  if (!titulo && !conteudoMd) {
+    return (
+      <div className="w-full min-h-[340px] rounded-md border border-dashed border-input bg-muted/20 grid place-items-center text-sm text-muted-foreground">
+        <div className="text-center">
+          <p className="font-semibold mb-1">Preview vazio</p>
+          <p className="text-xs">Preencha pelo menos o título e o conteúdo pra ver o preview.</p>
+        </div>
+      </div>
+    );
+  }
+
+  return (
+    <div className="w-full rounded-md border border-input bg-stone-50 overflow-hidden">
+      {/* Barra simulando endereco */}
+      <div className="bg-stone-200 px-3 py-1.5 text-[10px] text-stone-500 font-mono border-b border-stone-300">
+        Preview · /s/.../blog/{(titulo || 'meu-artigo').toLowerCase().replace(/[^a-z0-9]+/g, '-').slice(0, 60)}
+      </div>
+
+      {/* Container principal do post */}
+      <div className="mx-auto max-w-[640px] px-5 py-6 bg-white">
+        {capaUrl && (
+          // eslint-disable-next-line @next/next/no-img-element
+          <img
+            src={capaUrl}
+            alt={titulo}
+            className="w-full h-auto rounded-lg object-cover max-h-[280px] mb-6"
+            onError={(e) => { (e.target as HTMLImageElement).style.display = 'none'; }}
+          />
+        )}
+
+        <p className="text-[10px] font-semibold uppercase tracking-[0.2em] text-stone-500">
+          {dataAtual}
+        </p>
+
+        <h1
+          className="mt-2 text-2xl font-bold leading-tight sm:text-3xl text-stone-900"
+          style={{ fontFamily: 'Georgia, serif' }}
+        >
+          {titulo || 'Título do artigo'}
+        </h1>
+
+        {resumo && (
+          <p className="mt-3 text-base text-stone-700 leading-relaxed">{resumo}</p>
+        )}
+
+        {autor && (
+          <p className="mt-3 text-sm text-stone-500">por {autor}</p>
+        )}
+
+        <article
+          className="mt-6 text-stone-800 [&>h2]:mt-7 [&>h2]:mb-3 [&>h2]:text-xl [&>h2]:font-bold [&>h2]:text-stone-900 [&>h3]:mt-5 [&>h3]:mb-2 [&>h3]:text-lg [&>h3]:font-semibold [&>p]:my-3 [&>p]:leading-[1.7] [&>p]:text-stone-700 [&>ul]:my-3 [&>ul]:pl-6 [&>ul]:list-disc [&>ul]:space-y-1 [&_a]:text-blue-600 [&_a]:underline [&_strong]:font-semibold [&_strong]:text-stone-900"
+          dangerouslySetInnerHTML={{ __html: html || '<p style="color: #999; font-style: italic;">Conteúdo vazio — escreva algo no editor.</p>' }}
+        />
+
+        <div className="mt-8 pt-4 border-t border-stone-200 text-xs text-stone-400">
+          Preview · É só uma simulação. No site real terá header, footer e mais detalhes.
+        </div>
+      </div>
     </div>
   );
 }
