@@ -656,6 +656,12 @@ model Contrato {
   observacoes     String?
   /// Hook n8n: evita disparos duplicados quando cron varrer "vence em X dias"
   eventoVencimentoEmitido Boolean @default(false)
+  /// Tracking de reajuste anual (ALUGUEL/ADMINISTRACAO). Se null, considera dataInicio.
+  ultimoReajusteEm        DateTime?
+  /// IGPM, IPCA, IPC, livre, ou null
+  indexadorReajuste       String?
+  /// Hook n8n: evita disparar lembrete duplicado de reajuste anual
+  eventoReajusteEmitido   Boolean @default(false)
   // Auditoria
   createdAt       DateTime        @default(now())
   updatedAt       DateTime        @updatedAt
@@ -668,6 +674,7 @@ model Contrato {
   @@index([tenantId, status])
   @@index([tenantId, dataInicio])
   @@index([tenantId, dataFim])
+  @@index([tenantId, ultimoReajusteEm])
   @@map("contratos")
 }
 

@@ -66,6 +66,23 @@ export async function PATCH(
     if (body.dataFim !== undefined && data.dataFim !== undefined) {
       data.eventoVencimentoEmitido = false;
     }
+    // Reajuste anual (F4): registra data + indexador. Quando muda
+    // ultimoReajusteEm, reseta flag pra n8n disparar lembrete no
+    // proximo aniversario.
+    if (body.ultimoReajusteEm !== undefined) {
+      if (!body.ultimoReajusteEm) data.ultimoReajusteEm = null;
+      else {
+        const d = new Date(body.ultimoReajusteEm);
+        if (!Number.isNaN(d.getTime())) {
+          data.ultimoReajusteEm = d;
+          data.eventoReajusteEmitido = false;
+        }
+      }
+    }
+    if (body.indexadorReajuste !== undefined)
+      data.indexadorReajuste = body.indexadorReajuste || null;
+    if (typeof body.eventoReajusteEmitido === 'boolean')
+      data.eventoReajusteEmitido = body.eventoReajusteEmitido;
 
     if (data.dataInicio && data.dataFim && data.dataFim < data.dataInicio) {
       return NextResponse.json(
