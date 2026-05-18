@@ -1,0 +1,381 @@
+'use client';
+
+import { useState } from 'react';
+import { Bed, Bath, Car, Maximize2, MapPin, MessageCircle, Share2, Check, Copy } from 'lucide-react';
+import type { Customization, ThemeId } from '@/types/site-customization';
+import type { ImovelPublic, TenantPublic } from '@/app/_templates/types';
+import { ThemeScope } from './ThemeScope';
+import { BrisaHeader, BrisaFooter } from './brisa/BrisaChrome';
+import { AuraHeader, AuraFooter } from './aura/AuraChrome';
+import { OnyxHeader, OnyxFooter } from './onyx/OnyxChrome';
+import { CookieBanner } from './CookieBanner';
+import { formatPriceBRL, imageUrl } from './_shared';
+import { LeadForm } from './LeadForm';
+import { ImagemComMarca } from './ImagemComMarca';
+
+interface Props {
+  theme: ThemeId;
+  config: Customization;
+  tenant: TenantPublic;
+  imovel: ImovelPublic;
+}
+
+export function ImovelDetail({ theme, config, tenant, imovel }: Props) {
+  const Footer = theme === 'aura' ? AuraFooter : theme === 'onyx' ? OnyxFooter : BrisaFooter;
+
+  return (
+    <ThemeScope config={config}>
+      {/* Em pagina interna o header eh solido (texto escuro sobre fundo claro)
+          pra nao sumir em cima da galeria de fotos. */}
+      {theme === 'aura' ? (
+        <AuraHeader config={config} tenant={tenant} transparent={false} />
+      ) : theme === 'onyx' ? (
+        <OnyxHeader config={config} tenant={tenant} />
+      ) : (
+        <BrisaHeader config={config} tenant={tenant} />
+      )}
+      <main>
+        <ImovelGallery imagens={imovel.imagens} capa={imovel.capaUrl} titulo={imovel.titulo} marca={tenant.marca} />
+        <ImovelInfo imovel={imovel} tenant={tenant} />
+      </main>
+      <Footer config={config} tenant={tenant} />
+      <CookieBanner slug={tenant.slug} />
+    </ThemeScope>
+  );
+}
+
+function ImovelGallery({
+  imagens,
+  capa,
+  titulo,
+  marca,
+}: {
+  imagens: string[];
+  capa: string | null;
+  titulo: string;
+  marca: TenantPublic['marca'];
+}) {
+  // capa eh uma das URLs de imagens — usar [capa, ...imagens] duplica.
+  // Dedupe via Set garante cada foto so 1x (capa fica primeira). Tambem
+  // protege contra duplicatas que possam ter entrado no array imagens
+  // por bug de reorder/upload antigo.
+  const all = Array.from(
+    new Set([capa, ...imagens].filter((x): x is string => Boolean(x))),
+  );
+  const [active, setActive] = useState(0);
+  const main = all[active] ?? imageUrl(null);
+
+  return (
+    <div className="mx-auto max-w-7xl px-6 pt-8">
+      <div className="grid gap-3 md:grid-cols-4">
+        <div className="md:col-span-3">
+          <ImagemComMarca
+            src={main}
+            alt={titulo}
+            marca={marca}
+            className="aspect-[16/10] w-full overflow-hidden rounded-2xl"
+          />
+        </div>
+        <div className="grid grid-cols-4 gap-2 md:grid-cols-1">
+          {all.slice(0, 4).map((img, i) => (
+            <button
+              key={i}
+              type="button"
+              onClick={() => setActive(i)}
+              className={`aspect-[4/3] overflow-hidden rounded-lg ring-2 ${
+                active === i ? 'ring-[var(--t-primary)]' : 'ring-transparent'
+              }`}
+            >
+              {/* thumbnails sem marca pra nao poluir */}
+              {/* eslint-disable-next-line @next/next/no-img-element */}
+              <img src={img} alt="" className="h-full w-full object-cover" />
+            </button>
+          ))}
+        </div>
+      </div>
+    </div>
+  );
+}
+
+function ImovelInfo({
+  imovel,
+  tenant,
+}: {
+  imovel: ImovelPublic;
+  tenant: TenantPublic;
+}) {
+  const wppNumber = (tenant.marca?.whatsapp ?? '').replace(/\D/g, '');
+  const wppText = encodeURIComponent(
+    `Olá! Tenho interesse no imóvel [${imovel.codigo}] — ${imovel.titulo}.`,
+  );
+  const wppHref = wppNumber
+    ? `https://wa.me/${wppNumber}?text=${wppText}`
+    : '#contato';
+
+  return (
+    <div className="mx-auto mt-12 max-w-7xl px-6 pb-24">
+      <div className="grid gap-10 md:grid-cols-3">
+        <div className="md:col-span-2">
+          <p className="text-[11px] font-medium uppercase tracking-[0.2em] opacity-60">
+            {imovel.tipo.replace(/_/g, ' ').toLowerCase()} · {imovel.operacao.toLowerCase()}
+          </p>
+          <h1
+            style={{ fontFamily: 'var(--t-font-heading)' }}
+            className="mt-2 text-3xl font-semibold leading-tight md:text-5xl"
+          >
+            {imovel.titulo}
+          </h1>
+          {(imovel.bairro || imovel.cidade) && (
+            <p className="mt-3 flex items-center gap-1.5 text-sm opacity-75">
+              <MapPin className="h-4 w-4" />
+              {[imovel.bairro, imovel.cidade, imovel.estado].filter(Boolean).join(' · ')}
+            </p>
+          )}
+
+          <div
+            className="mt-7 flex flex-wrap gap-6 border-y py-5 text-sm"
+            style={{ borderColor: 'rgb(var(--t-fg-rgb) / 0.1)' }}
+          >
+            {imovel.quartos > 0 && (
+              <Spec icon={Bed} label="Quartos" value={imovel.quartos} />
+            )}
+            {imovel.banheiros > 0 && (
+              <Spec icon={Bath} label="Banheiros" value={imovel.banheiros} />
+            )}
+            {imovel.vagas > 0 && (
+              <Spec icon={Car} label="Vagas" value={imovel.vagas} />
+            )}
+            {imovel.areaM2 != null && (
+              <Spec icon={Maximize2} label="Área útil" value={`${imovel.areaM2}m²`} />
+            )}
+          </div>
+
+          {imovel.descricao && (
+            <div className="mt-8">
+              <h2
+                style={{ fontFamily: 'var(--t-font-heading)' }}
+                className="text-2xl font-semibold"
+              >
+                Sobre este imóvel
+              </h2>
+              <p className="mt-4 whitespace-pre-line text-base leading-relaxed opacity-80">
+                {imovel.descricao}
+              </p>
+            </div>
+          )}
+
+          {imovel.amenidades.length > 0 && (
+            <div className="mt-10">
+              <h2
+                style={{ fontFamily: 'var(--t-font-heading)' }}
+                className="text-2xl font-semibold"
+              >
+                Comodidades
+              </h2>
+              <ul className="mt-4 grid grid-cols-2 gap-2 md:grid-cols-3">
+                {imovel.amenidades.map((a) => (
+                  <li
+                    key={a}
+                    className="flex items-center gap-2 rounded-lg px-3 py-2 text-sm"
+                    style={{ background: 'rgb(var(--t-fg-rgb) / 0.04)' }}
+                  >
+                    <span
+                      className="h-1.5 w-1.5 rounded-full"
+                      style={{ background: 'var(--t-primary)' }}
+                    />
+                    {a}
+                  </li>
+                ))}
+              </ul>
+            </div>
+          )}
+        </div>
+
+        <aside className="md:col-span-1">
+          <ContactCard imovel={imovel} tenant={tenant} wppHref={wppHref} />
+        </aside>
+      </div>
+    </div>
+  );
+}
+
+function ContactCard({
+  imovel,
+  tenant,
+  wppHref,
+}: {
+  imovel: ImovelPublic;
+  tenant: TenantPublic;
+  wppHref: string;
+}) {
+  const [copied, setCopied] = useState(false);
+  const [copiedCode, setCopiedCode] = useState(false);
+  const wpp = tenant.marca?.whatsapp ?? '';
+  const nomeEmpresa = tenant.marca?.nomeEmpresa ?? tenant.nome ?? null;
+  const logoUrl = tenant.marca?.logoUrl ?? null;
+
+  function handleShare() {
+    const url = typeof window !== 'undefined' ? window.location.href : '';
+    if (navigator.share) {
+      navigator.share({ title: imovel.titulo, url }).catch(() => {});
+      return;
+    }
+    navigator.clipboard?.writeText(url).then(() => {
+      setCopied(true);
+      setTimeout(() => setCopied(false), 1800);
+    });
+  }
+
+  function copyCodigo() {
+    navigator.clipboard?.writeText(imovel.codigo).then(() => {
+      setCopiedCode(true);
+      setTimeout(() => setCopiedCode(false), 1800);
+    });
+  }
+
+  return (
+    <div className="sticky top-24 space-y-4">
+      {/* Card de preço + CTA WhatsApp */}
+      <div
+        className="rounded-2xl border p-6"
+        style={{ borderColor: 'rgb(var(--t-fg-rgb) / 0.1)' }}
+      >
+        <p className="text-xs uppercase tracking-wider opacity-60">
+          {imovel.operacao.toUpperCase() === 'ALUGUEL' ? 'Aluguel mensal' : 'Valor de venda'}
+        </p>
+        <p
+          style={{ fontFamily: 'var(--t-font-heading)', color: 'var(--t-primary)' }}
+          className="mt-1 text-3xl font-bold leading-none"
+        >
+          {formatPriceBRL(imovel.preco, imovel.operacao)}
+        </p>
+
+        {(imovel.iptuMensal || imovel.condominioMensal) && (
+          <div className="mt-3 space-y-0.5 text-xs opacity-70">
+            {imovel.iptuMensal != null && (
+              <div className="flex justify-between gap-4">
+                <span>IPTU</span>
+                <span className="font-medium">
+                  R$ {Number(imovel.iptuMensal).toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+                </span>
+              </div>
+            )}
+            {imovel.condominioMensal != null && (
+              <div className="flex justify-between gap-4">
+                <span>Condomínio</span>
+                <span className="font-medium">
+                  R$ {Number(imovel.condominioMensal).toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+                </span>
+              </div>
+            )}
+          </div>
+        )}
+
+        <button
+          type="button"
+          onClick={copyCodigo}
+          title={copiedCode ? 'Copiado!' : 'Copiar código'}
+          className="mt-2 inline-flex items-center gap-1.5 text-xs opacity-60 transition-opacity hover:opacity-100"
+        >
+          <span>Cód. {imovel.codigo}</span>
+          {copiedCode ? (
+            <Check className="h-3 w-3 text-green-600" />
+          ) : (
+            <Copy className="h-3 w-3" />
+          )}
+        </button>
+
+        {/* CTA principal: WhatsApp */}
+        <a
+          href={wppHref}
+          target="_blank"
+          rel="noopener"
+          className="mt-6 flex w-full items-center justify-center gap-2 rounded-xl py-4 text-base font-semibold text-white shadow-md transition-transform hover:scale-[1.02]"
+          style={{ background: '#16A34A' }}
+        >
+          <MessageCircle className="h-5 w-5" /> Tenho interesse
+        </a>
+
+        <button
+          type="button"
+          onClick={handleShare}
+          className="mt-3 flex w-full items-center justify-center gap-1.5 rounded-xl border py-2.5 text-xs font-medium transition-colors hover:bg-[rgb(var(--t-fg-rgb)/0.04)]"
+          style={{ borderColor: 'rgb(var(--t-fg-rgb) / 0.15)' }}
+        >
+          {copied ? (
+            <>
+              <Check className="h-3.5 w-3.5 text-green-600" /> Link copiado
+            </>
+          ) : (
+            <>
+              <Share2 className="h-3.5 w-3.5" /> Compartilhar
+            </>
+          )}
+        </button>
+
+        {/* Form de captura — chega como Lead novo no CRM com origem='site' */}
+        <div className="mt-5 border-t pt-5" style={{ borderColor: 'rgb(var(--t-fg-rgb) / 0.08)' }}>
+          <p className="mb-3 text-[10px] font-semibold uppercase tracking-wider opacity-60">
+            Ou envie uma mensagem
+          </p>
+          <LeadForm
+            slug={tenant.slug}
+            imovelId={imovel.id}
+            defaultMessage={`Olá, tenho interesse no imóvel ${imovel.codigo} — ${imovel.titulo}.`}
+            ctaLabel="Quero saber mais"
+          />
+        </div>
+      </div>
+
+      {/* Card da imobiliaria/corretor */}
+      {nomeEmpresa && (
+        <div
+          className="rounded-2xl border p-5"
+          style={{ borderColor: 'rgb(var(--t-fg-rgb) / 0.1)' }}
+        >
+          <div className="flex items-center gap-3">
+            {logoUrl ? (
+              // eslint-disable-next-line @next/next/no-img-element
+              <img
+                src={logoUrl}
+                alt={nomeEmpresa}
+                className="h-12 w-12 rounded-full object-cover"
+              />
+            ) : (
+              <div
+                className="grid h-12 w-12 place-items-center rounded-full text-lg font-bold"
+                style={{ background: 'var(--t-primary)', color: 'var(--t-bg)' }}
+              >
+                {nomeEmpresa.charAt(0).toUpperCase()}
+              </div>
+            )}
+            <div className="min-w-0">
+              <p className="text-[10px] uppercase tracking-wider opacity-60">Anunciante</p>
+              <p className="truncate text-sm font-semibold">{nomeEmpresa}</p>
+            </div>
+          </div>
+        </div>
+      )}
+    </div>
+  );
+}
+
+function Spec({
+  icon: Icon,
+  label,
+  value,
+}: {
+  icon: typeof Bed;
+  label: string;
+  value: number | string;
+}) {
+  return (
+    <div className="flex items-center gap-2.5">
+      <Icon className="h-5 w-5 opacity-60" />
+      <div>
+        <div className="text-base font-semibold">{value}</div>
+        <div className="text-[11px] uppercase tracking-wider opacity-60">{label}</div>
+      </div>
+    </div>
+  );
+}

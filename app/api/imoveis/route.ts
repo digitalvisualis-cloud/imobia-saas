@@ -2,6 +2,43 @@ import { NextResponse } from 'next/server';
 import { auth } from '@/auth';
 import { prisma } from '@/lib/prisma';
 
+export const dynamic = 'force-dynamic';
+
+/**
+ * GET /api/imoveis — lista imoveis do tenant (resumo) pra pickers,
+ * autocomplete em modais (ex: vincular Lead a imovel), etc.
+ *
+ * Retorna campos minimos pra UI. Sem paginacao por ora — tenant tipico
+ * tem <500 imoveis e o filtro acontece client-side.
+ */
+export async function GET() {
+  const session = await auth();
+  if (!session?.user) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+  const tenantId = (session.user as any).tenantId as string;
+
+  const imoveis = await prisma.imovel.findMany({
+    where: { tenantId },
+    orderBy: { createdAt: 'desc' },
+    select: {
+      id: true,
+      codigo: true,
+      titulo: true,
+      tipo: true,
+      operacao: true,
+      bairro: true,
+      cidade: true,
+      preco: true,
+    },
+  });
+
+  return NextResponse.json({
+    data: imoveis.map((i) => ({
+      ...i,
+      preco: i.preco ? Number(i.preco) : null,
+    })),
+  });
+}
+
 const MAP_TIPO: Record<string, string> = {
   'Casa': 'CASA',
   'Apartamento': 'APARTAMENTO',
@@ -66,6 +103,10 @@ export async function POST(req: Request) {
 
     // Preço & specs
     const preco = Number(formData.get('preco'));
+    const iptuRaw = formData.get('iptuMensal');
+    const condominioRaw = formData.get('condominioMensal');
+    const iptuMensal = iptuRaw ? Number(iptuRaw) || null : null;
+    const condominioMensal = condominioRaw ? Number(condominioRaw) || null : null;
     const quartos = Number(formData.get('quartos') ?? 0);
     const suites = Number(formData.get('suites') ?? 0);
     const banheiros = Number(formData.get('banheiros') ?? 0);
@@ -98,6 +139,8 @@ export async function POST(req: Request) {
         bairro,
         estado,
         preco,
+        iptuMensal,
+        condominioMensal,
         quartos,
         suites,
         banheiros,
@@ -113,6 +156,16 @@ export async function POST(req: Request) {
         statusGeracao: 'RASCUNHO',
       },
     });
+
+    // Fire-and-forget: dispara alertas pros inscritos do tenant que
+    // batem com cidade/tipo/operacao/precoMax. Nao bloqueia a resposta
+    // (cadastro do imovel nao depende do envio dos emails).
+    if (imovel.publicado) {
+      // Import dinamico pra evitar bundle do dispatcher no client/edge
+      import('@/lib/newsletter-dispatcher')
+        .then(({ dispatchNewsletterForImovel }) => dispatchNewsletterForImovel(imovel.id))
+        .catch((err) => console.error('[newsletter] fire-and-forget falhou:', err));
+    }
 
     return NextResponse.json({ success: true, imovel });
   } catch (error: any) {

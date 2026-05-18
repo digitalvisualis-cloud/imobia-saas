@@ -9,8 +9,8 @@ import {
   KeyRound,
   Plus,
   TrendingUp,
-  Users,
   MessageSquare,
+  MessageCircle,
   Calendar,
   Globe,
   Sparkles,
@@ -26,9 +26,18 @@ import {
   X,
   ExternalLink,
   LogOut,
+  Briefcase,
+  Mail,
+  FileText,
+  Receipt,
+  Users,
+  ArrowRightLeft,
+  AlertCircle,
+  Library,
   type LucideIcon,
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
+import { Toaster } from '@/components/ui/toaster';
 
 type NavItem = {
   name: string;
@@ -86,26 +95,23 @@ export default function DashboardLayout({
     {
       label: 'CRM',
       items: [
-        { name: 'Negócios', href: '/leads', icon: TrendingUp },
-        { name: 'Contatos', href: '/contatos', icon: Users },
-        { name: 'Leads (chatbot)', href: '/leads-inbox', icon: MessageSquare, soon: true },
+        { name: 'Funil de Vendas', href: '/leads', icon: TrendingUp },
+        { name: 'Leads (chatbot)', href: '/leads-inbox', icon: MessageSquare },
         { name: 'Agenda', href: '/agenda', icon: Calendar },
       ],
     },
     {
       label: 'Marketing',
       items: [
-        ...(siteSlug
-          ? [
-              {
-                name: 'Meu Site',
-                href: `/s/${siteSlug}`,
-                icon: Globe,
-                external: true,
-              },
-            ]
-          : [{ name: 'Configurar Site', href: '/sites', icon: Globe }]),
-        { name: 'Conteúdo IA', href: '/conteudo', icon: Sparkles },
+        { name: 'Meu Site', href: '/sites', icon: Globe },
+        { name: 'Blog', href: '/blog', icon: FileText },
+        { name: 'Criador de Posts', href: '/conteudo', icon: Sparkles },
+        { name: 'Biblioteca', href: '/biblioteca', icon: Library },
+        {
+          name: 'Cadastrar portais',
+          href: '/configuracoes/portais',
+          icon: Globe,
+        },
         {
           name: 'Agendar Posts',
           href: '/conteudo/agenda',
@@ -117,13 +123,24 @@ export default function DashboardLayout({
     {
       label: 'Atendimento IA',
       items: [
-        { name: 'Assistente Virtual', href: '/atendimento', icon: Bot },
+        { name: 'Conversas', href: '/atendimento', icon: MessageSquare },
+        { name: 'Agente IA', href: '/configuracoes/agente-ia', icon: Bot },
+        { name: 'WhatsApp', href: '/configuracoes/whatsapp', icon: MessageCircle },
       ],
     },
     {
-      label: 'Financeiro',
+      label: 'Negócios',
       items: [
+        { name: 'Captação', href: '/captacao', icon: Briefcase },
+        { name: 'Alertas (e-mail)', href: '/newsletter', icon: Mail },
+        { name: 'Controle de Chaves', href: '/controle-chaves', icon: KeyRound },
+        { name: 'Contratos', href: '/contratos', icon: FileText },
+        { name: 'Inquilinos', href: '/inquilinos', icon: Users },
+        { name: 'Repasses', href: '/repasses', icon: ArrowRightLeft },
+        { name: 'Comissões', href: '/comissoes', icon: Receipt },
+        { name: 'Inadimplência', href: '/inadimplencia', icon: AlertCircle },
         { name: 'Financeiro', href: '/financeiro', icon: Wallet },
+        { name: 'Mensagens automáticas', href: '/automacoes', icon: Bell },
       ],
     },
     {
@@ -298,7 +315,8 @@ export default function DashboardLayout({
           </button>
         </header>
 
-        <main className="flex-1 p-4 md:p-8 overflow-y-auto">{children}</main>
+        <main className={cn('flex-1 overflow-y-auto', pathname.startsWith('/sites') ? '' : 'p-4 md:p-8')}>{children}</main>
+        <Toaster />
       </div>
     </div>
   );

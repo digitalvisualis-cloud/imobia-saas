@@ -1,18 +1,133 @@
 import { notFound } from 'next/navigation';
 import { prisma } from '@/lib/prisma';
-import { TemplateHome } from '@/app/_templates/elegance/TemplateHome';
-import type { TenantPublic, ImovelPublic } from '@/app/_templates/types';
+import { ThemeRenderer } from '@/components/themes/ThemeRenderer';
+import { SearchResultsView } from '@/components/themes/SearchResultsView';
+import { SearchFlashMessage } from '@/components/themes/SearchFlashMessage';
+import { mergeCustomization, type ThemeId } from '@/types/site-customization';
+import { buildImoveisPublic, buildTenantPublic } from '@/lib/build-tenant-public';
+import {
+  applyFilters,
+  filtersSummary,
+  hasFilters,
+  parseFilters,
+} from '@/lib/imovel-filter';
 
 export const dynamic = 'force-dynamic';
+export const revalidate = 0;
 
-function titleCase(slug: string) {
-  return slug
-    .split('-')
-    .map((p) => p.charAt(0).toUpperCase() + p.slice(1))
-    .join(' ');
+function isThemeId(v: unknown): v is ThemeId {
+  return v === 'brisa' || v === 'aura' || v === 'onyx';
 }
 
 export default async function SiteHome({
+  params,
+  searchParams,
+}: {
+  params: Promise<{ slug: string }>;
+  searchParams: Promise<Record<string, string | string[] | undefined>>;
+}) {
+  const { slug } = await params;
+  const sp = await searchParams;
+
+  const tenant = await prisma.tenant.findUnique({
+    where: { slug },
+    include: { marca: true, site: true },
+  });
+
+  if (!tenant) notFound();
+  if (!tenant.site?.publicado) notFound();
+
+  // Quando há filtros, busca todos os imóveis publicados (sem take/limit) pra
+  // poder filtrar todos. Em produção, pode-se trocar por filtro no banco.
+  const filters = parseFilters(sp);
+  const isSearching = hasFilters(filters);
+
+  const [imoveis, artigos] = await Promise.all([
+    prisma.imovel.findMany({
+      where: { tenantId: tenant.id, publicado: true },
+      orderBy: [{ destaque: 'desc' }, { createdAt: 'desc' }],
+      take: isSearching ? 200 : 30,
+    }),
+    // Pega ate 3 artigos publicados pro teaser na home (skip se isSearching)
+    isSearching
+      ? Promise.resolve([])
+      : prisma.artigoBlog.findMany({
+          where: { tenantId: tenant.id, publicado: true },
+          orderBy: { publicadoEm: 'desc' },
+          take: 3,
+          select: {
+            id: true,
+            slug: true,
+            titulo: true,
+            resumo: true,
+            capaUrl: true,
+            publicadoEm: true,
+          },
+        }),
+  ]);
+
+  const siteAny = tenant.site as any;
+  const rawConfig = (siteAny.config ?? {}) as Record<string, unknown>;
+  const themeId: ThemeId = isThemeId(siteAny.templateId) ? siteAny.templateId : 'brisa';
+
+  const isMultiTheme =
+    rawConfig &&
+    typeof rawConfig === 'object' &&
+    ('brisa' in rawConfig || 'aura' in rawConfig || 'onyx' in rawConfig);
+
+  const config = mergeCustomization(
+    themeId,
+    isMultiTheme ? rawConfig[themeId] : rawConfig,
+  );
+
+  const tenantPublic = buildTenantPublic(tenant);
+  const imoveisPublic = buildImoveisPublic(imoveis);
+
+  if (isSearching) {
+    const filtered = applyFilters(imoveisPublic, filters);
+    if (filtered.length === 0) {
+      // Sem resultados → mostra a home normal com um flash message no topo
+      return (
+        <>
+          <SearchFlashMessage
+            filters={filtersSummary(filters)}
+            cleanHref={`/s/${slug}`}
+          />
+          <ThemeRenderer
+            theme={themeId}
+            config={config}
+            tenant={tenantPublic}
+            imoveis={imoveisPublic}
+            artigos={artigos.map((a) => ({
+              ...a,
+              publicadoEm: a.publicadoEm?.toISOString() ?? null,
+            }))}
+          />
+        </>
+      );
+    }
+    return (
+      <SearchResultsView
+        theme={themeId}
+        config={config}
+        tenant={tenantPublic}
+        results={filtered}
+        filtersLabels={filtersSummary(filters)}
+      />
+    );
+  }
+
+  return (
+    <ThemeRenderer
+      theme={themeId}
+      config={config}
+      tenant={tenantPublic}
+      imoveis={imoveisPublic}
+    />
+  );
+}
+
+export async function generateMetadata({
   params,
 }: {
   params: Promise<{ slug: string }>;
@@ -20,67 +135,23 @@ export default async function SiteHome({
   const { slug } = await params;
   const tenant = await prisma.tenant.findUnique({
     where: { slug },
-    include: { marca: true },
+    include: { site: true, marca: true },
   });
+  if (!tenant) return {};
 
-  if (!tenant) notFound();
+  const siteAny = tenant.site as any;
+  const rawConfig = (siteAny?.config ?? {}) as Record<string, unknown>;
+  const themeId: ThemeId = isThemeId(siteAny?.templateId) ? siteAny.templateId : 'brisa';
+  const isMultiTheme =
+    rawConfig && typeof rawConfig === 'object' && ('brisa' in rawConfig || 'aura' in rawConfig || 'onyx' in rawConfig);
+  const config = mergeCustomization(
+    themeId,
+    isMultiTheme ? rawConfig[themeId] : rawConfig,
+  );
 
-  const imoveis = await prisma.imovel.findMany({
-    where: { tenantId: tenant.id, publicado: true },
-    orderBy: [{ destaque: 'desc' }, { createdAt: 'desc' }],
-    take: 30,
-  });
-
-  const tenantCtx: TenantPublic = {
-    slug: tenant.slug,
-    nome: tenant.marca?.nomeEmpresa || titleCase(slug),
-    marca: tenant.marca
-      ? {
-          nomeEmpresa: tenant.marca.nomeEmpresa,
-          slogan: tenant.marca.slogan,
-          descricao: tenant.marca.descricao,
-          logoUrl: tenant.marca.logoUrl,
-          faviconUrl: tenant.marca.faviconUrl,
-          corPrimaria: tenant.marca.corPrimaria,
-          corSecundaria: tenant.marca.corSecundaria,
-          whatsapp: tenant.marca.whatsapp,
-          email: tenant.marca.email,
-          telefone: tenant.marca.telefone,
-          endereco: tenant.marca.endereco,
-          instagram: tenant.marca.instagram,
-          facebook: tenant.marca.facebook,
-          youtube: tenant.marca.youtube,
-          linkedin: tenant.marca.linkedin,
-          tiktok: tenant.marca.tiktok,
-        }
-      : null,
+  return {
+    title: config.seo.title || tenant.marca?.nomeEmpresa || tenant.slug,
+    description: config.seo.description,
+    icons: tenant.marca?.faviconUrl ? { icon: tenant.marca.faviconUrl } : undefined,
   };
-
-  // Serializa Decimal → number antes de passar pro client component
-  const imoveisData: ImovelPublic[] = imoveis.map((i) => ({
-    id: i.id,
-    codigo: i.codigo,
-    titulo: i.titulo,
-    descricao: i.descricao,
-    tipo: i.tipo as unknown as string,
-    operacao: i.operacao as unknown as string,
-    preco: Number(i.preco),
-    bairro: i.bairro,
-    cidade: i.cidade,
-    estado: i.estado,
-    endereco: i.endereco,
-    quartos: i.quartos,
-    suites: i.suites,
-    banheiros: i.banheiros,
-    vagas: i.vagas,
-    areaM2: i.areaM2 != null ? Number(i.areaM2) : null,
-    areaTotal: i.areaTotal != null ? Number(i.areaTotal) : null,
-    imagens: i.imagens ?? [],
-    capaUrl: i.capaUrl,
-    videoUrl: i.videoUrl,
-    amenidades: i.amenidades ?? [],
-    destaque: i.destaque,
-  }));
-
-  return <TemplateHome tenant={tenantCtx} imoveis={imoveisData} />;
 }

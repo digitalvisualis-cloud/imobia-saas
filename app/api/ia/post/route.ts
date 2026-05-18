@@ -2,7 +2,20 @@ import { NextRequest, NextResponse } from 'next/server';
 import { auth } from '@/auth';
 import OpenAI from 'openai';
 
-const openai = new OpenAI({ apiKey: process.env.OPENAI_API_KEY });
+// Force dynamic — evita o Next coletar page data no build (que tenta
+// avaliar este modulo top-level sem OPENAI_API_KEY disponivel)
+export const runtime = 'nodejs';
+export const dynamic = 'force-dynamic';
+
+// Lazy init: cliente OpenAI so eh criado na primeira request, nao no
+// import do modulo (que rodava em `next build > Collecting page data`)
+let openaiClient: OpenAI | null = null;
+function getOpenAI() {
+  if (!openaiClient) {
+    openaiClient = new OpenAI({ apiKey: process.env.OPENAI_API_KEY });
+  }
+  return openaiClient;
+}
 
 export async function POST(req: NextRequest) {
   const session = await auth();
@@ -37,7 +50,7 @@ ${imovel.cidade}${imovel.bairro ? ' - ' + imovel.bairro : ''}`,
 
   const prompt = prompts[formato] ?? prompts['INSTAGRAM_FEED'];
 
-  const completion = await openai.chat.completions.create({
+  const completion = await getOpenAI().chat.completions.create({
     model: 'gpt-4o-mini',
     messages: [{ role: 'user', content: prompt }],
     max_tokens: 800,

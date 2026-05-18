@@ -11,6 +11,7 @@ export type BrandKit = {
   faviconUrl: string | null;
   corPrimaria: string | null;
   corSecundaria: string | null;
+  corTextoHero: string | null;
   whatsapp: string | null;
   email: string | null;
   telefone: string | null;
@@ -20,6 +21,14 @@ export type BrandKit = {
   youtube: string | null;
   linkedin: string | null;
   tiktok: string | null;
+  /** Marca d'agua nas fotos do site. NAO afeta Criador de Posts. */
+  marcaDaguaAtiva: boolean;
+  /** 'centro' | 'inferior-direita' | 'inferior-esquerda' | 'inferior-centro' | 'tile' */
+  marcaDaguaPosicao: string;
+  /** 10..80 */
+  marcaDaguaOpacidade: number;
+  /** 'pequeno' | 'medio' | 'grande' */
+  marcaDaguaTamanho: string;
 };
 
 export type TenantPublic = {
@@ -36,6 +45,8 @@ export type ImovelPublic = {
   tipo: string;
   operacao: string;
   preco: number;
+  iptuMensal: number | null;
+  condominioMensal: number | null;
   bairro: string | null;
   cidade: string | null;
   estado: string | null;
@@ -81,9 +92,25 @@ export function formatBRL(v: number) {
   });
 }
 
-export function buildWhatsAppLink(num: string, msg = 'Olá! Vim pelo site e gostaria de mais informações.') {
+/**
+ * @deprecated Usar `buildWhatsappLink` de `@/lib/whatsapp-link`. Mantido pra
+ * compatibilidade com templates legados.
+ */
+export function buildWhatsAppLink(
+  num: string,
+  msg = 'Olá! Vim pelo site e gostaria de mais informações.',
+  imovel?: { codigo: string; titulo: string; bairro?: string | null; cidade?: string | null },
+) {
   const cleaned = num.replace(/\D/g, '');
   const withCountry =
     cleaned.length === 11 || cleaned.length === 10 ? `55${cleaned}` : cleaned;
-  return `https://wa.me/${withCountry}?text=${encodeURIComponent(msg)}`;
+
+  // Se imóvel veio, prioriza mensagem com [CÓDIGO] pro agente IA reconhecer
+  let text = msg;
+  if (imovel) {
+    const local = [imovel.bairro, imovel.cidade].filter(Boolean).join(', ');
+    text = `Olá! Tenho interesse no imóvel [${imovel.codigo}] - ${imovel.titulo}${local ? ` (${local})` : ''}. Pode me passar mais informações?`;
+  }
+
+  return `https://wa.me/${withCountry}?text=${encodeURIComponent(text)}`;
 }

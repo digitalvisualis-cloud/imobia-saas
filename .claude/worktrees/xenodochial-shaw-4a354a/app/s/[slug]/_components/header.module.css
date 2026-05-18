@@ -1,0 +1,127 @@
+.header {
+  position: sticky;
+  top: 0;
+  z-index: 50;
+  background: var(--forest);
+  color: hsl(40, 22%, 92%);
+  border-bottom: 1px solid color-mix(in oklab, var(--accent) 20%, transparent);
+  backdrop-filter: blur(8px);
+}
+
+.container {
+  max-width: 1280px;
+  margin: 0 auto;
+  padding: 0 16px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  height: 72px;
+}
+
+.brand {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  color: inherit;
+}
+
+.logo {
+  height: 48px;
+  width: auto;
+  max-width: 180px;
+  object-fit: contain;
+}
+
+.logoFallback {
+  width: 48px;
+  height: 48px;
+  color: var(--accent);
+  flex-shrink: 0;
+}
+
+.brandText {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  line-height: 1;
+}
+
+.brandName {
+  font-family: 'Cormorant Garamond', serif;
+  font-size: 1.4rem;
+  font-weight: 600;
+  color: var(--accent);
+  letter-spacing: 0.01em;
+  line-height: 1.1;
+}
+
+.brandSubtitle {
+  font-family: 'Inter', sans-serif;
+  font-size: 0.62rem;
+  font-weight: 500;
+  letter-spacing: 0.32em;
+  color: hsla(40, 22%, 92%, 0.55);
+  margin-top: 4px;
+}
+
+.nav {
+  display: flex;
+  align-items: center;
+  gap: 28px;
+}
+
+.navLink {
+  font-size: 0.9rem;
+  color: hsla(40, 22%, 92%, 0.85);
+  transition: color 0.2s ease;
+}
+
+.navLink:hover {
+  color: var(--accent);
+}
+
+.menuBtn {
+  display: none;
+  background: none;
+  border: none;
+  color: inherit;
+  font-size: 1.5rem;
+  cursor: pointer;
+  padding: 8px;
+}
+
+.mobileMenu {
+  display: none;
+  flex-direction: column;
+  background: var(--forest);
+  padding: 16px;
+  border-top: 1px solid color-mix(in oklab, var(--accent) 20%, transparent);
+}
+
+.mobileLink {
+  padding: 10px 0;
+  color: hsla(40, 22%, 92%, 0.85);
+  font-size: 0.95rem;
+}
+
+.mobileLink:hover {
+  color: var(--accent);
+}
+
+@media (max-width: 768px) {
+  .container {
+    height: 64px;
+  }
+  .brandName {
+    display: none;
+  }
+  .nav {
+    display: none;
+  }
+  .menuBtn {
+    display: block;
+  }
+  .mobileMenu {
+    display: flex;
+  }
+}

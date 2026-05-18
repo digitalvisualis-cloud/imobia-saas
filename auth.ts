@@ -6,6 +6,10 @@ import { isSuperAdminEmail } from '@/lib/super-admin';
 
 // Config base — Edge compatible (JWT only, no PrismaAdapter)
 export const { handlers, auth, signIn, signOut } = NextAuth({
+  // Atras de reverse proxy (Traefik no EasyPanel) o Auth.js v5 exige
+  // trustHost explicito — senao bloqueia com `UntrustedHost`. Mantemos
+  // hardcoded pra nao depender da env AUTH_TRUST_HOST chegar no build.
+  trustHost: true,
   session: { strategy: 'jwt' },
   pages: {
     signIn: '/login',
@@ -53,11 +57,45 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
     }),
   ],
   callbacks: {
+    // Bloqueia login Google se o email nao tem User cadastrado.
+    // Credentials nao chega aqui (passa por authorize que ja valida).
+    async signIn({ user, account }) {
+      if (account?.provider === 'google') {
+        if (!user.email) return false;
+        const { prisma } = await import('@/lib/prisma');
+        const dbUser = await prisma.user.findUnique({
+          where: { email: user.email },
+          select: { id: true },
+        });
+        if (!dbUser) {
+          // Manda pra /login com erro — usuario precisa se cadastrar primeiro
+          return '/login?error=NaoCadastrado';
+        }
+      }
+      return true;
+    },
     async jwt({ token, user }) {
+      // Login fresh (Credentials retorna user com tenantId, Google nao)
       if (user) {
-        token.tenantId = (user as any).tenantId;
-        token.role = (user as any).role;
         token.id = user.id;
+        if ((user as any).tenantId) {
+          token.tenantId = (user as any).tenantId;
+          token.role = (user as any).role;
+        }
+      }
+      // Se ainda nao temos tenantId (caso Google OAuth), busca no banco
+      // por email. Roda 1x — proximas requests usam o token cacheado.
+      if (!token.tenantId && token.email) {
+        const { prisma } = await import('@/lib/prisma');
+        const dbUser = await prisma.user.findUnique({
+          where: { email: token.email as string },
+          select: { id: true, tenantId: true, role: true },
+        });
+        if (dbUser) {
+          token.id = dbUser.id;
+          token.tenantId = dbUser.tenantId;
+          token.role = dbUser.role;
+        }
       }
       // isSuperAdmin é derivado do email — recalcula a cada refresh do JWT
       token.isSuperAdmin = isSuperAdminEmail(token.email as string | undefined);

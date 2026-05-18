@@ -1,234 +1,503 @@
 'use client';
 
-import { useState, useMemo } from 'react';
+import { useMemo, useRef, useState } from 'react';
+import { useSearchParams } from 'next/navigation';
 import Link from 'next/link';
+import { Sparkles, Download, Save, Loader2, ArrowLeft, Library, Wand2 } from 'lucide-react';
+import { CanvasPreview } from '@/app/_post-templates/lovable/CanvasPreview';
+import { ExportStage, type ExportStageHandle } from '@/app/_post-templates/lovable/ExportStage';
+import { TEMPLATES } from '@/app/_post-templates/lovable/templates/registry';
 import {
-  Sparkles,
-  Search,
-  ImageOff,
-  ArrowRight,
-  Plus,
-  ImageIcon,
-} from 'lucide-react';
-import { Input } from '@/components/ui/input';
-import { Badge } from '@/components/ui/badge';
+  PALETTES,
+  FONT_PAIRS,
+  DEFAULT_PALETTE,
+  DEFAULT_FONT_PAIR,
+} from '@/app/_post-templates/lovable/templates/tokens';
+import { FORMATO_LIST, FORMATOS } from '@/app/_post-templates/lovable/lib/formats';
+import { exportSlides, nodeToThumbnail } from '@/app/_post-templates/lovable/lib/export';
+import type {
+  Customizacao,
+  FormatoPost,
+  ImovelData,
+  MarcaData,
+} from '@/app/_post-templates/lovable/lib/types';
+import { PageHeader } from '@/components/ui/page-header';
 import { Button } from '@/components/ui/button';
+import { toast } from '@/lib/toast';
+import { cn } from '@/lib/utils';
 
-type ImovelLite = {
-  id: string;
-  codigo: string;
-  titulo: string;
-  capaUrl: string | null;
-  cidade: string;
-  bairro: string | null;
-  tipo: string;
-  operacao: string;
-  preco: number;
-  publicado: boolean;
-  postsCount: number;
-};
-
-const TIPO_LABELS: Record<string, string> = {
-  CASA: 'Casa',
-  APARTAMENTO: 'Apartamento',
-  COBERTURA: 'Cobertura',
-  STUDIO: 'Studio',
-  TERRENO: 'Terreno',
-  SALA_COMERCIAL: 'Sala Comercial',
-  LOJA: 'Loja',
-  GALPAO: 'Galpão',
-  CHACARA: 'Chácara',
-  SITIO: 'Sítio',
-  OUTRO: 'Outro',
-};
-
-const OP_LABELS: Record<string, string> = {
-  VENDA: 'Venda',
-  ALUGUEL: 'Aluguel',
-  TEMPORADA: 'Temporada',
-};
-
-function formatBRL(v: number) {
-  return v.toLocaleString('pt-BR', {
-    style: 'currency',
-    currency: 'BRL',
-    minimumFractionDigits: 0,
-    maximumFractionDigits: 0,
-  });
+interface Props {
+  imoveis: ImovelData[];
+  marca: MarcaData;
 }
 
-export default function ConteudoClient({ imoveis }: { imoveis: ImovelLite[] }) {
-  const [search, setSearch] = useState('');
+export default function ConteudoClient({ imoveis, marca }: Props) {
+  const sp = useSearchParams();
+  const initialImovel = sp.get('imovel');
 
-  const filtered = useMemo(() => {
-    const q = search.trim().toLowerCase();
-    if (!q) return imoveis;
-    return imoveis.filter((i) =>
-      `${i.titulo} ${i.codigo} ${i.cidade} ${i.bairro ?? ''}`
-        .toLowerCase()
-        .includes(q),
+  const [imovelId, setImovelId] = useState<string | null>(
+    initialImovel ?? imoveis[0]?.id ?? null,
+  );
+  const [templateId, setTemplateId] = useState(TEMPLATES[0].id);
+  const [formatoId, setFormatoId] = useState<FormatoPost>('SQUARE');
+  const [paletteId, setPaletteId] = useState(DEFAULT_PALETTE.id);
+  const [fontPairId, setFontPairId] = useState(DEFAULT_FONT_PAIR.id);
+  const [operacaoOverride, setOperacaoOverride] = useState<'VENDA' | 'ALUGUEL' | null>(null);
+  const [showTitle, setShowTitle] = useState(true);
+  const [showPrice, setShowPrice] = useState(true);
+  const [showSpecs, setShowSpecs] = useState(true);
+  const [showCTA, setShowCTA] = useState(true);
+  const [ctaText, setCtaText] = useState('Fale conosco');
+  const [customMsg, setCustomMsg] = useState('');
+  const [useCustomMsg, setUseCustomMsg] = useState(false);
+  const [exporting, setExporting] = useState(false);
+  const [saving, setSaving] = useState(false);
+  const stageRef = useRef<ExportStageHandle>(null);
+
+  const palette = PALETTES.find((p) => p.id === paletteId) ?? DEFAULT_PALETTE;
+  const formato = FORMATOS[formatoId];
+  const template = TEMPLATES.find((t) => t.id === templateId) ?? TEMPLATES[0];
+  const imovelBase = imoveis.find((i) => i.id === imovelId) ?? imoveis[0] ?? null;
+  const imovel: ImovelData | null = imovelBase
+    ? { ...imovelBase, operacao: operacaoOverride ?? imovelBase.operacao }
+    : null;
+
+  const customizacao: Customizacao = useMemo(
+    () => ({
+      paletteId,
+      fontPairId,
+      primary: palette.primary,
+      secondary: palette.secondary,
+      surface: palette.surface,
+      ink: palette.ink,
+      ctaText: ctaText.trim() || 'Fale conosco',
+      headlineOverride: useCustomMsg && customMsg.trim() ? customMsg.trim() : undefined,
+      showLogo: true,
+      showTitle,
+      showPrice,
+      showSpecs,
+      showCTA,
+      showContact: false,
+    }),
+    [
+      paletteId,
+      fontPairId,
+      palette,
+      ctaText,
+      useCustomMsg,
+      customMsg,
+      showTitle,
+      showPrice,
+      showSpecs,
+      showCTA,
+    ],
+  );
+
+  async function handleExport() {
+    const nodes = stageRef.current?.getSlideNodes() ?? [];
+    if (!nodes.length) return;
+    setExporting(true);
+    try {
+      const base = `${template.id}-${formato.id.toLowerCase()}`;
+      await exportSlides(nodes, base);
+      toast.success(`Exportado ${nodes.length === 1 ? 'PNG' : `${nodes.length} PNGs`}`);
+    } catch (e) {
+      toast.error('Erro ao exportar', { description: (e as Error).message });
+    } finally {
+      setExporting(false);
+    }
+  }
+
+  async function handleSaveLibrary() {
+    const nodes = stageRef.current?.getSlideNodes() ?? [];
+    if (!nodes.length || !imovel) return;
+    setSaving(true);
+    try {
+      // 1. Gera thumb (slide 0, ~360px largura → PNG ~50-100KB)
+      const thumbDataUrl = await nodeToThumbnail(nodes[0], 360);
+
+      // 2. Upload pro Supabase Storage
+      const uploadRes = await fetch('/api/posts-lib/upload-thumb', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ dataUrl: thumbDataUrl }),
+      });
+      const upload = await uploadRes.json();
+      if (!uploadRes.ok) throw new Error(upload?.error || 'Falha no upload do thumb');
+
+      // 3. Persiste metadata no banco
+      const local = [imovel.bairro, imovel.cidade].filter(Boolean).join(' · ');
+      const saveRes = await fetch('/api/posts-lib', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          imovelId: imovel.id,
+          imovelTitulo: imovel.titulo,
+          imovelLocal: local,
+          templateId: template.id,
+          templateNome: template.nome,
+          formato: formato.id,
+          formatoLabel: formato.label,
+          thumbUrl: upload.url,
+          thumbPath: upload.path,
+          copy: useCustomMsg && customMsg.trim() ? customMsg.trim() : null,
+          customizacao: {
+            paletteId,
+            fontPairId,
+            operacao: imovel.operacao,
+            showTitle,
+            showPrice,
+            showSpecs,
+            showCTA,
+            ctaText,
+            customMsg,
+            useCustomMsg,
+          },
+        }),
+      });
+      const saved = await saveRes.json();
+      if (!saveRes.ok) throw new Error(saved?.error || 'Falha ao salvar');
+
+      toast.success('Salvo na biblioteca ✓');
+    } catch (e) {
+      toast.error('Erro ao salvar', { description: (e as Error).message });
+    } finally {
+      setSaving(false);
+    }
+  }
+
+  const [generatingCopy, setGeneratingCopy] = useState(false);
+  async function handleGenerateCopy() {
+    if (!imovel) return;
+    setGeneratingCopy(true);
+    try {
+      const res = await fetch('/api/posts/legenda', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ imovelId: imovel.id }),
+      });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data?.error || 'Falha na IA');
+      setCustomMsg(data.legenda ?? '');
+      setUseCustomMsg(false); // copy IA vai pra textarea como sugestao, nao substitui headline
+      toast.success('Copy gerada ✨');
+    } catch (e) {
+      toast.error('Erro ao gerar copy', { description: (e as Error).message });
+    } finally {
+      setGeneratingCopy(false);
+    }
+  }
+
+  if (!imovel) {
+    return (
+      <div className="space-y-6">
+        <PageHeader
+          kicker="Conteúdo"
+          icon={Sparkles}
+          title="Criador de Posts"
+          description="Você precisa ter pelo menos 1 imóvel cadastrado e publicado pra gerar posts."
+        />
+        <div className="rounded-lg border border-amber-500/40 bg-amber-500/10 px-4 py-3 text-sm text-amber-900 dark:text-amber-200">
+          Nenhum imóvel disponível.{' '}
+          <Link href="/imoveis/novo" className="underline font-medium">
+            Cadastre o primeiro
+          </Link>{' '}
+          ou marque como publicado em <Link href="/imoveis" className="underline">/imoveis</Link>.
+        </div>
+      </div>
     );
-  }, [imoveis, search]);
-
-  const totalPosts = imoveis.reduce((acc, i) => acc + i.postsCount, 0);
+  }
 
   return (
-    <div className="space-y-6">
-      {/* Header */}
-      <div className="flex flex-wrap items-center justify-between gap-3">
-        <div>
-          <h1 className="font-display text-3xl font-bold text-foreground">
-            Conteúdo
-          </h1>
-          <p className="text-sm text-muted-foreground">
-            Gere posts visuais a partir dos seus imóveis. Cores e logo da sua
-            marca aplicados automaticamente.
-          </p>
-        </div>
-        <Button asChild variant="outline">
-          <Link href="/imoveis/novo">
-            <Plus className="h-4 w-4 mr-2" />
-            Cadastrar imóvel
-          </Link>
-        </Button>
-      </div>
-
-      {/* KPIs simples */}
-      <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
-        <KpiCard label="Imóveis cadastrados" value={String(imoveis.length)} />
-        <KpiCard label="Posts gerados" value={String(totalPosts)} />
-        <KpiCard
-          label="Imóveis no ar"
-          value={String(imoveis.filter((i) => i.publicado).length)}
-        />
-      </div>
-
-      {/* Como funciona */}
-      <div className="rounded-lg border border-primary/30 bg-primary/5 p-5">
-        <div className="flex items-start gap-4 flex-wrap">
-          <div className="h-10 w-10 rounded-md bg-primary/15 grid place-items-center text-primary shrink-0">
-            <Sparkles className="h-5 w-5" />
+    <div className="space-y-4">
+      <PageHeader
+        kicker="Conteúdo"
+        icon={Sparkles}
+        title="Criador de Posts"
+        description={`Template ${template.nome} · ${formato.label} ${formato.width}×${formato.height}`}
+        actions={
+          <div className="flex items-center gap-2">
+            <Link
+              href="/conteudo/legacy"
+              className="text-xs text-muted-foreground hover:text-foreground hover:underline"
+            >
+              <ArrowLeft className="h-3 w-3 inline mr-1" />
+              Editor antigo
+            </Link>
           </div>
-          <div className="flex-1 min-w-[260px]">
-            <p className="font-display text-lg font-semibold text-foreground">
-              Como funciona
-            </p>
-            <p className="text-sm text-muted-foreground">
-              Escolha um imóvel → escolha o formato (post quadrado, story,
-              Facebook) → escolha um dos 3 templates visuais → o post é gerado
-              instantaneamente com sua marca aplicada. Baixe em PNG e copie a
-              legenda pronta.
-            </p>
-          </div>
-        </div>
-      </div>
+        }
+      />
 
-      {/* Busca */}
-      <div className="relative">
-        <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-        <Input
-          placeholder="Buscar imóvel por título, código, cidade ou bairro..."
-          value={search}
-          onChange={(e) => setSearch(e.target.value)}
-          className="pl-10"
-        />
-      </div>
-
-      {/* Grid de imóveis */}
-      {filtered.length === 0 ? (
-        <div className="text-center py-16 bg-card border border-border rounded-lg">
-          <ImageIcon className="h-10 w-10 text-muted-foreground/40 mx-auto mb-3" />
-          <p className="text-muted-foreground mb-1">
-            {imoveis.length === 0
-              ? 'Você ainda não tem imóveis cadastrados.'
-              : 'Nenhum imóvel encontrado pra esse filtro.'}
-          </p>
-          {imoveis.length === 0 && (
-            <Button asChild className="mt-4">
-              <Link href="/imoveis/novo">
-                <Plus className="h-4 w-4 mr-2" />
-                Cadastrar primeiro imóvel
-              </Link>
-            </Button>
-          )}
-        </div>
-      ) : (
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5">
-          {filtered.map((i) => (
-            <ImovelCard key={i.id} imovel={i} />
+      <div className="grid gap-4 md:grid-cols-[240px_1fr_280px]">
+        {/* ESQUERDA — templates */}
+        <aside className="rounded-lg border border-border bg-card p-3 space-y-1.5 max-h-[calc(100vh-180px)] overflow-y-auto">
+          <h4 className="text-[11px] font-semibold uppercase tracking-wider text-muted-foreground px-1 pb-1.5">
+            Templates
+          </h4>
+          {TEMPLATES.map((t) => (
+            <button
+              key={t.id}
+              onClick={() => setTemplateId(t.id)}
+              className={cn(
+                'w-full rounded-md border px-3 py-2 text-left text-xs transition-colors',
+                templateId === t.id
+                  ? 'border-primary bg-primary text-primary-foreground'
+                  : 'border-border hover:border-primary/40 hover:bg-muted/40',
+              )}
+            >
+              <div className="font-semibold">{t.nome}</div>
+              <div className={cn('text-[11px]', templateId === t.id ? 'opacity-80' : 'opacity-60')}>
+                {t.vibe}
+              </div>
+            </button>
           ))}
-        </div>
-      )}
-    </div>
-  );
-}
+        </aside>
 
-function ImovelCard({ imovel }: { imovel: ImovelLite }) {
-  return (
-    <Link
-      href={`/conteudo/imovel/${imovel.id}`}
-      className="group rounded-lg border border-border bg-card overflow-hidden hover:shadow-md hover:border-primary/40 transition-all"
-    >
-      <div className="aspect-[4/3] bg-muted relative">
-        {imovel.capaUrl ? (
-          /* eslint-disable-next-line @next/next/no-img-element */
-          <img
-            src={imovel.capaUrl}
-            alt=""
-            className="w-full h-full object-cover"
+        {/* CENTRO — canvas + botões */}
+        <div className="rounded-lg border border-border bg-card p-6 flex flex-col items-center gap-4">
+          <CanvasPreview
+            template={template}
+            formato={formato}
+            imovel={imovel}
+            marca={marca}
+            customizacao={customizacao}
           />
-        ) : (
-          <div className="w-full h-full grid place-items-center">
-            <ImageOff className="h-10 w-10 text-muted-foreground/40" />
+
+          <div className="flex flex-wrap items-center justify-center gap-2">
+            <Button onClick={handleExport} disabled={exporting}>
+              {exporting ? (
+                <>
+                  <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                  Exportando…
+                </>
+              ) : (
+                <>
+                  <Download className="h-4 w-4 mr-2" />
+                  {formato.slides > 1 ? `Baixar carrossel (${formato.slides})` : 'Baixar PNG'}
+                </>
+              )}
+            </Button>
+            <Button variant="outline" onClick={handleSaveLibrary} disabled={saving}>
+              {saving ? (
+                <>
+                  <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                  Salvando…
+                </>
+              ) : (
+                <>
+                  <Save className="h-4 w-4 mr-2" />
+                  Salvar na biblioteca
+                </>
+              )}
+            </Button>
+            <Link href="/biblioteca" passHref legacyBehavior>
+              <Button variant="ghost" size="sm" asChild>
+                <a>
+                  <Library className="h-4 w-4 mr-2" />
+                  Biblioteca
+                </a>
+              </Button>
+            </Link>
           </div>
-        )}
-        {imovel.postsCount > 0 && (
-          <div className="absolute top-2 right-2 inline-flex items-center gap-1 px-2 py-1 rounded-full text-[10px] font-semibold uppercase tracking-wider bg-primary text-primary-foreground shadow">
-            <Sparkles className="h-2.5 w-2.5" />
-            {imovel.postsCount} {imovel.postsCount === 1 ? 'post' : 'posts'}
-          </div>
-        )}
-      </div>
-      <div className="p-4">
-        <div className="flex items-center gap-2 mb-2 flex-wrap">
-          <Badge variant="outline" className="text-[10px] font-normal">
-            {TIPO_LABELS[imovel.tipo] ?? imovel.tipo}
-          </Badge>
-          <Badge variant="outline" className="text-[10px] font-normal">
-            {OP_LABELS[imovel.operacao] ?? imovel.operacao}
-          </Badge>
-          <span className="text-[10px] font-mono text-muted-foreground ml-auto">
-            {imovel.codigo}
-          </span>
+          <p className="text-[11px] text-muted-foreground text-center">
+            {formato.slides > 1
+              ? 'Slide 1 = template completo · slides 2-4 = fotos cadastradas'
+              : `1 PNG ${formato.width}×${formato.height}`}
+          </p>
         </div>
-        <h3 className="font-semibold text-sm text-foreground truncate">
-          {imovel.titulo}
-        </h3>
-        <p className="text-xs text-muted-foreground truncate mb-2">
-          {[imovel.bairro, imovel.cidade].filter(Boolean).join(', ')}
-        </p>
-        <div className="flex items-center justify-between mt-3">
-          <span className="font-display text-lg font-bold text-primary">
-            {formatBRL(imovel.preco)}
-          </span>
-          <span className="inline-flex items-center gap-1 text-xs text-primary font-medium opacity-0 group-hover:opacity-100 transition-opacity">
-            Gerar posts <ArrowRight className="h-3 w-3" />
-          </span>
-        </div>
+
+        {/* DIREITA — controles */}
+        <aside className="rounded-lg border border-border bg-card p-4 space-y-5 max-h-[calc(100vh-180px)] overflow-y-auto">
+          <Section title="Imóvel">
+            <select
+              value={imovel.id}
+              onChange={(e) => setImovelId(e.target.value)}
+              className="w-full rounded-md border border-input bg-background px-2 py-2 text-xs focus:outline-none focus:ring-2 focus:ring-ring"
+            >
+              {imoveis.map((i) => (
+                <option key={i.id} value={i.id}>
+                  {i.codigo} · {i.titulo}
+                  {i.bairro ? ` · ${i.bairro}` : ''}
+                </option>
+              ))}
+            </select>
+          </Section>
+
+          <Section title="Formato">
+            <div className="grid grid-cols-2 gap-2">
+              {FORMATO_LIST.map((f) => (
+                <button
+                  key={f.id}
+                  onClick={() => setFormatoId(f.id)}
+                  className={cn(
+                    'rounded-md border px-2 py-1.5 text-left text-[11px]',
+                    formatoId === f.id
+                      ? 'border-primary bg-primary text-primary-foreground'
+                      : 'border-border hover:border-primary/40',
+                  )}
+                >
+                  <div className="font-semibold">{f.label}</div>
+                  <div className="opacity-70 font-mono">
+                    {f.width}×{f.height}
+                  </div>
+                </button>
+              ))}
+            </div>
+          </Section>
+
+          <Section title="Paleta">
+            <div className="grid grid-cols-5 gap-1.5">
+              {PALETTES.map((p) => (
+                <button
+                  key={p.id}
+                  onClick={() => setPaletteId(p.id)}
+                  title={p.label}
+                  className={cn(
+                    'h-10 rounded-md border-2 transition-all',
+                    paletteId === p.id
+                      ? 'border-foreground scale-105'
+                      : 'border-transparent hover:border-border',
+                  )}
+                  style={{
+                    background: `linear-gradient(135deg, ${p.primary} 0 50%, ${p.secondary} 50% 100%)`,
+                  }}
+                />
+              ))}
+            </div>
+            <p className="mt-1.5 text-[10px] text-muted-foreground">
+              Selecionada: {palette.label}
+            </p>
+          </Section>
+
+          <Section title="Fonte">
+            <select
+              value={fontPairId}
+              onChange={(e) => setFontPairId(e.target.value)}
+              className="w-full rounded-md border border-input bg-background px-2 py-2 text-xs focus:outline-none focus:ring-2 focus:ring-ring"
+            >
+              {FONT_PAIRS.map((fp) => (
+                <option key={fp.id} value={fp.id}>
+                  {fp.label}
+                </option>
+              ))}
+            </select>
+          </Section>
+
+          <Section title="Operação">
+            <div className="grid grid-cols-2 gap-2">
+              {(['VENDA', 'ALUGUEL'] as const).map((op) => (
+                <button
+                  key={op}
+                  onClick={() => setOperacaoOverride(op)}
+                  className={cn(
+                    'rounded-md border px-2 py-1.5 text-[11px] font-semibold',
+                    imovel.operacao === op
+                      ? 'border-primary bg-primary text-primary-foreground'
+                      : 'border-border hover:border-primary/40',
+                  )}
+                >
+                  {op === 'VENDA' ? 'À venda' : 'Aluguel'}
+                </button>
+              ))}
+            </div>
+            <p className="mt-1 text-[10px] text-muted-foreground">
+              Default: {imovelBase?.operacao}
+            </p>
+          </Section>
+
+          <Section title="Elementos">
+            <Toggle label="Título" value={showTitle} onChange={setShowTitle} />
+            <Toggle label="Preço" value={showPrice} onChange={setShowPrice} />
+            <Toggle label="Specs" value={showSpecs} onChange={setShowSpecs} />
+            <Toggle label="CTA" value={showCTA} onChange={setShowCTA} />
+          </Section>
+
+          {showCTA && (
+            <Section title="Texto do CTA">
+              <input
+                value={ctaText}
+                onChange={(e) => setCtaText(e.target.value)}
+                placeholder="Fale conosco"
+                className="w-full rounded-md border border-input bg-background px-2 py-1.5 text-xs focus:outline-none focus:ring-2 focus:ring-ring"
+              />
+            </Section>
+          )}
+
+          <Section title="Mensagem / legenda IA">
+            <textarea
+              value={customMsg}
+              onChange={(e) => setCustomMsg(e.target.value)}
+              placeholder="Escreva ou gere com IA…"
+              rows={5}
+              className="w-full resize-y rounded-md border border-input bg-background p-2 text-xs focus:outline-none focus:ring-2 focus:ring-ring"
+            />
+            <div className="mt-1.5 flex items-center justify-between gap-2">
+              <Toggle label="Usar como headline" value={useCustomMsg} onChange={setUseCustomMsg} />
+              <button
+                type="button"
+                onClick={handleGenerateCopy}
+                disabled={generatingCopy}
+                className="inline-flex items-center gap-1 rounded-md border border-primary/40 bg-primary/5 px-2 py-1 text-[11px] font-medium text-primary hover:bg-primary/10 disabled:opacity-50"
+              >
+                {generatingCopy ? (
+                  <>
+                    <Loader2 className="h-3 w-3 animate-spin" />
+                    Gerando…
+                  </>
+                ) : (
+                  <>
+                    <Wand2 className="h-3 w-3" />
+                    Gerar com IA
+                  </>
+                )}
+              </button>
+            </div>
+          </Section>
+        </aside>
       </div>
-    </Link>
+
+      {/* ExportStage off-screen pra render nativo 1080px */}
+      <ExportStage
+        ref={stageRef}
+        template={template}
+        formato={formato}
+        imovel={imovel}
+        marca={marca}
+        customizacao={customizacao}
+      />
+    </div>
   );
 }
 
-function KpiCard({ label, value }: { label: string; value: string }) {
+function Section({ title, children }: { title: string; children: React.ReactNode }) {
   return (
-    <div className="rounded-lg border border-border bg-card p-4">
-      <p className="text-[10px] uppercase tracking-wider text-muted-foreground">
-        {label}
-      </p>
-      <p className="mt-1 font-display text-2xl font-semibold text-foreground">
-        {value}
-      </p>
+    <div>
+      <h4 className="text-[11px] font-semibold uppercase tracking-wider text-muted-foreground mb-2">
+        {title}
+      </h4>
+      {children}
     </div>
+  );
+}
+
+function Toggle({
+  label,
+  value,
+  onChange,
+}: {
+  label: string;
+  value: boolean;
+  onChange: (v: boolean) => void;
+}) {
+  return (
+    <label className="flex cursor-pointer items-center justify-between py-1 text-xs">
+      <span>{label}</span>
+      <input
+        type="checkbox"
+        checked={value}
+        onChange={(e) => onChange(e.target.checked)}
+        className="cursor-pointer"
+      />
+    </label>
   );
 }

@@ -12,12 +12,16 @@ import {
   Check,
   Loader2,
   ImageOff,
+  KeyRound,
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Input } from '@/components/ui/input';
 import { NativeSelect } from '@/components/ui/select';
 import { Switch } from '@/components/ui/switch';
+import { EmptyState } from '@/components/ui/empty-state';
+import { PageHeader } from '@/components/ui/page-header';
+import { toast } from '@/lib/toast';
 import {
   TIPO_LABELS,
   FINALIDADE_LABELS,
@@ -84,7 +88,7 @@ export default function ImoveisClient({ imoveis }: { imoveis: Imovel[] }) {
       startTransition(() => router.refresh());
     } catch (e) {
       console.error(e);
-      alert('Erro ao atualizar imóvel');
+      toast.error('Erro ao atualizar imóvel', { description: 'Tente novamente.' });
     } finally {
       setPendingId(null);
     }
@@ -99,7 +103,7 @@ export default function ImoveisClient({ imoveis }: { imoveis: Imovel[] }) {
       startTransition(() => router.refresh());
     } catch (e) {
       console.error(e);
-      alert('Erro ao excluir imóvel');
+      toast.error('Erro ao excluir imóvel');
     } finally {
       setPendingId(null);
     }
@@ -109,17 +113,19 @@ export default function ImoveisClient({ imoveis }: { imoveis: Imovel[] }) {
 
   return (
     <div className="space-y-6 fade-in">
-      {/* Header */}
-      <div className="flex items-center justify-between">
-        <h1 className="font-display text-3xl font-bold text-foreground">
-          Imóveis
-        </h1>
-        <Button asChild>
-          <Link href="/imoveis/novo">
-            <Plus className="h-4 w-4 mr-2" /> Adicionar imóvel
-          </Link>
-        </Button>
-      </div>
+      <PageHeader
+        kicker="Portfólio"
+        icon={KeyRound}
+        title="Imóveis"
+        description={`${imoveis.length} ${imoveis.length === 1 ? 'imóvel cadastrado' : 'imóveis cadastrados'}`}
+        actions={
+          <Button asChild>
+            <Link href="/imoveis/novo">
+              <Plus className="h-4 w-4 mr-2" /> Adicionar imóvel
+            </Link>
+          </Button>
+        }
+      />
 
       {/* Filters */}
       <div className="flex flex-col md:flex-row gap-3">
@@ -160,20 +166,23 @@ export default function ImoveisClient({ imoveis }: { imoveis: Imovel[] }) {
 
       {/* List */}
       {filtered.length === 0 ? (
-        <div className="text-center py-16 bg-card border border-border rounded-lg">
-          <p className="text-muted-foreground mb-4">
-            {imoveis.length === 0
-              ? 'Você ainda não tem imóveis cadastrados.'
-              : 'Nenhum imóvel encontrado para esse filtro.'}
-          </p>
-          {imoveis.length === 0 && (
-            <Button asChild>
-              <Link href="/imoveis/novo">
-                <Plus className="h-4 w-4 mr-2" /> Cadastrar primeiro imóvel
-              </Link>
-            </Button>
-          )}
-        </div>
+        <EmptyState
+          icon={ImageOff}
+          title={
+            imoveis.length === 0
+              ? 'Você ainda não tem imóveis cadastrados'
+              : 'Nenhum imóvel encontrado para esse filtro'
+          }
+          action={
+            imoveis.length === 0
+              ? {
+                  label: 'Cadastrar primeiro imóvel',
+                  href: '/imoveis/novo',
+                  icon: Plus,
+                }
+              : undefined
+          }
+        />
       ) : (
         <div className="space-y-3">
           {filtered.map((im) => {

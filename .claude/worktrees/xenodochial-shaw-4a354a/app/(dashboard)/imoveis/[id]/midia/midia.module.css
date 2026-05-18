@@ -1,0 +1,204 @@
+.page {
+  padding: 24px;
+  max-width: 1200px;
+  margin: 0 auto;
+}
+
+.header {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  margin-bottom: 32px;
+}
+
+.backBtn {
+  background: var(--bg-secondary);
+  border: 1px solid var(--border);
+  padding: 8px 16px;
+  border-radius: var(--radius);
+  color: var(--text-primary);
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.backBtn:hover {
+  background: var(--bg-hover);
+  border-color: var(--accent);
+}
+
+.title {
+  font-size: 1.5rem;
+  font-weight: 700;
+}
+
+.container {
+  display: grid;
+  grid-template-columns: 320px 1fr;
+  gap: 24px;
+  align-items: start;
+}
+
+.imovelCard {
+  background: var(--bg-card);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-lg);
+  overflow: hidden;
+  position: sticky;
+  top: 24px;
+}
+
+.capa {
+  width: 100%;
+  height: 200px;
+  object-fit: cover;
+}
+
+.info {
+  padding: 16px;
+}
+
+.badge {
+  background: var(--bg-hover);
+  padding: 4px 8px;
+  border-radius: 4px;
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--text-muted);
+  display: inline-block;
+  margin-bottom: 8px;
+}
+
+.imovelTitle {
+  font-size: 1.1rem;
+  font-weight: 600;
+  margin-bottom: 4px;
+}
+
+.imovelLoc {
+  color: var(--text-muted);
+  font-size: 0.9rem;
+  margin-bottom: 12px;
+}
+
+.imovelPrice {
+  font-size: 1.2rem;
+  font-weight: 700;
+  color: var(--accent-light);
+}
+
+.mainArea {
+  display: grid;
+  grid-template-columns: 280px 1fr;
+  gap: 24px;
+}
+
+.sectionTitle {
+  font-size: 1.1rem;
+  font-weight: 600;
+  margin-bottom: 16px;
+}
+
+.formatos {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.fmtBtn {
+  background: var(--bg-secondary);
+  border: 1px solid var(--border);
+  padding: 16px;
+  border-radius: var(--radius);
+  text-align: left;
+  font-weight: 500;
+  color: var(--text-primary);
+  cursor: pointer;
+  transition: all 0.2s;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.fmtBtn:hover {
+  border-color: var(--accent);
+}
+
+.fmtActive {
+  background: var(--accent-glow);
+  border-color: var(--accent);
+}
+
+.gerarBtn {
+  font-size: 1.05rem;
+  padding: 14px;
+}
+
+.previewBox {
+  background: var(--bg-card);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-lg);
+  min-height: 400px;
+  padding: 24px;
+  display: flex;
+  flex-direction: column;
+}
+
+.textArea {
+  flex: 1;
+  width: 100%;
+  background: transparent;
+  border: none;
+  color: var(--text-primary);
+  font-size: 1rem;
+  line-height: 1.6;
+  resize: none;
+  outline: none;
+}
+
+.copyBtn {
+  margin-top: 16px;
+  background: var(--bg-hover);
+  border: 1px solid var(--border);
+  padding: 12px;
+  border-radius: var(--radius);
+  font-weight: 600;
+  color: var(--text-primary);
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.copyBtn:hover {
+  background: var(--bg-secondary);
+  border-color: var(--accent);
+}
+
+.emptyState {
+  color: var(--text-muted);
+  text-align: center;
+  margin: auto;
+  max-width: 300px;
+  line-height: 1.5;
+}
+
+.loadingPulse {
+  color: var(--accent-light);
+  text-align: center;
+  margin: auto;
+  font-weight: 600;
+  animation: pulse 1.5s infinite ease-in-out;
+}
+
+@keyframes pulse {
+  0% { opacity: 0.5; }
+  50% { opacity: 1; }
+  100% { opacity: 0.5; }
+}
+
+@media (max-width: 900px) {
+  .container { grid-template-columns: 1fr; }
+  .imovelCard { position: static; display: flex; align-items: center; }
+  .capa { width: 120px; height: 120px; }
+  .mainArea { grid-template-columns: 1fr; }
+  .formatos { flex-direction: row; flex-wrap: wrap; }
+}

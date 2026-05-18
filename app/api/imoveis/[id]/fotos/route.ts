@@ -290,12 +290,21 @@ export async function PATCH(
         { status: 400 },
       );
     }
-    // valida que são exatamente as mesmas URLs (sem invenção/remoção)
+    // Dedupe silencioso: o array pode vir com duplicatas (frontend
+    // buggado ou usuario arrastando 2x). Mantemos a ordem da 1a
+    // ocorrencia. Isso impede a duplicacao de capa no site publico.
+    const seen = new Set<string>();
+    const limpas = (body.imagens as string[]).filter((u) => {
+      if (typeof u !== "string" || !u || seen.has(u)) return false;
+      seen.add(u);
+      return true;
+    });
+
+    // valida que são exatamente as mesmas URLs do banco (sem invenção)
     const set = new Set(imovel.imagens ?? []);
-    const novaSet = new Set(body.imagens as string[]);
     if (
-      set.size !== novaSet.size ||
-      [...set].some((u) => !novaSet.has(u))
+      set.size !== seen.size ||
+      [...set].some((u) => !seen.has(u))
     ) {
       return NextResponse.json(
         { error: "Reorder não pode adicionar/remover fotos — use POST/DELETE" },
@@ -304,7 +313,7 @@ export async function PATCH(
     }
     const updated = await prisma.imovel.update({
       where: { id },
-      data: { imagens: body.imagens },
+      data: { imagens: limpas },
       select: { imagens: true, capaUrl: true },
     });
     return NextResponse.json({ ok: true, ...updated });

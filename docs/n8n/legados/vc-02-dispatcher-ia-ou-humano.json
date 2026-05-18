@@ -1,0 +1,340 @@
+{
+  "updatedAt": "2026-04-07T01:57:48.998Z",
+  "createdAt": "2026-04-07T01:57:48.998Z",
+  "id": "9u01B4tJ9W8klhfo",
+  "name": "VC-02 | Dispatcher — IA ou Humano",
+  "description": null,
+  "active": false,
+  "isArchived": false,
+  "nodes": [
+    {
+      "id": "wh1",
+      "name": "Webhook Dispatcher",
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 2,
+      "position": [
+        240,
+        300
+      ],
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "vc-dispatcher",
+        "responseMode": "responseNode",
+        "options": {}
+      },
+      "webhookId": "4f041bbe-16b5-4ba8-bbfd-7326fc3fd561"
+    },
+    {
+      "id": "set1",
+      "name": "Extrair Contexto",
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3,
+      "position": [
+        460,
+        300
+      ],
+      "parameters": {
+        "mode": "manual",
+        "assignments": {
+          "assignments": [
+            {
+              "id": "b1",
+              "name": "phone",
+              "value": "={{ $json.body.phone }}",
+              "type": "string"
+            },
+            {
+              "id": "b2",
+              "name": "message",
+              "value": "={{ $json.body.message }}",
+              "type": "string"
+            },
+            {
+              "id": "b3",
+              "name": "org_id",
+              "value": "={{ $json.body.org_id }}",
+              "type": "string"
+            },
+            {
+              "id": "b4",
+              "name": "instance_id",
+              "value": "={{ $json.body.instance_id }}",
+              "type": "string"
+            },
+            {
+              "id": "b5",
+              "name": "pushName",
+              "value": "={{ $json.body.pushName }}",
+              "type": "string"
+            }
+          ]
+        },
+        "options": {}
+      }
+    },
+    {
+      "id": "http1",
+      "name": "Buscar Status Conversa (Supabase)",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        680,
+        300
+      ],
+      "parameters": {
+        "method": "GET",
+        "url": "={{ $env.SUPABASE_URL }}/rest/v1/messaging_conversations?phone=eq.{{ $json.phone }}&org_id=eq.{{ $json.org_id }}&select=id,assigned_to,ai_active,status&limit=1",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "apikey",
+              "value": "={{ $env.SUPABASE_ANON_KEY }}"
+            },
+            {
+              "name": "Authorization",
+              "value": "=Bearer {{ $env.SUPABASE_ANON_KEY }}"
+            }
+          ]
+        },
+        "options": {}
+      }
+    },
+    {
+      "id": "if1",
+      "name": "Conversa com Humano?",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2,
+      "position": [
+        900,
+        300
+      ],
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict"
+          },
+          "conditions": [
+            {
+              "id": "c1",
+              "leftValue": "={{ $json[0].ai_active }}",
+              "rightValue": false,
+              "operator": {
+                "type": "boolean",
+                "operation": "equal"
+              }
+            }
+          ],
+          "combinator": "and"
+        }
+      }
+    },
+    {
+      "id": "http2",
+      "name": "Enviar para Chatwoot",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        1120,
+        180
+      ],
+      "parameters": {
+        "method": "POST",
+        "url": "={{ $env.CHATWOOT_URL }}/api/v1/accounts/{{ $env.CHATWOOT_ACCOUNT_ID }}/conversations/{{ $('Buscar Status Conversa (Supabase)').item.json[0].id }}/messages",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "api_access_token",
+              "value": "={{ $env.CHATWOOT_API_TOKEN }}"
+            }
+          ]
+        },
+        "sendBody": true,
+        "bodyParameters": {
+          "parameters": [
+            {
+              "name": "content",
+              "value": "={{ $('Extrair Contexto').item.json.message }}"
+            },
+            {
+              "name": "message_type",
+              "value": "incoming"
+            },
+            {
+              "name": "private",
+              "value": "false"
+            }
+          ]
+        },
+        "options": {}
+      }
+    },
+    {
+      "id": "http3",
+      "name": "Enviar para Agente IA",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        1120,
+        420
+      ],
+      "parameters": {
+        "method": "POST",
+        "url": "={{ $env.N8N_WEBHOOK_BASE_URL }}/vc-agente-ia",
+        "sendBody": true,
+        "bodyParameters": {
+          "parameters": [
+            {
+              "name": "phone",
+              "value": "={{ $('Extrair Contexto').item.json.phone }}"
+            },
+            {
+              "name": "message",
+              "value": "={{ $('Extrair Contexto').item.json.message }}"
+            },
+            {
+              "name": "org_id",
+              "value": "={{ $('Extrair Contexto').item.json.org_id }}"
+            },
+            {
+              "name": "instance_id",
+              "value": "={{ $('Extrair Contexto').item.json.instance_id }}"
+            },
+            {
+              "name": "pushName",
+              "value": "={{ $('Extrair Contexto').item.json.pushName }}"
+            }
+          ]
+        },
+        "options": {}
+      }
+    },
+    {
+      "id": "resp1",
+      "name": "Responder OK",
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1,
+      "position": [
+        1340,
+        300
+      ],
+      "parameters": {
+        "respondWith": "json",
+        "responseBody": "={ \"status\": \"dispatched\" }",
+        "options": {}
+      }
+    }
+  ],
+  "connections": {
+    "Webhook Dispatcher": {
+      "main": [
+        [
+          {
+            "node": "Extrair Contexto",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Extrair Contexto": {
+      "main": [
+        [
+          {
+            "node": "Buscar Status Conversa (Supabase)",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Buscar Status Conversa (Supabase)": {
+      "main": [
+        [
+          {
+            "node": "Conversa com Humano?",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Conversa com Humano?": {
+      "main": [
+        [
+          {
+            "node": "Enviar para Chatwoot",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Enviar para Agente IA",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Enviar para Chatwoot": {
+      "main": [
+        [
+          {
+            "node": "Responder OK",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Enviar para Agente IA": {
+      "main": [
+        [
+          {
+            "node": "Responder OK",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "settings": {
+    "executionOrder": "v1",
+    "timezone": "America/Sao_Paulo",
+    "callerPolicy": "workflowsFromSameOwner",
+    "availableInMCP": false
+  },
+  "staticData": null,
+  "meta": null,
+  "pinData": null,
+  "versionId": "637061f5-b915-4585-bb9b-bca1f67fe7b0",
+  "activeVersionId": null,
+  "versionCounter": 1,
+  "triggerCount": 0,
+  "shared": [
+    {
+      "updatedAt": "2026-04-07T01:57:49.000Z",
+      "createdAt": "2026-04-07T01:57:49.000Z",
+      "role": "workflow:owner",
+      "workflowId": "9u01B4tJ9W8klhfo",
+      "projectId": "AKiCCH0oxaoQhr2Z",
+      "project": {
+        "updatedAt": "2026-03-27T14:30:55.615Z",
+        "createdAt": "2026-03-27T14:27:20.854Z",
+        "id": "AKiCCH0oxaoQhr2Z",
+        "name": "PABLO MEDINA <digitalvisualis@gmail.com>",
+        "type": "personal",
+        "icon": null,
+        "description": null,
+        "creatorId": "595fd4e5-a243-4d30-88ac-7327a99f627e"
+      }
+    }
+  ],
+  "tags": [],
+  "activeVersion": null
+}

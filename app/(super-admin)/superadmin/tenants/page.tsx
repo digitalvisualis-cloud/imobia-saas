@@ -37,13 +37,14 @@ export default async function TenantsAdminPage() {
               <th className="text-right px-4 py-2.5 font-medium">Users</th>
               <th className="text-right px-4 py-2.5 font-medium">Leads</th>
               <th className="text-right px-4 py-2.5 font-medium">Criado</th>
+              <th className="text-right px-4 py-2.5 font-medium">Agente IA</th>
               <th className="text-right px-4 py-2.5 font-medium">Site</th>
             </tr>
           </thead>
           <tbody className="divide-y divide-zinc-800">
             {tenants.length === 0 ? (
               <tr>
-                <td colSpan={8} className="px-4 py-12 text-center text-zinc-500">
+                <td colSpan={9} className="px-4 py-12 text-center text-zinc-500">
                   Nenhum tenant cadastrado ainda.
                 </td>
               </tr>
@@ -74,6 +75,14 @@ export default async function TenantsAdminPage() {
                   </td>
                   <td className="px-4 py-2.5 text-right text-xs text-zinc-500">
                     {new Date(t.createdAt).toLocaleDateString('pt-BR')}
+                  </td>
+                  <td className="px-4 py-2.5 text-right">
+                    <Link
+                      href={`/superadmin/tenants/${t.id}/agente`}
+                      className="text-red-400 hover:text-red-300 text-xs underline"
+                    >
+                      configurar →
+                    </Link>
                   </td>
                   <td className="px-4 py-2.5 text-right">
                     <Link

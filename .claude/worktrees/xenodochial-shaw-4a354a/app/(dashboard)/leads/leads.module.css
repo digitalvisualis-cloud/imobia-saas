@@ -1,0 +1,50 @@
+.metricsRow { display: flex; gap: 8px; margin-bottom: 20px; flex-wrap: wrap; }
+.metricChip {
+  flex: 1; min-width: 120px; padding: 10px 14px; border-radius: var(--radius-sm);
+  background: var(--bg-card); border: 1px solid; display: flex; flex-direction: column; gap: 2px;
+}
+
+/* KANBAN */
+.kanban { display: flex; gap: 12px; overflow-x: auto; padding-bottom: 20px; min-height: 500px; }
+.col { flex: 0 0 260px; display: flex; flex-direction: column; gap: 8px; }
+.colHeader {
+  padding: 10px 12px; border-radius: var(--radius-sm);
+  background: var(--bg-card); border: 1px solid;
+  display: flex; align-items: center; justify-content: space-between;
+  position: sticky; top: 0;
+}
+.colDot { width: 8px; height: 8px; border-radius: 50%; flex-shrink: 0; }
+.colTitle { font-size: 10px; font-weight: 700; letter-spacing: 0.08em; }
+.colCount {
+  width: 20px; height: 20px; border-radius: 50%; background: var(--bg-hover);
+  display: flex; align-items: center; justify-content: center; font-size: 11px; font-weight: 700;
+}
+.cards { display: flex; flex-direction: column; gap: 8px; }
+
+/* LEAD CARD */
+.leadCard {
+  background: var(--bg-card); border: 1px solid var(--border);
+  border-radius: var(--radius); padding: 14px; cursor: grab;
+  transition: all 0.15s; position: relative;
+}
+.leadCard:hover { border-color: var(--accent); transform: translateY(-1px); box-shadow: 0 4px 16px rgba(0,0,0,0.3); }
+.leadCard:active { cursor: grabbing; }
+.leadName { font-size: 14px; font-weight: 600; margin-bottom: 2px; }
+.leadImovel { font-size: 12px; color: var(--text-muted); }
+.leadValue { font-size: 13px; font-weight: 700; color: var(--green); }
+.leadTime { font-size: 11px; color: var(--text-muted); }
+.leadFooter { display: flex; align-items: center; justify-content: space-between; margin-top: 8px; border-top: 1px solid var(--border-light); padding-top: 8px; }
+.leadPhone { font-size: 11px; color: var(--text-muted); }
+
+/* TAGS */
+.tag { display: inline-block; font-size: 10px; font-weight: 700; padding: 2px 8px; border-radius: 100px; margin-bottom: 6px; }
+.tagHot { background: rgba(239,68,68,0.15); color: var(--red); }
+.tagWarm { background: rgba(234,179,8,0.15); color: var(--yellow); }
+.tagWon { background: var(--green-glow); color: var(--green); }
+
+.emptyCol {
+  border: 2px dashed var(--border); border-radius: var(--radius);
+  padding: 24px 12px; text-align: center; font-size: 12px; color: var(--text-muted);
+}
+.tagFrio { background: rgba(148,163,184,0.15); color: #64748b; }
+.tagMorno { background: rgba(234,179,8,0.15); color: var(--yellow); }

@@ -2,6 +2,33 @@
 import Link from 'next/link';
 import type { SerializedImovel } from '@/lib/serialize';
 
+const STATUS_LABEL: Record<string, string> = {
+  DISPONIVEL: 'Disponível',
+  RESERVADO: 'Reservado',
+  VENDIDO: 'Vendido',
+  ALUGADO: 'Alugado',
+  INATIVO: 'Inativo',
+};
+
+const TIPO_LABEL: Record<string, string> = {
+  CASA: 'Casa',
+  APARTAMENTO: 'Apartamento',
+  COBERTURA: 'Cobertura',
+  STUDIO: 'Studio',
+  TERRENO: 'Terreno',
+  SALA_COMERCIAL: 'Sala Comercial',
+  LOJA: 'Loja',
+  GALPAO: 'Galpão',
+  CHACARA: 'Chácara',
+  SITIO: 'Sítio',
+};
+
+const OPERACAO_LABEL: Record<string, string> = {
+  VENDA: 'Venda',
+  ALUGUEL: 'Aluguel',
+  TEMPORADA: 'Temporada',
+};
+
 export default function ImovelDetailsClient({
   imovel,
   siteSlug,
@@ -44,11 +71,11 @@ export default function ImovelDetailsClient({
             <div className="grid-2 gap-4 mb-4">
               <div>
                 <p className="text-xs text-muted">Tipo</p>
-                <p className="font-semibold">{imovel.tipo}</p>
+                <p className="font-semibold">{TIPO_LABEL[imovel.tipo] ?? imovel.tipo}</p>
               </div>
               <div>
                 <p className="text-xs text-muted">Operação</p>
-                <p className="font-semibold">{imovel.operacao}</p>
+                <p className="font-semibold">{OPERACAO_LABEL[imovel.operacao] ?? imovel.operacao}</p>
               </div>
               <div>
                 <p className="text-xs text-muted">Valor</p>
@@ -56,7 +83,7 @@ export default function ImovelDetailsClient({
               </div>
               <div>
                 <p className="text-xs text-muted">Status</p>
-                <p className="font-semibold">{imovel.status}</p>
+                <p className="font-semibold">{STATUS_LABEL[imovel.status] ?? imovel.status}</p>
               </div>
             </div>
             <p className="text-xs text-muted">Localização</p>

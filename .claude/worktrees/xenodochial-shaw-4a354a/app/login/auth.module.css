@@ -1,0 +1,92 @@
+/* Base */
+.authPage {
+  min-height: 100vh; display: flex; align-items: center; justify-content: center;
+  padding: 24px;
+  background: radial-gradient(ellipse at 50% 0%, rgba(124,58,237,0.15) 0%, transparent 60%), var(--bg-primary);
+}
+.authCard {
+  background: var(--bg-card); border: 1px solid var(--border);
+  border-radius: var(--radius-lg); padding: 40px;
+  width: 100%; max-width: 420px;
+  animation: slideUp 0.3s ease;
+}
+.authCardWide { max-width: 680px; }
+@keyframes slideUp { from { opacity: 0; transform: translateY(12px); } to { opacity: 1; transform: translateY(0); } }
+
+.authLogo { text-align: center; font-size: 1.6rem; font-weight: 800; margin-bottom: 20px; }
+.authTitle { text-align: center; font-size: 1.4rem; margin-bottom: 4px; }
+.authSub { text-align: center; color: var(--text-muted); font-size: 14px; margin-bottom: 24px; }
+
+/* Google */
+.googleBtn {
+  width: 100%; display: flex; align-items: center; justify-content: center; gap: 10px;
+  padding: 11px 16px; border-radius: var(--radius-sm); font-size: 14px; font-weight: 500;
+  background: var(--bg-secondary); border: 1px solid var(--border); color: var(--text-primary);
+  cursor: pointer; transition: all 0.15s; font-family: inherit;
+}
+.googleBtn:hover { background: var(--bg-hover); border-color: var(--accent); }
+
+/* Divider */
+.divider { display: flex; align-items: center; gap: 12px; margin: 16px 0; }
+.divider::before, .divider::after { content: ''; flex: 1; height: 1px; background: var(--border); }
+.divider span { font-size: 12px; color: var(--text-muted); }
+
+/* Error */
+.errorBox {
+  padding: 10px 14px; border-radius: var(--radius-sm); margin-bottom: 14px;
+  background: rgba(239,68,68,0.1); border: 1px solid rgba(239,68,68,0.3);
+  color: #fca5a5; font-size: 13px;
+}
+
+/* Forgot link */
+.forgotLink { font-size: 13px; color: var(--accent-light); text-decoration: none; }
+.forgotLink:hover { text-decoration: underline; }
+
+/* Switch */
+.authSwitch { text-align: center; font-size: 13px; color: var(--text-muted); margin-top: 20px; }
+.authSwitch a { color: var(--accent-light); text-decoration: none; font-weight: 500; }
+.authSwitch a:hover { text-decoration: underline; }
+
+/* Steps */
+.steps { display: flex; align-items: center; justify-content: center; gap: 0; margin-bottom: 24px; }
+.step { display: flex; align-items: center; gap: 6px; font-size: 12px; color: var(--text-muted); }
+.step::after { content: '→'; margin: 0 10px; color: var(--border); }
+.step:last-child::after { display: none; }
+.stepNum {
+  width: 24px; height: 24px; border-radius: 50%; flex-shrink: 0;
+  background: var(--bg-hover); border: 1px solid var(--border);
+  display: flex; align-items: center; justify-content: center; font-size: 11px; font-weight: 700;
+}
+.stepActive { color: var(--text-primary); }
+.stepActive .stepNum { background: var(--accent); border-color: var(--accent); color: #fff; }
+
+/* Role cards */
+.roleCard {
+  flex: 1; padding: 14px 10px; border-radius: var(--radius); cursor: pointer;
+  background: var(--bg-secondary); border: 2px solid var(--border);
+  font-size: 13px; font-weight: 500; font-family: inherit; color: var(--text-primary);
+  transition: all 0.2s; text-align: center; line-height: 1.5;
+}
+.roleCard:hover { border-color: var(--accent); }
+.roleCardActive { border-color: var(--accent); background: var(--accent-glow); }
+
+/* Planos grid */
+.planosGrid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; margin-top: 16px; }
+.planoCard {
+  padding: 16px 12px; border-radius: var(--radius); cursor: pointer; position: relative;
+  background: var(--bg-secondary); border: 2px solid var(--border);
+  transition: all 0.2s; text-align: center; font-size: 13px;
+}
+.planoCard:hover { border-color: var(--accent); }
+.planoCardActive { border-color: var(--accent); background: var(--accent-glow); }
+.planoDestaque { border-color: rgba(124,58,237,0.4); }
+.planoBadge {
+  position: absolute; top: -10px; left: 50%; transform: translateX(-50%);
+  background: var(--accent); color: #fff; font-size: 10px; font-weight: 700;
+  padding: 2px 8px; border-radius: 100px; white-space: nowrap;
+}
+
+@media (max-width: 580px) {
+  .planosGrid { grid-template-columns: 1fr; }
+  .authCardWide { max-width: 100%; }
+}

@@ -9,18 +9,28 @@
  * Cliente quer mudar marca? Vai em /configuracoes.
  */
 
-export type PostFormato = 'POST_QUADRADO' | 'POST_VERTICAL' | 'STORY';
+export type PostFormato = 'POST_QUADRADO' | 'POST_VERTICAL' | 'STORY' | 'CARROSSEL';
 
 export const FORMATO_LABELS: Record<PostFormato, string> = {
   POST_QUADRADO: 'Post Instagram (quadrado)',
   POST_VERTICAL: 'Post Instagram (vertical)',
   STORY: 'Story / Reels',
+  CARROSSEL: 'Carrossel (capa)',
 };
 
 export const FORMATO_DIMENSOES: Record<PostFormato, { w: number; h: number; aspect: string }> = {
   POST_QUADRADO: { w: 1080, h: 1080, aspect: '1:1' },
   POST_VERTICAL: { w: 1080, h: 1350, aspect: '4:5' },
   STORY: { w: 1080, h: 1920, aspect: '9:16' },
+  CARROSSEL: { w: 1080, h: 1350, aspect: '4:5' }, // mesma dim do vertical, com slides adicionais
+};
+
+/** Classes pra aplicar no wrapper que controlam o layout do PostShell. */
+export const FORMATO_CLASS: Record<PostFormato, string> = {
+  POST_QUADRADO: 'format-square',
+  POST_VERTICAL: 'format-vertical',
+  STORY: 'format-story',
+  CARROSSEL: 'format-carousel',
 };
 
 export type ImovelParaPost = {
@@ -93,6 +103,36 @@ export function operacaoLabel(op: string): string {
   if (op === 'ALUGUEL') return 'Aluguel';
   if (op === 'TEMPORADA') return 'Temporada';
   return op;
+}
+
+/**
+ * Gera versao curta do titulo pra story/preview pequeno.
+ * Regras do CONTRATO_VISUAL:
+ * - Titulo completo: "Casa moderna com piscina e area gourmet"
+ * - Titulo curto:    "Casa moderna com piscina"
+ * - Titulo story:    "Casa com piscina"
+ */
+export function shortTitle(full: string, mode: 'short' | 'ultra' = 'short'): string {
+  if (!full) return '';
+  const palavras = full.trim().split(/\s+/);
+  if (mode === 'ultra') return palavras.slice(0, 3).join(' ');
+  return palavras.slice(0, 5).join(' ');
+}
+
+/**
+ * Especs formatadas pro spec-strip do lab (formato: <b>284</b><small>m²</small>).
+ * Retorna array de { value, unit } pra cada spec presente.
+ */
+export function specsArray(imovel: ImovelParaPost): Array<{ value: string; unit: string }> {
+  const out: Array<{ value: string; unit: string }> = [];
+  if (imovel.areaM2 != null) out.push({ value: String(imovel.areaM2), unit: 'm²' });
+  if (imovel.quartos > 0)
+    out.push({ value: String(imovel.quartos), unit: imovel.quartos === 1 ? 'quarto' : 'quartos' });
+  if (imovel.banheiros > 0)
+    out.push({ value: String(imovel.banheiros), unit: imovel.banheiros === 1 ? 'banheiro' : 'banheiros' });
+  if (imovel.vagas > 0)
+    out.push({ value: String(imovel.vagas), unit: imovel.vagas === 1 ? 'vaga' : 'vagas' });
+  return out;
 }
 
 /**

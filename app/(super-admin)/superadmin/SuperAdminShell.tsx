@@ -48,8 +48,9 @@ const SECTIONS: NavSection[] = [
       { name: 'Logs IA', href: '/superadmin/logs-ia', icon: Brain },
       { name: 'Logs API', href: '/superadmin/logs-api', icon: Activity },
       { name: 'Chaves API', href: '/superadmin/api-keys', icon: KeyRound },
+      { name: 'n8n', href: '/superadmin/n8n', icon: Webhook },
+      { name: 'Saúde n8n', href: '/superadmin/n8n-saude', icon: Activity },
       { name: 'Doc API', href: '/superadmin/api-docs', icon: BookOpen },
-      { name: 'Webhooks', href: '/superadmin/webhooks', icon: Webhook, soon: true },
     ],
   },
 ];

@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useTransition } from 'react';
+import { useEffect, useState, useTransition } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import {
@@ -15,6 +15,7 @@ import {
   UsersRound,
   CreditCard,
   Save,
+  Settings,
   Check,
   ExternalLink,
   Plus,
@@ -25,7 +26,11 @@ import {
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
+import { PageHeader } from '@/components/ui/page-header';
+import { PhoneInput } from '@/components/ui/phone-input';
+import { toast } from '@/lib/toast';
 import { cn } from '@/lib/utils';
+import { FONTES_TITULO, FONTES_CORPO } from '@/lib/fonts';
 
 type Perfil = {
   id: string;
@@ -42,6 +47,9 @@ type Marca = {
   faviconUrl: string;
   corPrimaria: string;
   corSecundaria: string;
+  corTextoHero: string;
+  fonteTitulo: string;
+  fonteCorpo: string;
   email: string;
   whatsapp: string;
   telefone: string;
@@ -51,6 +59,13 @@ type Marca = {
   youtube: string;
   linkedin: string;
   tiktok: string;
+  politicaPrivacidade: string;
+  termosUso: string;
+  politicaCookies: string;
+  marcaDaguaAtiva: boolean;
+  marcaDaguaPosicao: string;
+  marcaDaguaOpacidade: number;
+  marcaDaguaTamanho: string;
 };
 type TenantInfo = {
   slug: string;
@@ -77,7 +92,6 @@ type TabId =
   | 'redes'
   | 'site'
   | 'legal'
-  | 'integracoes'
   | 'equipe'
   | 'plano';
 
@@ -91,7 +105,6 @@ const TABS: Tab[] = [
   { id: 'redes', label: 'Redes Sociais', icon: Share2 },
   { id: 'site', label: 'Meu Site', icon: Globe },
   { id: 'legal', label: 'Páginas Legais', icon: ScrollText, soft: true },
-  { id: 'integracoes', label: 'Integrações', icon: Plug, soft: true },
   { id: 'equipe', label: 'Equipe', icon: UsersRound },
   { id: 'plano', label: 'Plano', icon: CreditCard },
 ];
@@ -127,6 +140,7 @@ export default function ConfiguracoesClient(props: {
   const [marca, setMarca] = useState<Marca>(props.marca);
   const [saving, setSaving] = useState(false);
   const [savedFlash, setSavedFlash] = useState(false);
+  const [uploadingLogo, setUploadingLogo] = useState(false);
 
   function flashSaved() {
     setSavedFlash(true);
@@ -145,7 +159,7 @@ export default function ConfiguracoesClient(props: {
       flashSaved();
       startTransition(() => router.refresh());
     } catch {
-      alert('Erro ao salvar perfil');
+      toast.error('Erro ao salvar perfil', { description: 'Tente novamente.' });
     } finally {
       setSaving(false);
     }
@@ -163,7 +177,7 @@ export default function ConfiguracoesClient(props: {
       flashSaved();
       startTransition(() => router.refresh());
     } catch {
-      alert('Erro ao salvar configurações');
+      toast.error('Erro ao salvar configurações');
     } finally {
       setSaving(false);
     }
@@ -173,23 +187,39 @@ export default function ConfiguracoesClient(props: {
     setMarca((p) => ({ ...p, [k]: v }));
   }
 
+  async function uploadLogo(file: File) {
+    setUploadingLogo(true);
+    try {
+      const fd = new FormData();
+      fd.append('file', file);
+      const r = await fetch('/api/configuracoes/logo', { method: 'POST', body: fd });
+      const data = await r.json();
+      if (!r.ok) throw new Error(data.error || 'Falha no upload');
+      // endpoint ja persiste em ConfigMarca — aqui so atualiza a UI
+      setM('logoUrl', data.url);
+      toast.success('Logo enviado');
+    } catch (e: any) {
+      toast.error('Erro ao enviar logo', { description: e.message });
+    } finally {
+      setUploadingLogo(false);
+    }
+  }
+
   return (
     <div className="space-y-6">
-      <div className="flex items-center justify-between flex-wrap gap-3">
-        <div>
-          <h1 className="font-display text-3xl font-bold text-foreground">
-            Configurações
-          </h1>
-          <p className="text-sm text-muted-foreground">
-            Identidade, marca, site e equipe da sua imobiliária
-          </p>
-        </div>
-        {savedFlash && (
-          <Badge className="bg-green-500/15 text-green-700 dark:text-green-400 border-green-500/30 hover:bg-green-500/20">
-            <Check className="h-3 w-3 mr-1" /> Salvo
-          </Badge>
-        )}
-      </div>
+      <PageHeader
+        kicker="Plataforma"
+        icon={Settings}
+        title="Configurações"
+        description="Identidade, marca, site e equipe da sua imobiliária"
+        actions={
+          savedFlash ? (
+            <Badge className="bg-green-500/15 text-green-700 dark:text-green-400 border-green-500/30 hover:bg-green-500/20">
+              <Check className="h-3 w-3 mr-1" /> Salvo
+            </Badge>
+          ) : null
+        }
+      />
 
       <div className="grid grid-cols-1 md:grid-cols-[220px_1fr] gap-6">
         {/* Tabs verticais */}
@@ -306,17 +336,17 @@ export default function ConfiguracoesClient(props: {
               hint="Aparecem no rodapé do site, no botão de WhatsApp e nas peças de marketing."
             >
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <Field label="WhatsApp da imobiliária *" hint="Sem espaços. Ex: 5511999999999">
-                  <Input
+                <Field label="WhatsApp da imobiliária *" hint="Seleciona o país e digita só o número.">
+                  <PhoneInput
                     value={marca.whatsapp}
-                    onChange={(e) => setM('whatsapp', e.target.value)}
-                    placeholder="5511999999999"
+                    onChange={(v) => setM('whatsapp', v)}
+                    placeholder="(11) 99999-9999"
                   />
                 </Field>
                 <Field label="Telefone fixo">
-                  <Input
+                  <PhoneInput
                     value={marca.telefone}
-                    onChange={(e) => setM('telefone', e.target.value)}
+                    onChange={(v) => setM('telefone', v)}
                     placeholder="(11) 3333-4444"
                   />
                 </Field>
@@ -346,12 +376,45 @@ export default function ConfiguracoesClient(props: {
               hint="Logo, favicon e paleta — aplicado automaticamente no site e nas artes geradas."
             >
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <Field label="URL do logo" hint="Use uma URL hospedada por enquanto. Upload em breve.">
-                  <Input
-                    value={marca.logoUrl}
-                    onChange={(e) => setM('logoUrl', e.target.value)}
-                    placeholder="https://..."
-                  />
+                <Field label="Logo" hint="PNG, JPG, WEBP ou SVG. Máximo 2MB. Aplicado no site e nas artes geradas.">
+                  <div className="flex items-center gap-3">
+                    <label
+                      className={cn(
+                        'inline-flex cursor-pointer items-center gap-2 rounded-md border border-input bg-background px-3 py-2 text-sm font-medium hover:bg-muted',
+                        uploadingLogo && 'pointer-events-none opacity-60',
+                      )}
+                    >
+                      {uploadingLogo ? (
+                        <Loader2 className="h-4 w-4 animate-spin" />
+                      ) : (
+                        <ImageIcon className="h-4 w-4" />
+                      )}
+                      {uploadingLogo
+                        ? 'Enviando…'
+                        : marca.logoUrl
+                          ? 'Trocar logo'
+                          : 'Enviar logo'}
+                      <input
+                        type="file"
+                        accept="image/png,image/jpeg,image/webp,image/svg+xml"
+                        className="hidden"
+                        onChange={(e) => {
+                          const f = e.target.files?.[0];
+                          if (f) uploadLogo(f);
+                          e.target.value = '';
+                        }}
+                      />
+                    </label>
+                    {marca.logoUrl && (
+                      <button
+                        type="button"
+                        onClick={() => setM('logoUrl', '')}
+                        className="text-xs text-muted-foreground hover:text-red-600"
+                      >
+                        Remover
+                      </button>
+                    )}
+                  </div>
                   {marca.logoUrl && (
                     <div className="mt-2 p-3 rounded-md bg-muted/40 border border-border flex items-center gap-3">
                       {/* eslint-disable-next-line @next/next/no-img-element */}
@@ -386,6 +449,18 @@ export default function ConfiguracoesClient(props: {
                   <ColorInput
                     value={marca.corSecundaria}
                     onChange={(v) => setM('corSecundaria', v)}
+                  />
+                </Field>
+              </div>
+
+              <div className="mt-4">
+                <Field
+                  label="Cor do texto sobre foto (hero)"
+                  hint="Slogan e descrição que aparecem sobre a foto principal do site. Use branco em fotos escuras, preto/cinza em fotos claras."
+                >
+                  <ColorInput
+                    value={marca.corTextoHero}
+                    onChange={(v) => setM('corTextoHero', v)}
                   />
                 </Field>
               </div>
@@ -438,6 +513,200 @@ export default function ConfiguracoesClient(props: {
                     );
                   })}
                 </div>
+              </div>
+
+              {/* Marca d'agua nas fotos do site */}
+              <div className="mt-6 pt-6 border-t border-border">
+                <div className="flex items-start justify-between gap-3 mb-3">
+                  <div>
+                    <h4 className="font-medium text-foreground">Marca d'água nas fotos</h4>
+                    <p className="text-xs text-muted-foreground mt-0.5">
+                      Sobrepõe o logo nas fotos dos imóveis no <strong>site público</strong> pra
+                      proteger contra cópia. Não afeta o Criador de Posts.
+                    </p>
+                  </div>
+                  <label className="inline-flex items-center gap-2 cursor-pointer shrink-0">
+                    <span className="text-xs text-muted-foreground">
+                      {marca.marcaDaguaAtiva ? 'Ativa' : 'Inativa'}
+                    </span>
+                    <input
+                      type="checkbox"
+                      checked={!!marca.marcaDaguaAtiva}
+                      onChange={(e) => setM('marcaDaguaAtiva' as any, e.target.checked)}
+                      className="h-4 w-7 appearance-none rounded-full bg-muted-foreground/30 checked:bg-primary transition-colors cursor-pointer relative after:absolute after:top-0.5 after:left-0.5 after:h-3 after:w-3 after:rounded-full after:bg-white after:transition-transform checked:after:translate-x-3"
+                    />
+                  </label>
+                </div>
+
+                {marca.marcaDaguaAtiva && !marca.logoUrl && (
+                  <div className="rounded-md border border-amber-500/40 bg-amber-500/10 px-3 py-2 text-xs text-amber-900 dark:text-amber-200 mb-3">
+                    ⚠️ Você precisa cadastrar o logo acima pra marca d'água funcionar.
+                  </div>
+                )}
+
+                {marca.marcaDaguaAtiva && (
+                  <div className="space-y-4">
+                    <Field label="Posição">
+                      <div className="grid grid-cols-2 md:grid-cols-5 gap-2">
+                        {[
+                          { val: 'centro', label: 'Centro' },
+                          { val: 'inferior-direita', label: 'Inferior ↘' },
+                          { val: 'inferior-esquerda', label: 'Inferior ↙' },
+                          { val: 'inferior-centro', label: 'Inferior ↓' },
+                          { val: 'tile', label: 'Padrão repetido' },
+                        ].map((p) => (
+                          <button
+                            key={p.val}
+                            type="button"
+                            onClick={() => setM('marcaDaguaPosicao' as any, p.val)}
+                            className={cn(
+                              'rounded-md border px-3 py-2 text-xs font-medium transition-colors',
+                              marca.marcaDaguaPosicao === p.val
+                                ? 'border-primary bg-primary text-primary-foreground'
+                                : 'border-border hover:border-primary/40',
+                            )}
+                          >
+                            {p.label}
+                          </button>
+                        ))}
+                      </div>
+                    </Field>
+
+                    <Field label="Tamanho">
+                      <div className="grid grid-cols-3 gap-2">
+                        {[
+                          { val: 'pequeno', label: 'Pequeno (12%)' },
+                          { val: 'medio', label: 'Médio (20%)' },
+                          { val: 'grande', label: 'Grande (30%)' },
+                        ].map((t) => (
+                          <button
+                            key={t.val}
+                            type="button"
+                            onClick={() => setM('marcaDaguaTamanho' as any, t.val)}
+                            className={cn(
+                              'rounded-md border px-3 py-2 text-xs font-medium transition-colors',
+                              marca.marcaDaguaTamanho === t.val
+                                ? 'border-primary bg-primary text-primary-foreground'
+                                : 'border-border hover:border-primary/40',
+                            )}
+                          >
+                            {t.label}
+                          </button>
+                        ))}
+                      </div>
+                    </Field>
+
+                    <Field label={`Opacidade: ${marca.marcaDaguaOpacidade}%`}>
+                      <input
+                        type="range"
+                        min={10}
+                        max={80}
+                        step={5}
+                        value={marca.marcaDaguaOpacidade}
+                        onChange={(e) => setM('marcaDaguaOpacidade' as any, Number(e.target.value))}
+                        className="w-full"
+                      />
+                      <p className="text-[10px] text-muted-foreground mt-1">
+                        Mais baixo = marca mais sutil. Mais alto = mais visível (mas pode atrapalhar a leitura da foto).
+                      </p>
+                    </Field>
+
+                    {/* Preview rápido */}
+                    {marca.logoUrl && (
+                      <div>
+                        <p className="text-xs text-muted-foreground mb-2">Pré-visualização:</p>
+                        <div className="relative aspect-[16/10] max-w-md overflow-hidden rounded-lg border border-border">
+                          <div
+                            className="absolute inset-0 bg-cover bg-center"
+                            style={{
+                              backgroundImage:
+                                'url(https://images.unsplash.com/photo-1564013799919-ab600027ffc6?w=800)',
+                            }}
+                          />
+                          {marca.marcaDaguaPosicao === 'tile' ? (
+                            <div
+                              aria-hidden
+                              className="pointer-events-none absolute inset-0"
+                              style={{
+                                backgroundImage: `url(${marca.logoUrl})`,
+                                backgroundRepeat: 'repeat',
+                                backgroundSize: `${
+                                  (marca.marcaDaguaTamanho === 'pequeno'
+                                    ? 12
+                                    : marca.marcaDaguaTamanho === 'grande'
+                                      ? 30
+                                      : 20) * 1.5
+                                }% auto`,
+                                opacity: marca.marcaDaguaOpacidade / 100,
+                                mixBlendMode: 'overlay',
+                                transform: 'rotate(-25deg) scale(1.4)',
+                                transformOrigin: 'center',
+                              }}
+                            />
+                          ) : (
+                            // eslint-disable-next-line @next/next/no-img-element
+                            <img
+                              src={marca.logoUrl}
+                              alt=""
+                              className="pointer-events-none absolute"
+                              style={{
+                                width: `${
+                                  marca.marcaDaguaTamanho === 'pequeno'
+                                    ? 12
+                                    : marca.marcaDaguaTamanho === 'grande'
+                                      ? 30
+                                      : 20
+                                }%`,
+                                height: 'auto',
+                                opacity: marca.marcaDaguaOpacidade / 100,
+                                filter: 'drop-shadow(0 2px 8px rgba(0,0,0,0.4))',
+                                ...(marca.marcaDaguaPosicao === 'inferior-direita'
+                                  ? { right: '4%', bottom: '4%' }
+                                  : marca.marcaDaguaPosicao === 'inferior-esquerda'
+                                    ? { left: '4%', bottom: '4%' }
+                                    : marca.marcaDaguaPosicao === 'inferior-centro'
+                                      ? {
+                                          left: '50%',
+                                          bottom: '4%',
+                                          transform: 'translateX(-50%)',
+                                        }
+                                      : {
+                                          left: '50%',
+                                          top: '50%',
+                                          transform: 'translate(-50%, -50%)',
+                                        }),
+                              }}
+                            />
+                          )}
+                        </div>
+                      </div>
+                    )}
+                  </div>
+                )}
+              </div>
+
+              {/* Fontes (tipografia) */}
+              <div className="mt-6 grid grid-cols-1 md:grid-cols-2 gap-4">
+                <Field
+                  label="Fonte dos títulos"
+                  hint="Aplica nas chamadas e títulos do site"
+                >
+                  <FonteSelect
+                    value={(marca as any).fonteTitulo ?? 'cormorant'}
+                    onChange={(v) => setM('fonteTitulo' as any, v)}
+                    opcoes={FONTES_TITULO}
+                  />
+                </Field>
+                <Field
+                  label="Fonte do corpo"
+                  hint="Aplica nos textos longos (descrições, parágrafos)"
+                >
+                  <FonteSelect
+                    value={(marca as any).fonteCorpo ?? 'inter'}
+                    onChange={(v) => setM('fonteCorpo' as any, v)}
+                    opcoes={FONTES_CORPO}
+                  />
+                </Field>
               </div>
 
               <SaveButton onClick={saveMarca} saving={saving} />
@@ -493,31 +762,7 @@ export default function ConfiguracoesClient(props: {
           {tab === 'site' && <SiteTab tenantInfo={props.tenantInfo} />}
 
           {tab === 'legal' && (
-            <Placeholder
-              title="Páginas legais"
-              description="Política de Privacidade, Termos de Uso e Política de Cookies do seu site público."
-              bullets={[
-                'Editor rich text com placeholders {{nome_empresa}}, {{cidade}}',
-                'Templates prontos LGPD pra preencher na hora',
-                'Aparece automaticamente no rodapé do site público',
-                'Banner de cookies configurável (cor, posição, texto)',
-              ]}
-            />
-          )}
-
-          {tab === 'integracoes' && (
-            <Placeholder
-              title="Integrações"
-              description="Conecte ferramentas externas pra rastrear, cobrar e atender clientes."
-              bullets={[
-                'Pixel da Meta (Facebook/Instagram Ads) — código de rastreamento',
-                'Google Analytics 4 — ID de medição',
-                'Google Tag Manager',
-                'Google Maps API (mapa no site)',
-                'Asaas (pagamentos) — credenciais já gerenciadas pela plataforma',
-                'Evolution API (WhatsApp) — chatbot no site',
-              ]}
-            />
+            <LegalTab marca={marca} setM={setM} save={saveMarca} saving={saving} />
           )}
 
           {tab === 'equipe' && (
@@ -612,6 +857,15 @@ function SiteTab({ tenantInfo }: { tenantInfo: TenantInfo }) {
 
 /* ---------- Aba Equipe ---------- */
 
+type ConvitePendente = {
+  id: string;
+  email: string;
+  role: string;
+  token: string;
+  createdAt: string;
+  expiresAt: string;
+};
+
 function EquipeTab({
   equipe,
   currentUserId,
@@ -619,6 +873,39 @@ function EquipeTab({
   equipe: EquipeUser[];
   currentUserId: string;
 }) {
+  const [convites, setConvites] = useState<ConvitePendente[]>([]);
+  const [modalOpen, setModalOpen] = useState(false);
+  const [linkGerado, setLinkGerado] = useState<string | null>(null);
+
+  useEffect(() => {
+    fetch('/api/equipe/convite')
+      .then((r) => (r.ok ? r.json() : { data: [] }))
+      .then((d) => setConvites(d.data ?? []))
+      .catch(() => {});
+  }, []);
+
+  function onConviteCriado(c: ConvitePendente & { link: string }) {
+    setConvites((prev) => [c, ...prev]);
+    setLinkGerado(c.link);
+  }
+
+  async function revogar(token: string) {
+    if (!confirm('Revogar este convite? O link vai parar de funcionar.')) return;
+    try {
+      const r = await fetch(`/api/equipe/convite/${token}`, { method: 'DELETE' });
+      if (!r.ok) throw new Error();
+      setConvites((prev) => prev.filter((c) => c.token !== token));
+      toast.success('Convite revogado');
+    } catch {
+      toast.error('Erro ao revogar');
+    }
+  }
+
+  function copiarLink(token: string) {
+    const url = `${window.location.origin}/convite/${token}`;
+    navigator.clipboard.writeText(url).then(() => toast.success('Link copiado'));
+  }
+
   return (
     <Section
       title="Equipe"
@@ -627,12 +914,46 @@ function EquipeTab({
       <div className="flex justify-between items-center mb-3">
         <p className="text-sm text-muted-foreground">
           {equipe.length} {equipe.length === 1 ? 'pessoa' : 'pessoas'} na equipe
+          {convites.length > 0 && (
+            <> · {convites.length} convite{convites.length > 1 ? 's' : ''} pendente{convites.length > 1 ? 's' : ''}</>
+          )}
         </p>
-        <Button disabled title="Em breve">
+        <Button onClick={() => { setLinkGerado(null); setModalOpen(true); }}>
           <Plus className="h-4 w-4 mr-2" />
           Convidar corretor
         </Button>
       </div>
+
+      {linkGerado && (
+        <div className="mb-3 rounded-md border border-emerald-300 bg-emerald-50 p-3 text-sm">
+          <p className="font-medium text-emerald-800">
+            ✓ Convite criado. Manda o link pra pessoa:
+          </p>
+          <div className="mt-2 flex gap-2">
+            <input
+              readOnly
+              value={linkGerado}
+              className="flex-1 rounded border border-emerald-200 bg-white px-2 py-1.5 text-xs"
+            />
+            <button
+              type="button"
+              onClick={() => {
+                navigator.clipboard.writeText(linkGerado);
+                toast.success('Link copiado');
+              }}
+              className="rounded bg-emerald-600 px-3 py-1.5 text-xs font-semibold text-white hover:bg-emerald-700"
+            >
+              Copiar
+            </button>
+          </div>
+        </div>
+      )}
+
+      <ConvidarModal
+        open={modalOpen}
+        onClose={() => setModalOpen(false)}
+        onCreated={onConviteCriado}
+      />
 
       <div className="rounded-lg border border-border bg-card overflow-hidden">
         <table className="w-full text-sm">
@@ -692,15 +1013,263 @@ function EquipeTab({
                 </tr>
               );
             })}
+            {convites.map((c) => (
+              <tr key={c.id} className="bg-amber-50/50 hover:bg-amber-50">
+                <td className="px-4 py-2.5">
+                  <div className="flex items-center gap-2.5">
+                    <div className="h-8 w-8 rounded-full bg-amber-200 text-amber-800 grid place-items-center text-xs font-semibold shrink-0">
+                      …
+                    </div>
+                    <div className="min-w-0">
+                      <p className="font-medium truncate">{c.email}</p>
+                      <p className="text-xs text-amber-700">aguardando aceitar convite</p>
+                    </div>
+                  </div>
+                </td>
+                <td className="px-4 py-2.5">
+                  <Badge variant="outline" className="text-[10px] uppercase">
+                    {c.role}
+                  </Badge>
+                </td>
+                <td className="px-4 py-2.5 text-xs text-muted-foreground">—</td>
+                <td className="px-4 py-2.5 text-xs">
+                  <button
+                    type="button"
+                    onClick={() => copiarLink(c.token)}
+                    className="text-xs text-violet-600 hover:underline"
+                  >
+                    📋 Copiar link
+                  </button>
+                </td>
+                <td className="px-4 py-2.5 text-right text-xs">
+                  <button
+                    type="button"
+                    onClick={() => revogar(c.token)}
+                    className="text-xs text-red-600 hover:underline"
+                  >
+                    Revogar
+                  </button>
+                </td>
+              </tr>
+            ))}
           </tbody>
         </table>
       </div>
 
       <p className="text-xs text-muted-foreground mt-3">
-        Convite por e-mail, edição de papéis e remoção de membros chegam na
-        próxima entrega.
+        Convites expiram em 7 dias. Email automático e permissões granulares chegam na próxima entrega.
       </p>
     </Section>
+  );
+}
+
+/* ---------- Modal: Convidar membro ---------- */
+
+function ConvidarModal({
+  open,
+  onClose,
+  onCreated,
+}: {
+  open: boolean;
+  onClose: () => void;
+  onCreated: (c: ConvitePendente & { link: string }) => void;
+}) {
+  const [email, setEmail] = useState('');
+  const [role, setRole] = useState<'CORRETOR' | 'ADMIN' | 'VIEWER'>('CORRETOR');
+  const [saving, setSaving] = useState(false);
+  const [erro, setErro] = useState('');
+
+  useEffect(() => {
+    if (!open) {
+      setEmail(''); setRole('CORRETOR'); setErro(''); setSaving(false);
+    }
+  }, [open]);
+
+  async function submeter(e: React.FormEvent) {
+    e.preventDefault();
+    setErro('');
+    setSaving(true);
+    try {
+      const r = await fetch('/api/equipe/convite', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ email, role }),
+      });
+      const d = await r.json();
+      if (!r.ok) {
+        setErro(d.error ?? 'Erro');
+        return;
+      }
+      onCreated(d);
+      onClose();
+    } catch (e: any) {
+      setErro(e.message ?? 'Erro');
+    } finally {
+      setSaving(false);
+    }
+  }
+
+  if (!open) return null;
+
+  return (
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 p-4">
+      <div className="w-full max-w-md rounded-xl bg-white p-6 shadow-2xl">
+        <div className="mb-4 flex items-center justify-between">
+          <h3 className="font-display text-lg font-bold">Convidar membro</h3>
+          <button onClick={onClose} className="rounded-md p-1 hover:bg-gray-100" aria-label="Fechar">✕</button>
+        </div>
+        <form onSubmit={submeter} className="space-y-4">
+          <div>
+            <label className="block text-sm font-medium">Email *</label>
+            <input
+              type="email"
+              required
+              value={email}
+              onChange={(e) => setEmail(e.target.value)}
+              className="mt-1 w-full rounded-md border border-gray-300 px-3 py-2 text-sm"
+              placeholder="corretor@exemplo.com"
+            />
+          </div>
+          <div>
+            <label className="block text-sm font-medium">Papel</label>
+            <select
+              value={role}
+              onChange={(e) => setRole(e.target.value as any)}
+              className="mt-1 w-full rounded-md border border-gray-300 px-3 py-2 text-sm"
+            >
+              <option value="CORRETOR">Corretor</option>
+              <option value="ADMIN">Administrador</option>
+              <option value="VIEWER">Visualizador</option>
+            </select>
+            <p className="mt-1 text-xs text-muted-foreground">
+              {role === 'ADMIN' && 'Acesso total: configurações, equipe, todos os imóveis e leads.'}
+              {role === 'CORRETOR' && 'Pode cadastrar imóveis e atender leads.'}
+              {role === 'VIEWER' && 'Só visualiza — não edita nada.'}
+            </p>
+          </div>
+
+          {erro && <p className="text-sm text-red-600">{erro}</p>}
+
+          <div className="flex gap-2 justify-end">
+            <button type="button" onClick={onClose} className="rounded-md border border-gray-300 px-4 py-2 text-sm">
+              Cancelar
+            </button>
+            <Button type="submit" disabled={saving}>
+              {saving ? 'Criando...' : 'Gerar link de convite'}
+            </Button>
+          </div>
+        </form>
+        <p className="mt-3 text-xs text-muted-foreground">
+          O sistema gera um link único. Você manda pelo canal que preferir (WhatsApp, email, etc).
+          Email automático chega na próxima entrega.
+        </p>
+      </div>
+    </div>
+  );
+}
+
+/* ---------- Aba Páginas Legais ---------- */
+
+function LegalTab({
+  marca,
+  setM,
+  save,
+  saving,
+}: {
+  marca: Marca;
+  setM: <K extends keyof Marca>(k: K, v: Marca[K]) => void;
+  save: () => void;
+  saving: boolean;
+}) {
+  // Carrega templates lazy quando o user clica "Usar template" — evita
+  // import sincrono dum modulo de ~7KB de texto.
+  async function carregarTemplate(qual: 'privacidade' | 'termos' | 'cookies') {
+    const lib = await import('@/lib/templates-legais');
+    const dados = {
+      nomeEmpresa: marca.nomeEmpresa || '',
+      email: marca.email || '',
+      cidade: marca.endereco || '',
+    };
+    if (qual === 'privacidade') {
+      setM('politicaPrivacidade', lib.templatePoliticaPrivacidade(dados));
+    } else if (qual === 'termos') {
+      setM('termosUso', lib.templateTermosUso(dados));
+    } else {
+      setM('politicaCookies', lib.templatePoliticaCookies(dados));
+    }
+  }
+
+  return (
+    <Section
+      title="Páginas legais"
+      hint="Política de Privacidade, Termos de Uso e Política de Cookies do seu site público. LGPD-compliant — revise com advogado antes de publicar."
+    >
+      <div className="space-y-6">
+        <LegalCampo
+          label="Política de Privacidade"
+          rotaPublica="/s/<seu-slug>/privacidade"
+          value={marca.politicaPrivacidade}
+          onChange={(v) => setM('politicaPrivacidade', v)}
+          onUsarTemplate={() => carregarTemplate('privacidade')}
+        />
+        <LegalCampo
+          label="Termos de Uso"
+          rotaPublica="/s/<seu-slug>/termos"
+          value={marca.termosUso}
+          onChange={(v) => setM('termosUso', v)}
+          onUsarTemplate={() => carregarTemplate('termos')}
+        />
+        <LegalCampo
+          label="Política de Cookies"
+          rotaPublica="/s/<seu-slug>/cookies"
+          value={marca.politicaCookies}
+          onChange={(v) => setM('politicaCookies', v)}
+          onUsarTemplate={() => carregarTemplate('cookies')}
+        />
+      </div>
+      <SaveButton onClick={save} saving={saving} />
+    </Section>
+  );
+}
+
+function LegalCampo({
+  label,
+  rotaPublica,
+  value,
+  onChange,
+  onUsarTemplate,
+}: {
+  label: string;
+  rotaPublica: string;
+  value: string;
+  onChange: (v: string) => void;
+  onUsarTemplate: () => void;
+}) {
+  return (
+    <div>
+      <div className="flex items-center justify-between mb-2 gap-2 flex-wrap">
+        <div>
+          <h4 className="font-semibold">{label}</h4>
+          <p className="text-xs text-muted-foreground font-mono">{rotaPublica}</p>
+        </div>
+        <button
+          type="button"
+          onClick={onUsarTemplate}
+          className="text-xs inline-flex items-center gap-1 rounded-md border border-input bg-background px-3 py-1.5 font-medium hover:bg-muted"
+          title="Preenche com texto modelo LGPD usando o nome da sua empresa"
+        >
+          ✨ Usar template
+        </button>
+      </div>
+      <textarea
+        rows={10}
+        className="input font-mono text-xs"
+        style={{ minHeight: 240 }}
+        value={value}
+        onChange={(e) => onChange(e.target.value)}
+        placeholder='Cole ou edite o texto aqui. Suporta Markdown básico (# Título, **negrito**, listas). Clica em "Usar template" pra começar com modelo LGPD.'
+      />
+    </div>
   );
 }
 
@@ -896,6 +1465,47 @@ function KpiCardLite({
       >
         {value}
       </p>
+    </div>
+  );
+}
+
+/* ---------- Dropdown de fonte com preview ---------- */
+
+function FonteSelect({
+  value,
+  onChange,
+  opcoes,
+}: {
+  value: string;
+  onChange: (v: string) => void;
+  opcoes: Array<{ key: string; nome: string; familyCss: string; vibe?: string }>;
+}) {
+  return (
+    <div className="space-y-2">
+      <select
+        value={value}
+        onChange={(e) => onChange(e.target.value)}
+        className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-ring"
+      >
+        {opcoes.map((o) => (
+          <option key={o.key} value={o.key}>
+            {o.nome}
+            {o.vibe ? ` — ${o.vibe}` : ''}
+          </option>
+        ))}
+      </select>
+      {/* Preview da fonte selecionada */}
+      <div
+        className="rounded-md border border-border bg-card px-3 py-2.5"
+        style={{ fontFamily: opcoes.find((o) => o.key === value)?.familyCss }}
+      >
+        <p className="text-lg leading-tight">
+          Encontre o imóvel ideal
+        </p>
+        <p className="text-xs text-muted-foreground">
+          Pré-visualização — abc 123 ABC çãÁéí
+        </p>
+      </div>
     </div>
   );
 }

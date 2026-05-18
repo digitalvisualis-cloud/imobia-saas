@@ -1,0 +1,231 @@
+/* ─── Dropzone ──────────────────────────────────────────────── */
+.dropzone {
+  border: 2px dashed var(--border);
+  border-radius: 12px;
+  padding: 32px 16px;
+  text-align: center;
+  cursor: pointer;
+  transition: all 0.18s ease;
+  background: var(--bg-soft, hsl(0 0% 98%));
+  margin-bottom: 20px;
+}
+
+.dropzone:hover {
+  border-color: var(--accent);
+  background: var(--bg-soft-hover, hsl(40 22% 96%));
+}
+
+.dragOver {
+  border-color: var(--accent);
+  background: var(--accent-soft, hsl(39 46% 95%));
+  transform: scale(1.005);
+}
+
+.uploading {
+  opacity: 0.6;
+  pointer-events: none;
+}
+
+.dropzoneInner {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 6px;
+}
+
+.dropzoneTitle {
+  font-weight: 600;
+  font-size: 0.95rem;
+  color: var(--text-primary);
+}
+
+/* ─── Legenda informativa ────────────────────────────────────── */
+.legendaInfo {
+  background: hsl(39 46% 96%);
+  border: 1px solid hsl(39 46% 80%);
+  color: hsl(39 46% 30%);
+  padding: 10px 14px;
+  border-radius: 8px;
+  font-size: 0.85rem;
+  margin-bottom: 16px;
+}
+
+/* ─── Empty state ────────────────────────────────────────────── */
+.emptyState {
+  padding: 48px 16px;
+  text-align: center;
+  background: var(--bg-soft, hsl(0 0% 98%));
+  border-radius: 12px;
+  border: 1px solid var(--border);
+}
+
+/* ─── Grid de fotos ──────────────────────────────────────────── */
+.grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+  gap: 14px;
+}
+
+.fotoCard {
+  display: flex;
+  flex-direction: column;
+  border: 2px solid transparent;
+  border-radius: 12px;
+  overflow: hidden;
+  background: var(--bg-card, white);
+  transition: border-color 0.18s ease, transform 0.12s ease, box-shadow 0.18s ease;
+  cursor: grab;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.04);
+}
+
+.fotoCard:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
+}
+
+.fotoCard:active {
+  cursor: grabbing;
+}
+
+.fotoCapa {
+  border-color: hsl(142 70% 45%); /* verde estilo Lano */
+  box-shadow: 0 0 0 3px hsla(142 70% 45% / 0.15);
+}
+
+.fotoImgWrapper {
+  position: relative;
+  aspect-ratio: 4 / 3;
+  background: hsl(0 0% 96%);
+  overflow: hidden;
+}
+
+.fotoImg {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: block;
+}
+
+.fotoIdx {
+  position: absolute;
+  bottom: 8px;
+  left: 8px;
+  background: rgba(0, 0, 0, 0.65);
+  color: white;
+  font-size: 0.7rem;
+  font-weight: 700;
+  padding: 3px 9px;
+  border-radius: 999px;
+  pointer-events: none;
+  letter-spacing: 0.02em;
+}
+
+.fotoBadgeCapa {
+  position: absolute;
+  top: 8px;
+  left: 8px;
+  background: hsl(142 70% 45%);
+  color: white;
+  font-size: 0.72rem;
+  font-weight: 800;
+  padding: 4px 10px;
+  border-radius: 999px;
+  letter-spacing: 0.06em;
+  pointer-events: none;
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.18);
+}
+
+.fotoBtnRemove {
+  position: absolute;
+  top: 6px;
+  right: 6px;
+  width: 28px;
+  height: 28px;
+  border: none;
+  border-radius: 50%;
+  background: rgba(0, 0, 0, 0.55);
+  color: white;
+  font-size: 0.85rem;
+  font-weight: 700;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: background 0.12s ease;
+}
+
+.fotoBtnRemove:hover {
+  background: rgb(220, 38, 38);
+}
+
+/* ─── Botões de ação abaixo da foto ──────────────────────────── */
+.fotoActions {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  padding: 8px 10px;
+  background: white;
+}
+
+.fotoBtnCapa {
+  flex: 1;
+  border: 1px solid var(--border, hsl(0 0% 88%));
+  background: white;
+  color: var(--text-primary, #111);
+  font-size: 0.78rem;
+  font-weight: 600;
+  padding: 6px 10px;
+  border-radius: 8px;
+  cursor: pointer;
+  transition: all 0.12s ease;
+  white-space: nowrap;
+}
+
+.fotoBtnCapa:hover {
+  background: hsl(142 70% 45%);
+  border-color: hsl(142 70% 45%);
+  color: white;
+}
+
+.fotoCapaActive {
+  flex: 1;
+  font-size: 0.78rem;
+  font-weight: 700;
+  color: hsl(142 70% 35%);
+  text-align: center;
+  padding: 6px 10px;
+}
+
+.fotoArrows {
+  display: flex;
+  gap: 4px;
+}
+
+.arrowBtn {
+  width: 30px;
+  height: 30px;
+  border: 1px solid var(--border, hsl(0 0% 88%));
+  background: white;
+  border-radius: 8px;
+  font-size: 1.1rem;
+  font-weight: 700;
+  cursor: pointer;
+  color: var(--text-primary, #111);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.12s ease;
+  line-height: 1;
+}
+
+.arrowBtn:hover:not(:disabled) {
+  background: var(--accent, #c9a227);
+  border-color: var(--accent, #c9a227);
+  color: white;
+}
+
+.arrowBtn:disabled {
+  opacity: 0.35;
+  cursor: not-allowed;
+}

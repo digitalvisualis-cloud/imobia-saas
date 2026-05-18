@@ -1,0 +1,268 @@
+{
+  "name": "ImobIA Master — Atendimento Multi-Tenant",
+  "nodes": [
+    {
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "imobia-master",
+        "options": {
+          "responseMode": "lastNode"
+        }
+      },
+      "id": "webhook-in",
+      "name": "Webhook IN (WhatsApp/Site)",
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 2,
+      "position": [240, 300],
+      "webhookId": "imobia-master"
+    },
+    {
+      "parameters": {
+        "method": "GET",
+        "url": "={{ $env.IMOBIA_BASE_URL }}/api/internal/tenant-by-phone?phone={{ $json.body.from }}",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "x-internal-token",
+              "value": "={{ $env.IMOBIA_INTERNAL_TOKEN }}"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "id": "lookup-tenant",
+      "name": "Lookup Tenant pelo número",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [480, 300]
+    },
+    {
+      "parameters": {
+        "method": "GET",
+        "url": "={{ $env.IMOBIA_BASE_URL }}/api/internal/tenant-ia-config?tenantId={{ $json.tenantId }}",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "x-internal-token",
+              "value": "={{ $env.IMOBIA_INTERNAL_TOKEN }}"
+            }
+          ]
+        }
+      },
+      "id": "lookup-ia-config",
+      "name": "Lookup IA Config",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [720, 300]
+    },
+    {
+      "parameters": {
+        "rules": {
+          "rules": [
+            {
+              "conditions": {
+                "options": {
+                  "leftValue": "",
+                  "caseSensitive": false,
+                  "typeValidation": "loose"
+                },
+                "conditions": [
+                  {
+                    "id": "claude-route",
+                    "leftValue": "={{ $json.textoProvider }}",
+                    "rightValue": "CLAUDE",
+                    "operator": {
+                      "type": "string",
+                      "operation": "equals"
+                    }
+                  }
+                ],
+                "combinator": "and"
+              },
+              "renameOutput": true,
+              "outputKey": "Claude"
+            },
+            {
+              "conditions": {
+                "options": {
+                  "leftValue": "",
+                  "caseSensitive": false,
+                  "typeValidation": "loose"
+                },
+                "conditions": [
+                  {
+                    "id": "openai-route",
+                    "leftValue": "={{ $json.textoProvider }}",
+                    "rightValue": "OPENAI",
+                    "operator": {
+                      "type": "string",
+                      "operation": "equals"
+                    }
+                  }
+                ],
+                "combinator": "and"
+              },
+              "renameOutput": true,
+              "outputKey": "OpenAI"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "id": "switch-provider",
+      "name": "Switch IA Provider",
+      "type": "n8n-nodes-base.switch",
+      "typeVersion": 3,
+      "position": [960, 300]
+    },
+    {
+      "parameters": {
+        "model": "claude-haiku-4-5-20251001",
+        "messages": {
+          "values": [
+            {
+              "content": "=Você é {{ $json.nome }}, assistente da imobiliária. Persona: {{ $json.personalidade }}. Apresentação: {{ $json.apresentacao }}. Objetivo: {{ $json.objetivo }}.\n\nPergunte sempre o nome, telefone, tipo de imóvel buscado, faixa de valor, urgência. Não invente imóveis.\n\nMensagem do lead: {{ $('Webhook IN (WhatsApp/Site)').item.json.body.text }}"
+            }
+          ]
+        },
+        "options": {
+          "temperature": 0.7,
+          "maxTokens": 800
+        }
+      },
+      "id": "anthropic-call",
+      "name": "Anthropic (Claude)",
+      "type": "n8n-nodes-base.anthropic",
+      "typeVersion": 1,
+      "position": [1200, 200],
+      "notes": "Usa anthropicApiKey do tenant se vier; fallback master via Credential.",
+      "credentials": {
+        "anthropicApi": {
+          "id": "MASTER_VISUALIS_ANTHROPIC",
+          "name": "Anthropic Master Visualis"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "model": "gpt-4o-mini",
+        "messages": {
+          "values": [
+            {
+              "role": "system",
+              "content": "=Você é {{ $json.nome }}, assistente. Persona: {{ $json.personalidade }}. Objetivo: {{ $json.objetivo }}."
+            },
+            {
+              "role": "user",
+              "content": "={{ $('Webhook IN (WhatsApp/Site)').item.json.body.text }}"
+            }
+          ]
+        },
+        "options": {
+          "temperature": 0.7,
+          "maxTokens": 800
+        }
+      },
+      "id": "openai-call",
+      "name": "OpenAI (GPT-4o-mini)",
+      "type": "n8n-nodes-base.openAi",
+      "typeVersion": 1.5,
+      "position": [1200, 400],
+      "credentials": {
+        "openAiApi": {
+          "id": "MASTER_VISUALIS_OPENAI",
+          "name": "OpenAI Master Visualis"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "={{ $env.IMOBIA_BASE_URL }}/api/webhooks/n8n/lead-in",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "x-n8n-signature",
+              "value": "={{ $crypto.hmac('sha256', $env.N8N_WEBHOOK_SECRET, JSON.stringify($json)) }}"
+            }
+          ]
+        },
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={\n  \"tenantId\": \"{{ $('Lookup Tenant pelo número').item.json.tenantId }}\",\n  \"nome\": \"{{ $('Webhook IN (WhatsApp/Site)').item.json.body.pushName }}\",\n  \"telefone\": \"{{ $('Webhook IN (WhatsApp/Site)').item.json.body.from }}\",\n  \"mensagem\": \"{{ $('Webhook IN (WhatsApp/Site)').item.json.body.text }}\",\n  \"origem\": \"whatsapp\"\n}",
+        "options": {}
+      },
+      "id": "create-lead",
+      "name": "Cria Lead no ImobIA",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [1440, 300]
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "={{ $env.IMOBIA_BASE_URL }}/api/webhooks/n8n/lead-update",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "x-n8n-signature",
+              "value": "={{ $crypto.hmac('sha256', $env.N8N_WEBHOOK_SECRET, JSON.stringify($json)) }}"
+            }
+          ]
+        },
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={\n  \"tenantId\": \"{{ $('Lookup Tenant pelo número').item.json.tenantId }}\",\n  \"leadId\": \"{{ $('Cria Lead no ImobIA').item.json.leadId }}\",\n  \"etapa\": \"QUALIFICANDO\",\n  \"resumoConversa\": \"{{ $json.message.content[0].text || $json.choices[0].message.content }}\"\n}",
+        "options": {}
+      },
+      "id": "update-lead",
+      "name": "Atualiza Lead com qualificação",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [1680, 300]
+    }
+  ],
+  "connections": {
+    "Webhook IN (WhatsApp/Site)": {
+      "main": [[{ "node": "Lookup Tenant pelo número", "type": "main", "index": 0 }]]
+    },
+    "Lookup Tenant pelo número": {
+      "main": [[{ "node": "Lookup IA Config", "type": "main", "index": 0 }]]
+    },
+    "Lookup IA Config": {
+      "main": [[{ "node": "Switch IA Provider", "type": "main", "index": 0 }]]
+    },
+    "Switch IA Provider": {
+      "main": [
+        [{ "node": "Anthropic (Claude)", "type": "main", "index": 0 }],
+        [{ "node": "OpenAI (GPT-4o-mini)", "type": "main", "index": 0 }]
+      ]
+    },
+    "Anthropic (Claude)": {
+      "main": [[{ "node": "Cria Lead no ImobIA", "type": "main", "index": 0 }]]
+    },
+    "OpenAI (GPT-4o-mini)": {
+      "main": [[{ "node": "Cria Lead no ImobIA", "type": "main", "index": 0 }]]
+    },
+    "Cria Lead no ImobIA": {
+      "main": [[{ "node": "Atualiza Lead com qualificação", "type": "main", "index": 0 }]]
+    }
+  },
+  "settings": {
+    "executionOrder": "v1",
+    "saveManualExecutions": true,
+    "callerPolicy": "workflowsFromSameOwner",
+    "errorWorkflow": null
+  },
+  "staticData": null,
+  "tags": [{ "name": "imobia" }, { "name": "master" }, { "name": "multi-tenant" }],
+  "triggerCount": 1,
+  "versionId": "1.0.0",
+  "meta": {
+    "instanceId": "visualis-imobia-master"
+  }
+}

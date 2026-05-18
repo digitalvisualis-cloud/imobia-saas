@@ -54,6 +54,9 @@ export default async function ConfiguracoesPage() {
         faviconUrl: tenant.marca?.faviconUrl ?? '',
         corPrimaria: tenant.marca?.corPrimaria ?? '#c5a64f',
         corSecundaria: tenant.marca?.corSecundaria ?? '#1a2e1a',
+        corTextoHero: tenant.marca?.corTextoHero ?? '#FFFFFF',
+        fonteTitulo: (tenant.marca as any)?.fonteTitulo ?? 'cormorant',
+        fonteCorpo: (tenant.marca as any)?.fonteCorpo ?? 'inter',
         email: tenant.marca?.email ?? '',
         whatsapp: tenant.marca?.whatsapp ?? '',
         telefone: tenant.marca?.telefone ?? '',
@@ -63,6 +66,13 @@ export default async function ConfiguracoesPage() {
         youtube: tenant.marca?.youtube ?? '',
         linkedin: tenant.marca?.linkedin ?? '',
         tiktok: tenant.marca?.tiktok ?? '',
+        politicaPrivacidade: tenant.marca?.politicaPrivacidade ?? '',
+        termosUso: tenant.marca?.termosUso ?? '',
+        politicaCookies: tenant.marca?.politicaCookies ?? '',
+        marcaDaguaAtiva: (tenant.marca as any)?.marcaDaguaAtiva ?? false,
+        marcaDaguaPosicao: (tenant.marca as any)?.marcaDaguaPosicao ?? 'centro',
+        marcaDaguaOpacidade: (tenant.marca as any)?.marcaDaguaOpacidade ?? 35,
+        marcaDaguaTamanho: (tenant.marca as any)?.marcaDaguaTamanho ?? 'medio',
       }}
       tenantInfo={{
         slug: tenant.slug,
