@@ -16,7 +16,6 @@ import { PageHeader } from '@/components/ui/page-header';
 import { EmptyState } from '@/components/ui/empty-state';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
 import { toast } from '@/lib/toast';
 import { cn } from '@/lib/utils';
 
@@ -36,20 +35,32 @@ type LibItem = {
 
 export default function BibliotecaClient({ items }: { items: LibItem[] }) {
   const router = useRouter();
-  const [search, setSearch] = useState('');
+  const [imovelFilter, setImovelFilter] = useState<string>('');
   const [editingCopy, setEditingCopy] = useState<{ id: string; value: string } | null>(null);
   const [copiedId, setCopiedId] = useState<string | null>(null);
 
-  // Group by imovel
+  // Lista unica de imoveis pra popular o filtro
+  const imoveisDisponiveis = useMemo(() => {
+    const map = new Map<string, { key: string; titulo: string; local: string | null; count: number }>();
+    for (const it of items) {
+      const key = it.imovelId ?? `_avulso_${it.imovelTitulo}`;
+      const cur = map.get(key);
+      if (cur) cur.count += 1;
+      else
+        map.set(key, {
+          key,
+          titulo: it.imovelTitulo,
+          local: it.imovelLocal,
+          count: 1,
+        });
+    }
+    return Array.from(map.values()).sort((a, b) => a.titulo.localeCompare(b.titulo));
+  }, [items]);
+
+  // Filtra + agrupa por imovel
   const grupos = useMemo(() => {
-    const q = search.trim().toLowerCase();
-    const filtered = q
-      ? items.filter(
-          (i) =>
-            i.imovelTitulo.toLowerCase().includes(q) ||
-            (i.imovelLocal ?? '').toLowerCase().includes(q) ||
-            i.templateNome.toLowerCase().includes(q),
-        )
+    const filtered = imovelFilter
+      ? items.filter((i) => (i.imovelId ?? `_avulso_${i.imovelTitulo}`) === imovelFilter)
       : items;
 
     const map = new Map<
@@ -70,7 +81,7 @@ export default function BibliotecaClient({ items }: { items: LibItem[] }) {
       map.set(key, g);
     }
     return Array.from(map.values());
-  }, [items, search]);
+  }, [items, imovelFilter]);
 
   async function handleDelete(id: string) {
     if (!confirm('Apagar essa arte? Não dá pra desfazer.')) return;
@@ -127,12 +138,33 @@ export default function BibliotecaClient({ items }: { items: LibItem[] }) {
         }
       />
 
-      {items.length > 0 && (
-        <Input
-          placeholder="Buscar por imóvel, bairro ou template…"
-          value={search}
-          onChange={(e) => setSearch(e.target.value)}
-        />
+      {imoveisDisponiveis.length > 1 && (
+        <div className="flex items-center gap-3">
+          <label className="text-xs font-medium text-muted-foreground shrink-0">
+            Filtrar por imóvel:
+          </label>
+          <select
+            value={imovelFilter}
+            onChange={(e) => setImovelFilter(e.target.value)}
+            className="flex-1 max-w-md rounded-md border border-input bg-background px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-ring"
+          >
+            <option value="">Todos os imóveis ({items.length} arte{items.length > 1 ? 's' : ''})</option>
+            {imoveisDisponiveis.map((i) => (
+              <option key={i.key} value={i.key}>
+                {i.titulo}
+                {i.local ? ` · ${i.local}` : ''} ({i.count})
+              </option>
+            ))}
+          </select>
+          {imovelFilter && (
+            <button
+              onClick={() => setImovelFilter('')}
+              className="text-xs text-muted-foreground hover:text-foreground hover:underline"
+            >
+              Limpar
+            </button>
+          )}
+        </div>
       )}
 
       {grupos.length === 0 ? (
@@ -294,10 +326,6 @@ export default function BibliotecaClient({ items }: { items: LibItem[] }) {
         </div>
       )}
 
-      <div className="text-xs text-muted-foreground bg-muted/40 border border-border rounded-md px-3 py-2">
-        ℹ️ Os thumbs ficam no Supabase Storage. A copy é editável a qualquer momento.
-        Clica em "Novo" pra abrir o editor pré-carregado com o imóvel.
-      </div>
     </div>
   );
 }
