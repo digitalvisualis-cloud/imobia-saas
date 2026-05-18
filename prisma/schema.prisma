@@ -42,6 +42,7 @@ model Tenant {
   repasses Repasse[]
   cobrancas Cobranca[]
   postsLib PostGeradoLib[]
+  regrasAutomacao RegraAutomacao[]
 
   @@map("tenants")
 }
@@ -575,6 +576,36 @@ enum TipoPost {
   WHATSAPP
   FICHA_PDF
   DESCRICAO_SITE
+}
+
+/// Configuracao da regua de mensagens automaticas por tenant.
+/// 1 linha = 1 evento (lembrete_aluguel, aviso_vencimento_contrato,
+/// aviso_reajuste, chave_atrasada, repasse_pendente). Tenant ativa/
+/// desativa cada um e ajusta canais + offsetsDias + template.
+model RegraAutomacao {
+  id            String   @id @default(cuid())
+  tenantId      String
+  /// Slug do evento (lembrete_aluguel | aviso_vencimento_contrato |
+  /// aviso_reajuste | chave_atrasada | repasse_pendente)
+  evento        String
+  ativo         Boolean  @default(false)
+  /// Canais a disparar: ['whatsapp', 'email']
+  canais        String[] @default([])
+  /// Offsets em dias relativos ao evento (negativo = antes, 0 = no dia, positivo = depois)
+  offsetsDias   Int[]    @default([])
+  /// Template WhatsApp com variaveis {nome} {valor} {vencimento} {imovel} {empresa}
+  mensagemWpp   String?
+  /// Template e-mail com mesmas variaveis (suporta html simples)
+  mensagemEmail String?
+  ultimoTesteEm DateTime?
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+
+  tenant        Tenant   @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+
+  @@unique([tenantId, evento])
+  @@index([tenantId, ativo])
+  @@map("regras_automacao")
 }
 
 /// Biblioteca persistente do gerador de posts (engine Lovable).

@@ -33,7 +33,6 @@ import {
   Users,
   ArrowRightLeft,
   AlertCircle,
-  Zap,
   Library,
   type LucideIcon,
 } from 'lucide-react';
@@ -141,7 +140,7 @@ export default function DashboardLayout({
         { name: 'Comissões', href: '/comissoes', icon: Receipt },
         { name: 'Inadimplência', href: '/inadimplencia', icon: AlertCircle },
         { name: 'Financeiro', href: '/financeiro', icon: Wallet },
-        { name: 'Automações n8n', href: '/configuracoes/automacoes', icon: Zap, soon: true },
+        { name: 'Mensagens automáticas', href: '/automacoes', icon: Bell },
       ],
     },
     {

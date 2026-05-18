@@ -36,6 +36,18 @@ export async function GET(req: NextRequest) {
     return NextResponse.json({ error: 'tenantId obrigatorio' }, { status: 400 });
   }
 
+  // Carrega regras ATIVAS do tenant. Eventos sem regra ativa nao
+  // entram no payload (n8n nao dispara nada que o user nao configurou).
+  const regrasAtivas = await (prisma as any).regraAutomacao.findMany({
+    where: { tenantId, ativo: true },
+  });
+  const regrasMap = new Map<string, any>(regrasAtivas.map((r: any) => [r.evento, r]));
+
+  // Helper: se evento nao esta ativo, retorna array vazio (skip)
+  function isAtivo(evento: string): boolean {
+    return regrasMap.has(evento);
+  }
+
   const hoje = new Date();
   hoje.setHours(0, 0, 0, 0);
   const em30 = new Date(hoje);
@@ -44,7 +56,8 @@ export async function GET(req: NextRequest) {
   em60.setDate(em60.getDate() + 60);
 
   // 1. Cobrancas atrasadas (ABERTO, vencimento < hoje, evento nao emitido hoje)
-  const cobrancasAtrasadas = await (prisma as any).cobranca.findMany({
+  // Skip se regua lembrete_aluguel nao estiver ativa.
+  const cobrancasAtrasadas = !isAtivo('lembrete_aluguel') ? [] : await (prisma as any).cobranca.findMany({
     where: {
       tenantId,
       status: 'ABERTO',
@@ -65,7 +78,7 @@ export async function GET(req: NextRequest) {
   });
 
   // 2. Contratos vencendo nos proximos 30d
-  const contratosVencendo = await (prisma as any).contrato.findMany({
+  const contratosVencendo = !isAtivo('aviso_vencimento_contrato') ? [] : await (prisma as any).contrato.findMany({
     where: {
       tenantId,
       status: 'ATIVO',
@@ -84,7 +97,7 @@ export async function GET(req: NextRequest) {
 
   // 3. Reajustes proximos (60d antes do aniversario)
   // calculo: (ultimoReajusteEm OR dataInicio) + 12m em janela 60d
-  const contratosAtivos = await (prisma as any).contrato.findMany({
+  const contratosAtivos = !isAtivo('aviso_reajuste') ? [] : await (prisma as any).contrato.findMany({
     where: {
       tenantId,
       status: 'ATIVO',
@@ -111,7 +124,7 @@ export async function GET(req: NextRequest) {
     .filter((x: any) => x.proxReajuste >= hoje && x.proxReajuste <= em60);
 
   // 4. Chaves atrasadas (prazoDevolucao < hoje, status RETIRADA, nao emitido)
-  const chavesAtrasadas = await (prisma as any).chaveRetirada.findMany({
+  const chavesAtrasadas = !isAtivo('chave_atrasada') ? [] : await (prisma as any).chaveRetirada.findMany({
     where: {
       tenantId,
       status: 'RETIRADA',
@@ -131,7 +144,7 @@ export async function GET(req: NextRequest) {
   // 5. Repasses A_REPASSAR ha mais de 5 dias (proprietario esperando)
   const cincoDiasAtras = new Date(hoje);
   cincoDiasAtras.setDate(cincoDiasAtras.getDate() - 5);
-  const repassesPendentes = await (prisma as any).repasse.findMany({
+  const repassesPendentes = !isAtivo('repasse_pendente') ? [] : await (prisma as any).repasse.findMany({
     where: {
       tenantId,
       status: 'A_REPASSAR',
@@ -151,6 +164,14 @@ export async function GET(req: NextRequest) {
   return NextResponse.json({
     tenantId,
     geradoEm: new Date().toISOString(),
+    // Templates configurados pelo tenant (n8n usa pra montar a mensagem)
+    regras: regrasAtivas.map((r: any) => ({
+      evento: r.evento,
+      canais: r.canais,
+      offsetsDias: r.offsetsDias,
+      mensagemWpp: r.mensagemWpp,
+      mensagemEmail: r.mensagemEmail,
+    })),
     eventos: [
       ...cobrancasAtrasadas.map((c: any) => ({
         eventoTipo: 'cobranca_atrasada',
