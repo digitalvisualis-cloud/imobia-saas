@@ -418,6 +418,14 @@ model ConfigMarca {
   politicaPrivacidade String?
   termosUso           String?
   politicaCookies     String?
+  /// Marca d'agua nas fotos do site publico (NAO afeta Criador de Posts).
+  marcaDaguaAtiva     Boolean  @default(false)
+  /// 'centro' | 'inferior-direita' | 'inferior-esquerda' | 'inferior-centro' | 'tile'
+  marcaDaguaPosicao   String   @default("centro")
+  /// 10..80
+  marcaDaguaOpacidade Int      @default(35)
+  /// 'pequeno' (12%) | 'medio' (20%) | 'grande' (30%)
+  marcaDaguaTamanho   String   @default("medio")
   createdAt       DateTime @default(now())
   updatedAt       DateTime @updatedAt
 

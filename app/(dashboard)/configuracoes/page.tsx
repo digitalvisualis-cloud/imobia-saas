@@ -69,6 +69,10 @@ export default async function ConfiguracoesPage() {
         politicaPrivacidade: tenant.marca?.politicaPrivacidade ?? '',
         termosUso: tenant.marca?.termosUso ?? '',
         politicaCookies: tenant.marca?.politicaCookies ?? '',
+        marcaDaguaAtiva: (tenant.marca as any)?.marcaDaguaAtiva ?? false,
+        marcaDaguaPosicao: (tenant.marca as any)?.marcaDaguaPosicao ?? 'centro',
+        marcaDaguaOpacidade: (tenant.marca as any)?.marcaDaguaOpacidade ?? 35,
+        marcaDaguaTamanho: (tenant.marca as any)?.marcaDaguaTamanho ?? 'medio',
       }}
       tenantInfo={{
         slug: tenant.slug,

@@ -154,7 +154,7 @@ export function AuraDestaques({ tenant, imoveis }: SectionProps) {
         <SectionHead titulo="Residências escolhidas a dedo" cta="Ver todos" ctaTo={`/s/${tenant.slug}`} />
         <div className="mt-6 grid gap-4 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
           {imoveis.slice(0, 8).map((i) => (
-            <AuraCard key={i.id} imovel={i} slug={tenant.slug} />
+            <AuraCard key={i.id} imovel={i} slug={tenant.slug} marca={tenant.marca} />
           ))}
         </div>
       </div>

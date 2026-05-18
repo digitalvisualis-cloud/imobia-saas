@@ -11,6 +11,7 @@ import { OnyxHeader, OnyxFooter } from './onyx/OnyxChrome';
 import { CookieBanner } from './CookieBanner';
 import { formatPriceBRL, imageUrl } from './_shared';
 import { LeadForm } from './LeadForm';
+import { ImagemComMarca } from './ImagemComMarca';
 
 interface Props {
   theme: ThemeId;
@@ -34,7 +35,7 @@ export function ImovelDetail({ theme, config, tenant, imovel }: Props) {
         <BrisaHeader config={config} tenant={tenant} />
       )}
       <main>
-        <ImovelGallery imagens={imovel.imagens} capa={imovel.capaUrl} titulo={imovel.titulo} />
+        <ImovelGallery imagens={imovel.imagens} capa={imovel.capaUrl} titulo={imovel.titulo} marca={tenant.marca} />
         <ImovelInfo imovel={imovel} tenant={tenant} />
       </main>
       <Footer config={config} tenant={tenant} />
@@ -47,10 +48,12 @@ function ImovelGallery({
   imagens,
   capa,
   titulo,
+  marca,
 }: {
   imagens: string[];
   capa: string | null;
   titulo: string;
+  marca: TenantPublic['marca'];
 }) {
   // capa eh uma das URLs de imagens — usar [capa, ...imagens] duplica.
   // Dedupe via Set garante cada foto so 1x (capa fica primeira). Tambem
@@ -66,9 +69,12 @@ function ImovelGallery({
     <div className="mx-auto max-w-7xl px-6 pt-8">
       <div className="grid gap-3 md:grid-cols-4">
         <div className="md:col-span-3">
-          <div className="aspect-[16/10] w-full overflow-hidden rounded-2xl">
-            <img src={main} alt={titulo} className="h-full w-full object-cover" />
-          </div>
+          <ImagemComMarca
+            src={main}
+            alt={titulo}
+            marca={marca}
+            className="aspect-[16/10] w-full overflow-hidden rounded-2xl"
+          />
         </div>
         <div className="grid grid-cols-4 gap-2 md:grid-cols-1">
           {all.slice(0, 4).map((img, i) => (
@@ -80,6 +86,8 @@ function ImovelGallery({
                 active === i ? 'ring-[var(--t-primary)]' : 'ring-transparent'
               }`}
             >
+              {/* thumbnails sem marca pra nao poluir */}
+              {/* eslint-disable-next-line @next/next/no-img-element */}
               <img src={img} alt="" className="h-full w-full object-cover" />
             </button>
           ))}

@@ -1,13 +1,15 @@
 import Link from 'next/link';
-import type { ImovelPublic } from '@/app/_templates/types';
+import type { ImovelPublic, BrandKit } from '@/app/_templates/types';
 import { formatPriceBRL, imageUrl, imovelHref } from '../_shared';
+import { ImagemComMarca } from '../ImagemComMarca';
 
 interface Props {
   imovel: ImovelPublic;
   slug: string;
+  marca?: BrandKit | null;
 }
 
-export function AuraCard({ imovel, slug }: Props) {
+export function AuraCard({ imovel, slug, marca = null }: Props) {
   const operacao = imovel.operacao.toLowerCase();
   const specs: string[] = [];
   if (imovel.areaM2 != null) specs.push(`${imovel.areaM2} m²`);
@@ -21,11 +23,11 @@ export function AuraCard({ imovel, slug }: Props) {
       style={{ background: 'var(--t-card)', borderColor: 'var(--t-line)' }}
     >
       <div className="relative aspect-[16/10] overflow-hidden">
-        <img
+        <ImagemComMarca
           src={imageUrl(imovel.capaUrl ?? imovel.imagens[0])}
           alt={imovel.titulo}
-          loading="lazy"
-          className="h-full w-full object-cover transition-transform duration-[1200ms] ease-out group-hover:scale-[1.05]"
+          marca={marca}
+          className="absolute inset-0 transition-transform duration-[1200ms] ease-out group-hover:scale-[1.05]"
         />
         <span
           className="absolute left-2.5 top-2.5 rounded-sm bg-white/95 px-2 py-0.5 text-[10px] font-bold uppercase tracking-[0.15em] text-stone-900 backdrop-blur"

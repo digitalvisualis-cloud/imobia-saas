@@ -90,9 +90,9 @@ export function SearchResultsView({
             >
               {results.map((i) =>
                 theme === 'aura' ? (
-                  <AuraCard key={i.id} imovel={i} slug={tenant.slug} />
+                  <AuraCard key={i.id} imovel={i} slug={tenant.slug} marca={tenant.marca} />
                 ) : (
-                  <BrisaCard key={i.id} imovel={i} slug={tenant.slug} />
+                  <BrisaCard key={i.id} imovel={i} slug={tenant.slug} marca={tenant.marca} />
                 ),
               )}
             </div>

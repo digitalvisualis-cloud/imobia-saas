@@ -62,6 +62,10 @@ type Marca = {
   politicaPrivacidade: string;
   termosUso: string;
   politicaCookies: string;
+  marcaDaguaAtiva: boolean;
+  marcaDaguaPosicao: string;
+  marcaDaguaOpacidade: number;
+  marcaDaguaTamanho: string;
 };
 type TenantInfo = {
   slug: string;
@@ -509,6 +513,176 @@ export default function ConfiguracoesClient(props: {
                     );
                   })}
                 </div>
+              </div>
+
+              {/* Marca d'agua nas fotos do site */}
+              <div className="mt-6 pt-6 border-t border-border">
+                <div className="flex items-start justify-between gap-3 mb-3">
+                  <div>
+                    <h4 className="font-medium text-foreground">Marca d'água nas fotos</h4>
+                    <p className="text-xs text-muted-foreground mt-0.5">
+                      Sobrepõe o logo nas fotos dos imóveis no <strong>site público</strong> pra
+                      proteger contra cópia. Não afeta o Criador de Posts.
+                    </p>
+                  </div>
+                  <label className="inline-flex items-center gap-2 cursor-pointer shrink-0">
+                    <span className="text-xs text-muted-foreground">
+                      {marca.marcaDaguaAtiva ? 'Ativa' : 'Inativa'}
+                    </span>
+                    <input
+                      type="checkbox"
+                      checked={!!marca.marcaDaguaAtiva}
+                      onChange={(e) => setM('marcaDaguaAtiva' as any, e.target.checked)}
+                      className="h-4 w-7 appearance-none rounded-full bg-muted-foreground/30 checked:bg-primary transition-colors cursor-pointer relative after:absolute after:top-0.5 after:left-0.5 after:h-3 after:w-3 after:rounded-full after:bg-white after:transition-transform checked:after:translate-x-3"
+                    />
+                  </label>
+                </div>
+
+                {marca.marcaDaguaAtiva && !marca.logoUrl && (
+                  <div className="rounded-md border border-amber-500/40 bg-amber-500/10 px-3 py-2 text-xs text-amber-900 dark:text-amber-200 mb-3">
+                    ⚠️ Você precisa cadastrar o logo acima pra marca d'água funcionar.
+                  </div>
+                )}
+
+                {marca.marcaDaguaAtiva && (
+                  <div className="space-y-4">
+                    <Field label="Posição">
+                      <div className="grid grid-cols-2 md:grid-cols-5 gap-2">
+                        {[
+                          { val: 'centro', label: 'Centro' },
+                          { val: 'inferior-direita', label: 'Inferior ↘' },
+                          { val: 'inferior-esquerda', label: 'Inferior ↙' },
+                          { val: 'inferior-centro', label: 'Inferior ↓' },
+                          { val: 'tile', label: 'Padrão repetido' },
+                        ].map((p) => (
+                          <button
+                            key={p.val}
+                            type="button"
+                            onClick={() => setM('marcaDaguaPosicao' as any, p.val)}
+                            className={cn(
+                              'rounded-md border px-3 py-2 text-xs font-medium transition-colors',
+                              marca.marcaDaguaPosicao === p.val
+                                ? 'border-primary bg-primary text-primary-foreground'
+                                : 'border-border hover:border-primary/40',
+                            )}
+                          >
+                            {p.label}
+                          </button>
+                        ))}
+                      </div>
+                    </Field>
+
+                    <Field label="Tamanho">
+                      <div className="grid grid-cols-3 gap-2">
+                        {[
+                          { val: 'pequeno', label: 'Pequeno (12%)' },
+                          { val: 'medio', label: 'Médio (20%)' },
+                          { val: 'grande', label: 'Grande (30%)' },
+                        ].map((t) => (
+                          <button
+                            key={t.val}
+                            type="button"
+                            onClick={() => setM('marcaDaguaTamanho' as any, t.val)}
+                            className={cn(
+                              'rounded-md border px-3 py-2 text-xs font-medium transition-colors',
+                              marca.marcaDaguaTamanho === t.val
+                                ? 'border-primary bg-primary text-primary-foreground'
+                                : 'border-border hover:border-primary/40',
+                            )}
+                          >
+                            {t.label}
+                          </button>
+                        ))}
+                      </div>
+                    </Field>
+
+                    <Field label={`Opacidade: ${marca.marcaDaguaOpacidade}%`}>
+                      <input
+                        type="range"
+                        min={10}
+                        max={80}
+                        step={5}
+                        value={marca.marcaDaguaOpacidade}
+                        onChange={(e) => setM('marcaDaguaOpacidade' as any, Number(e.target.value))}
+                        className="w-full"
+                      />
+                      <p className="text-[10px] text-muted-foreground mt-1">
+                        Mais baixo = marca mais sutil. Mais alto = mais visível (mas pode atrapalhar a leitura da foto).
+                      </p>
+                    </Field>
+
+                    {/* Preview rápido */}
+                    {marca.logoUrl && (
+                      <div>
+                        <p className="text-xs text-muted-foreground mb-2">Pré-visualização:</p>
+                        <div className="relative aspect-[16/10] max-w-md overflow-hidden rounded-lg border border-border">
+                          <div
+                            className="absolute inset-0 bg-cover bg-center"
+                            style={{
+                              backgroundImage:
+                                'url(https://images.unsplash.com/photo-1564013799919-ab600027ffc6?w=800)',
+                            }}
+                          />
+                          {marca.marcaDaguaPosicao === 'tile' ? (
+                            <div
+                              aria-hidden
+                              className="pointer-events-none absolute inset-0"
+                              style={{
+                                backgroundImage: `url(${marca.logoUrl})`,
+                                backgroundRepeat: 'repeat',
+                                backgroundSize: `${
+                                  (marca.marcaDaguaTamanho === 'pequeno'
+                                    ? 12
+                                    : marca.marcaDaguaTamanho === 'grande'
+                                      ? 30
+                                      : 20) * 1.5
+                                }% auto`,
+                                opacity: marca.marcaDaguaOpacidade / 100,
+                                mixBlendMode: 'overlay',
+                                transform: 'rotate(-25deg) scale(1.4)',
+                                transformOrigin: 'center',
+                              }}
+                            />
+                          ) : (
+                            // eslint-disable-next-line @next/next/no-img-element
+                            <img
+                              src={marca.logoUrl}
+                              alt=""
+                              className="pointer-events-none absolute"
+                              style={{
+                                width: `${
+                                  marca.marcaDaguaTamanho === 'pequeno'
+                                    ? 12
+                                    : marca.marcaDaguaTamanho === 'grande'
+                                      ? 30
+                                      : 20
+                                }%`,
+                                height: 'auto',
+                                opacity: marca.marcaDaguaOpacidade / 100,
+                                filter: 'drop-shadow(0 2px 8px rgba(0,0,0,0.4))',
+                                ...(marca.marcaDaguaPosicao === 'inferior-direita'
+                                  ? { right: '4%', bottom: '4%' }
+                                  : marca.marcaDaguaPosicao === 'inferior-esquerda'
+                                    ? { left: '4%', bottom: '4%' }
+                                    : marca.marcaDaguaPosicao === 'inferior-centro'
+                                      ? {
+                                          left: '50%',
+                                          bottom: '4%',
+                                          transform: 'translateX(-50%)',
+                                        }
+                                      : {
+                                          left: '50%',
+                                          top: '50%',
+                                          transform: 'translate(-50%, -50%)',
+                                        }),
+                              }}
+                            />
+                          )}
+                        </div>
+                      </div>
+                    )}
+                  </div>
+                )}
               </div>
 
               {/* Fontes (tipografia) */}

@@ -1,6 +1,7 @@
 import Link from 'next/link';
 import type { ImovelPublic, TenantPublic } from '@/app/_templates/types';
 import { formatPriceBRL, imageUrl } from '../_shared';
+import { ImagemComMarca } from '../ImagemComMarca';
 
 /**
  * Card de imovel compacto — foto 16:10, dados sobrepostos (codigo no topo
@@ -25,11 +26,11 @@ export function OnyxCard({
       className="group block overflow-hidden rounded-md border border-black/5 bg-white transition-shadow hover:shadow-lg"
     >
       <div className="relative aspect-[16/10] overflow-hidden bg-gray-100">
-        {/* eslint-disable-next-line @next/next/no-img-element */}
-        <img
+        <ImagemComMarca
           src={imageUrl(capa)}
           alt={imovel.titulo}
-          className="h-full w-full object-cover transition-transform duration-500 group-hover:scale-105"
+          marca={tenant.marca}
+          className="absolute inset-0 transition-transform duration-500 group-hover:scale-105"
         />
         {/* Tag operacao */}
         <span

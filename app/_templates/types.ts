@@ -21,6 +21,14 @@ export type BrandKit = {
   youtube: string | null;
   linkedin: string | null;
   tiktok: string | null;
+  /** Marca d'agua nas fotos do site. NAO afeta Criador de Posts. */
+  marcaDaguaAtiva: boolean;
+  /** 'centro' | 'inferior-direita' | 'inferior-esquerda' | 'inferior-centro' | 'tile' */
+  marcaDaguaPosicao: string;
+  /** 10..80 */
+  marcaDaguaOpacidade: number;
+  /** 'pequeno' | 'medio' | 'grande' */
+  marcaDaguaTamanho: string;
 };
 
 export type TenantPublic = {

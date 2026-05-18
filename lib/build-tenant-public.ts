@@ -33,6 +33,10 @@ export function buildTenantPublic(
           youtube: tenant.marca.youtube,
           linkedin: tenant.marca.linkedin,
           tiktok: tenant.marca.tiktok,
+          marcaDaguaAtiva: (tenant.marca as any).marcaDaguaAtiva ?? false,
+          marcaDaguaPosicao: (tenant.marca as any).marcaDaguaPosicao ?? 'centro',
+          marcaDaguaOpacidade: (tenant.marca as any).marcaDaguaOpacidade ?? 35,
+          marcaDaguaTamanho: (tenant.marca as any).marcaDaguaTamanho ?? 'medio',
         }
       : null,
   };
